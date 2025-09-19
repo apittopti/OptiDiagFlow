@@ -463,31 +463,25 @@ export default function JobDetailsPage() {
       <div style={{ padding: '32px' }}>
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <button
-                onClick={() => router.push('/jobs')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '8px 12px',
-                  backgroundColor: 'transparent',
-                  color: '#374151',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                <ChevronLeft size={16} />
-                Back
-              </button>
-              <div>
-                <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Job Details</h1>
-                <p style={{ color: '#6b7280', fontSize: '14px' }}>{`Job ID: ${job.id}`}</p>
-              </div>
-            </div>
+            <button
+              onClick={() => router.push('/jobs')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '8px 12px',
+                backgroundColor: 'transparent',
+                color: '#374151',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              <ChevronLeft size={16} />
+              Back to Jobs
+            </button>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={handleReparse}
@@ -531,45 +525,122 @@ export default function JobDetailsPage() {
           </div>
         </div>
 
+        {/* Dashboard Stats Cards - Always Visible */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '16px',
+          marginBottom: '24px'
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '8px',
+            padding: '20px',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Total ECUs</p>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#111827' }}>{ecus.length}</p>
+              </div>
+              <div style={{
+                backgroundColor: '#dbeafe',
+                borderRadius: '8px',
+                padding: '10px'
+              }}>
+                <Cpu size={24} color="#3b82f6" />
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '8px',
+            padding: '20px',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Active DTCs</p>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#111827' }}>{job.DTC?.length || 0}</p>
+              </div>
+              <div style={{
+                backgroundColor: '#fee2e2',
+                borderRadius: '8px',
+                padding: '10px'
+              }}>
+                <AlertCircle size={24} color="#ef4444" />
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '8px',
+            padding: '20px',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Data IDs Read</p>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#111827' }}>{job.DataIdentifier?.length || 0}</p>
+              </div>
+              <div style={{
+                backgroundColor: '#d1fae5',
+                borderRadius: '8px',
+                padding: '10px'
+              }}>
+                <Database size={24} color="#10b981" />
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '8px',
+            padding: '20px',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Routines Executed</p>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#111827' }}>{job.Routine?.length || 0}</p>
+              </div>
+              <div style={{
+                backgroundColor: '#fef3c7',
+                borderRadius: '8px',
+                padding: '10px'
+              }}>
+                <Activity size={24} color="#f59e0b" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '12px',
           padding: '32px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}>
-          {/* Job Info */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '24px',
-            marginBottom: '32px'
-          }}>
-            <div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Session ID</p>
-              <p style={{ fontSize: '20px', fontWeight: '600' }}>{job.diagSessionId || 'N/A'}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Vehicle</p>
-              <p style={{ fontSize: '20px', fontWeight: '600' }}>{job.Vehicle?.vin || 'Unknown'}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Messages</p>
-              <p style={{ fontSize: '20px', fontWeight: '600' }}>{messages.length}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>ECUs</p>
-              <p style={{ fontSize: '20px', fontWeight: '600' }}>{ecus.length}</p>
-            </div>
-          </div>
-
           {/* Tabs with Knowledge Page Styling */}
           <div style={{
             display: 'flex',
-            gap: '4px',
-            marginBottom: '24px',
-            borderBottom: '2px solid #e5e7eb',
-            paddingBottom: '0'
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px'
           }}>
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              backgroundColor: '#e5e7eb',
+              borderRadius: '8px',
+              padding: '4px'
+            }}>
             <button
               onClick={() => setActiveTab('overview')}
               style={{
@@ -585,6 +656,22 @@ export default function JobDetailsPage() {
               }}
             >
               Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('ecus')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: activeTab === 'ecus' ? '#3b82f6' : 'transparent',
+                color: activeTab === 'ecus' ? '#ffffff' : '#6b7280',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              ECUs ({ecus.length})
             </button>
             <button
               onClick={() => setActiveTab('flow')}
@@ -666,18 +753,163 @@ export default function JobDetailsPage() {
             >
               Services
             </button>
+            </div>
           </div>
 
           {/* Tab Content */}
           {activeTab === 'overview' && (
             <div>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Session Overview</h3>
-              <div style={{ backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px' }}>
-                <p style={{ marginBottom: '12px' }}><strong>Type:</strong> {job.procedureType || 'Unknown'}</p>
-                <p style={{ marginBottom: '12px' }}><strong>Status:</strong> {job.status || 'Unknown'}</p>
-                <p style={{ marginBottom: '12px' }}><strong>Created:</strong> {new Date(job.createdAt).toLocaleString()}</p>
-                <p style={{ marginBottom: '12px' }}><strong>Duration:</strong> {job.duration ? `${job.duration}ms` : 'N/A'}</p>
-                <p><strong>Trace File:</strong> {job.traceFileName || 'N/A'}</p>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Session Information</h3>
+              <div style={{
+                backgroundColor: '#f9fafb',
+                padding: '20px',
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb'
+              }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                  <div>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Session ID</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>{job.diagSessionId || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Vehicle VIN</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>{job.Vehicle?.vin || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Procedure Type</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>{job.procedureType || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Status</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>{job.status || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Created</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>{new Date(job.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Duration</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>{job.duration ? `${job.duration}ms` : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Total Messages</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>{messages.length}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Protocol</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>DoIP/UDS</p>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Trace File</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>{job.traceFileName || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'ecus' && (
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>Discovered ECUs</h3>
+              <div style={{
+                display: 'grid',
+                gap: '16px'
+              }}>
+                {ecus.map(ecu => (
+                  <div
+                    key={ecu.address}
+                    style={{
+                      backgroundColor: '#f9fafb',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '20px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                          <span style={{
+                            fontFamily: 'monospace',
+                            fontSize: '16px',
+                            backgroundColor: '#ffffff',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            border: '1px solid #e5e7eb',
+                            fontWeight: '600'
+                          }}>
+                            {ecu.address}
+                          </span>
+                          <span style={{
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            color: '#111827'
+                          }}>
+                            {ecuNames[ecu.address]?.name || ecu.name}
+                          </span>
+                        </div>
+                        {ecuNames[ecu.address]?.description && (
+                          <p style={{ fontSize: '14px', color: '#6b7280', marginLeft: '4px' }}>
+                            {ecuNames[ecu.address].description}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px'
+                      }}>
+                        <span style={{
+                          fontSize: '14px',
+                          color: '#374151',
+                          backgroundColor: '#dbeafe',
+                          padding: '4px 12px',
+                          borderRadius: '6px',
+                          fontWeight: '500'
+                        }}>
+                          {ecu.messageCount} messages
+                        </span>
+                        {ecuNames[ecu.address]?.isVerified && (
+                          <span style={{
+                            fontSize: '14px',
+                            color: '#059669',
+                            backgroundColor: '#d1fae5',
+                            padding: '4px 12px',
+                            borderRadius: '6px',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <CheckCircle size={14} />
+                            Verified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {ecu.services.length > 0 && (
+                      <div style={{ marginTop: '12px' }}>
+                        <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px', fontWeight: '600' }}>SERVICES USED</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {ecu.services.map(service => (
+                            <span
+                              key={service}
+                              style={{
+                                fontSize: '12px',
+                                backgroundColor: '#ffffff',
+                                border: '1px solid #e5e7eb',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontFamily: 'monospace'
+                              }}
+                            >
+                              {service}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}

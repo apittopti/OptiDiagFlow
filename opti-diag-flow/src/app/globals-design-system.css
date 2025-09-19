@@ -1,0 +1,405 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* OptiDiagFlow Design System Variables */
+@layer base {
+  :root {
+    /* ============================================
+       DESIGN SYSTEM COLOR PALETTE
+       ============================================ */
+
+    /* Primary Blue - Trust, Technology, Precision */
+    --color-primary-50: #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-200: #bfdbfe;
+    --color-primary-300: #93c5fd;
+    --color-primary-400: #60a5fa;
+    --color-primary-500: #3b82f6;
+    --color-primary-600: #2563eb;
+    --color-primary-700: #1d4ed8;
+    --color-primary-800: #1e40af;
+    --color-primary-900: #1e3a8a;
+
+    /* Gray Scale - Professional, Clean */
+    --color-gray-50: #fafafa;
+    --color-gray-100: #f4f4f5;
+    --color-gray-200: #e4e4e7;
+    --color-gray-300: #d4d4d8;
+    --color-gray-400: #a1a1aa;
+    --color-gray-500: #71717a;
+    --color-gray-600: #52525b;
+    --color-gray-700: #3f3f46;
+    --color-gray-800: #27272a;
+    --color-gray-900: #18181b;
+
+    /* Success Green - Diagnostics Passed */
+    --color-success-500: #22c55e;
+    --color-success-600: #16a34a;
+
+    /* Warning Amber - Attention Required */
+    --color-warning-500: #f59e0b;
+    --color-warning-600: #d97706;
+
+    /* Error Red - Issues Detected */
+    --color-error-500: #ef4444;
+    --color-error-600: #dc2626;
+
+    /* Info Cyan - ECU Information */
+    --color-info-500: #06b6d4;
+    --color-info-600: #0891b2;
+
+    /* Purple - Advanced Features */
+    --color-purple-500: #a855f7;
+    --color-purple-600: #9333ea;
+
+    /* ============================================
+       DESIGN SYSTEM SPACING
+       ============================================ */
+    --spacing-1: 4px;
+    --spacing-2: 8px;
+    --spacing-3: 12px;
+    --spacing-4: 16px;
+    --spacing-5: 20px;
+    --spacing-6: 24px;
+    --spacing-8: 32px;
+
+    /* ============================================
+       DESIGN SYSTEM TYPOGRAPHY
+       ============================================ */
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-base: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 20px;
+    --font-size-2xl: 24px;
+    --font-size-3xl: 30px;
+
+    /* ============================================
+       DESIGN SYSTEM BORDERS & RADIUS
+       ============================================ */
+    --radius-1: 3px;
+    --radius-2: 4px;
+    --radius-3: 6px;
+    --radius-4: 8px;
+    --radius-5: 12px;
+    --radius-6: 16px;
+
+    --border-light: #e5e7eb;
+    --border-default: #d1d5db;
+    --border-strong: #9ca3af;
+
+    /* ============================================
+       DESIGN SYSTEM SHADOWS
+       ============================================ */
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* ============================================
+       COMPONENT SPECIFIC TOKENS
+       ============================================ */
+    --card-bg: #ffffff;
+    --card-border: var(--border-light);
+    --card-radius: var(--radius-5);
+    --card-padding: var(--spacing-6);
+    --card-shadow: var(--shadow-sm);
+    --card-shadow-hover: var(--shadow-md);
+
+    --button-height-md: 40px;
+    --button-padding-md: var(--spacing-2) var(--spacing-4);
+    --button-radius: var(--radius-4);
+
+    --input-height: 40px;
+    --input-border: var(--border-default);
+    --input-radius: var(--radius-4);
+
+    --stat-card-icon-size: 48px;
+    --stat-value-size: var(--font-size-3xl);
+
+    /* UI color variables for shadcn/ui compatibility */
+    --background: 0 0% 100%;
+    --foreground: 220 13% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 13%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 220 13% 13%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 220 13% 13%;
+    --destructive: 0 72% 61%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 217 91% 60%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+
+  body {
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Radix UI Themes overrides */
+.radix-themes {
+  --default-font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* OptiDiagFlow Design System Components */
+@layer components {
+  /* Standardized card styles */
+  .ds-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    transition: all 200ms ease;
+  }
+
+  .ds-card-hover:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-2px);
+  }
+
+  /* Standardized button styles */
+  .ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--button-height-md);
+    padding: var(--button-padding-md);
+    border-radius: var(--button-radius);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    transition: all 200ms ease;
+    cursor: pointer;
+    border: none;
+    outline: none;
+  }
+
+  .ds-btn-primary {
+    background-color: var(--color-primary-500);
+    color: white;
+  }
+
+  .ds-btn-primary:hover {
+    background-color: var(--color-primary-600);
+  }
+
+  .ds-btn-secondary {
+    background-color: white;
+    color: var(--color-gray-700);
+    border: 1px solid var(--border-default);
+  }
+
+  .ds-btn-secondary:hover {
+    background-color: var(--color-gray-50);
+    border-color: var(--border-strong);
+  }
+
+  /* Standardized input styles */
+  .ds-input {
+    width: 100%;
+    height: var(--input-height);
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-base);
+    border-radius: var(--input-radius);
+    border: 1px solid var(--input-border);
+    background-color: white;
+    transition: all 200ms ease;
+    outline: none;
+  }
+
+  .ds-input:focus {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Standardized stat card styles */
+  .ds-stat-card {
+    background-color: white;
+    border-radius: var(--radius-5);
+    padding: var(--spacing-5);
+    border: 1px solid var(--border-light);
+    transition: all 300ms ease;
+    cursor: pointer;
+  }
+
+  .ds-stat-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  /* Standardized table styles */
+  .ds-table {
+    width: 100%;
+    background-color: white;
+    border-radius: var(--radius-5);
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+  }
+
+  .ds-table-header {
+    background-color: var(--color-gray-50);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .ds-table-row {
+    border-bottom: 1px solid var(--border-light);
+    transition: background-color 200ms ease;
+  }
+
+  .ds-table-row:hover {
+    background-color: var(--color-gray-50);
+  }
+
+  /* Status badge styles */
+  .ds-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: 9999px;
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .ds-badge-success {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: var(--color-success-500);
+  }
+
+  .ds-badge-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-error-500);
+  }
+
+  .ds-badge-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning-500);
+  }
+
+  .ds-badge-info {
+    background-color: rgba(6, 182, 212, 0.1);
+    color: var(--color-info-500);
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .dark .glass-effect {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* shadcn/ui utility classes */
+  .border-border {
+    border-color: hsl(var(--border));
+  }
+
+  .bg-background {
+    background-color: hsl(var(--background));
+  }
+
+  .text-foreground {
+    color: hsl(var(--foreground));
+  }
+
+  .bg-card {
+    background-color: hsl(var(--card));
+  }
+
+  .text-card-foreground {
+    color: hsl(var(--card-foreground));
+  }
+
+  .bg-primary {
+    background-color: hsl(var(--primary));
+  }
+
+  .text-primary-foreground {
+    color: hsl(var(--primary-foreground));
+  }
+
+  .bg-secondary {
+    background-color: hsl(var(--secondary));
+  }
+
+  .text-secondary-foreground {
+    color: hsl(var(--secondary-foreground));
+  }
+
+  .bg-muted {
+    background-color: hsl(var(--muted));
+  }
+
+  .text-muted-foreground {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .bg-accent {
+    background-color: hsl(var(--accent));
+  }
+
+  .text-accent-foreground {
+    color: hsl(var(--accent-foreground));
+  }
+
+  .bg-destructive {
+    background-color: hsl(var(--destructive));
+  }
+
+  .text-destructive-foreground {
+    color: hsl(var(--destructive-foreground));
+  }
+
+  .ring-ring {
+    --tw-ring-color: hsl(var(--ring));
+  }
+}
