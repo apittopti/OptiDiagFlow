@@ -1,0 +1,808 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  name          String?
+  password      String?
+  role          UserRole        @default(VIEWER)
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  Account       Account[]
+  DiagnosticJob DiagnosticJob[]
+  Session       Session[]
+  Vehicle       Vehicle[]
+}
+
+model OEM {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  shortName String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Model     Model[]
+
+  // Knowledge Base Relations
+  ecuDefinitions      ECUDefinition[]
+  serviceDefinitions  ServiceDefinition[]
+  didDefinitions      DIDDefinition[]
+  dtcDefinitions      DTCDefinition[]
+  routineDefinitions  RoutineDefinition[]
+}
+
+model Model {
+  id          String      @id @default(cuid())
+  oemId       String
+  name        String
+  code        String      @unique
+  platform    String?
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  OEM         OEM         @relation(fields: [oemId], references: [id])
+  ModelYear   ModelYear[]
+
+  // Knowledge Base Relations
+  ecuDefinitions      ECUDefinition[]
+  serviceDefinitions  ServiceDefinition[]
+  didDefinitions      DIDDefinition[]
+  dtcDefinitions      DTCDefinition[]
+  routineDefinitions  RoutineDefinition[]
+
+  @@unique([oemId, name])
+}
+
+model ModelYear {
+  id          String    @id @default(cuid())
+  modelId     String
+  year        Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  code        String    @unique
+  description String?
+  Model       Model     @relation(fields: [modelId], references: [id])
+  Vehicle     Vehicle[]
+
+  // Knowledge Base Relations
+  ecuDefinitions      ECUDefinition[]
+  serviceDefinitions  ServiceDefinition[]
+  didDefinitions      DIDDefinition[]
+  dtcDefinitions      DTCDefinition[]
+  routineDefinitions  RoutineDefinition[]
+
+  @@unique([modelId, year])
+}
+
+model Vehicle {
+  id            String          @id @default(cuid())
+  vin           String?         @unique
+  modelYearId   String
+  createdBy     String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  DiagnosticJob DiagnosticJob[]
+  User          User            @relation(fields: [createdBy], references: [id])
+  ModelYear     ModelYear       @relation(fields: [modelYearId], references: [id])
+}
+
+model DiagnosticJob {
+  id               String             @id @default(cuid())
+  name             String
+  description      String?
+  vehicleId        String
+  uploadedBy       String
+  status           JobStatus          @default(ACTIVE)
+  procedureType    String
+  duration         Int?
+  messageCount     Int?
+  metadata         Json?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  odxGenerated     Boolean            @default(false)
+  odxMetadata      Json?
+  odxPath          String?
+  User             User               @relation(fields: [uploadedBy], references: [id])
+  Vehicle          Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  ECUConfiguration ECUConfiguration[]
+  DataIdentifier   DataIdentifier[]
+  DTC              DTC[]
+  Routine          Routine[]
+  Tag              Tag[]              @relation("DiagnosticJobToTag")
+}
+
+model Tag {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  color         String          @default("#6B7280")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  DiagnosticJob DiagnosticJob[] @relation("DiagnosticJobToTag")
+}
+
+model ECUConfiguration {
+  id            String        @id @default(cuid())
+  jobId         String
+  ecuName       String
+  sourceAddress String
+  targetAddress String
+  odxFileName   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  metadata      Json?
+  job           DiagnosticJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, ecuName])
+}
+
+model DataIdentifier {
+  id           String        @id @default(cuid())
+  jobId        String
+  ecuName      String
+  did          String
+  name         String
+  dataLength   Int
+  dataType     String
+  sampleValues String[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  job          DiagnosticJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, ecuName, did])
+}
+
+model DTC {
+  id          String        @id @default(cuid())
+  jobId       String
+  ecuName     String
+  code        String
+  status      String
+  statusByte  String
+  description String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  job         DiagnosticJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, ecuName, code])
+}
+
+model Routine {
+  id          String        @id @default(cuid())
+  jobId       String
+  ecuName     String
+  routineId   String
+  name        String
+  controlType String
+  hasInput    Boolean       @default(false)
+  hasOutput   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  job         DiagnosticJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, ecuName, routineId])
+}
+
+enum UserRole {
+  ADMIN
+  TECHNICIAN
+  VIEWER
+}
+
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+// ==========================================
+// KNOWLEDGE BASE MODELS
+// ==========================================
+
+model KnowledgeSource {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  type        SourceType
+  description String?
+  priority    Int      @default(0) // Higher priority overrides lower
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations to all definition types
+  ecuDefinitions      ECUDefinition[]
+  serviceDefinitions  ServiceDefinition[]
+  didDefinitions      DIDDefinition[]
+  dtcDefinitions      DTCDefinition[]
+  routineDefinitions  RoutineDefinition[]
+}
+
+enum SourceType {
+  MANUAL      // Manually entered
+  DISCOVERED  // Discovered from trace files
+  IMPORTED    // Imported from external sources
+  ODX         // Parsed from ODX files
+  STANDARD    // ISO/SAE standards
+}
+
+// ==========================================
+// ECU DEFINITIONS
+// ==========================================
+
+model ECUDefinition {
+  id              String   @id @default(cuid())
+  address         String   // e.g., "1706", "0E80"
+  name            String   // e.g., "BCM", "Tester"
+  description     String?  // User-editable description
+  category        String?  // e.g., "Body", "Powertrain", "Chassis"
+  jobName         String?  // Name of the job that discovered this ECU
+
+  // OEM/Model/Year context - data is always collected from specific contexts
+  oemId           String   // Required - always from a specific OEM
+  modelId         String   // Required - always from a specific Model
+  modelYearId     String   // Required - always from a specific Model Year
+
+  // Metadata
+  sourceId        String
+  confidence      Float    @default(1.0) // 0-1 confidence score
+  isVerified      Boolean  @default(false)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  modifiedBy      String?
+
+  // Relations
+  source          KnowledgeSource @relation(fields: [sourceId], references: [id])
+  oem             OEM             @relation(fields: [oemId], references: [id])
+  model           Model           @relation(fields: [modelId], references: [id])
+  modelYear       ModelYear       @relation(fields: [modelYearId], references: [id])
+  auditLogs       ECUDefinitionAudit[]
+
+  @@unique([address, oemId, modelId, modelYearId])
+  @@index([address])
+  @@index([oemId])
+  @@index([modelId])
+  @@index([modelYearId])
+}
+
+enum HierarchyLevel {
+  GLOBAL      // ISO/Standard level
+  OEM         // OEM level
+  MODEL       // Model level
+  MODEL_YEAR  // Model Year level
+  VEHICLE     // Individual vehicle level
+}
+
+// ==========================================
+// UDS SERVICE DEFINITIONS
+// ==========================================
+
+model ServiceDefinition {
+  id              String   @id @default(cuid())
+  serviceId       String   // e.g., "10", "22", "2E"
+  name            String   // e.g., "Diagnostic Session Control"
+  description     String?  // User-editable description
+  category        String?  // e.g., "Diagnostic", "Control", "Data"
+  requestFormat   String?  // Expected request format
+  responseFormat  String?  // Expected response format
+  jobName         String?  // Name of the job that discovered this service
+
+  // OEM/Model/Year context - data is always collected from specific contexts
+  oemId           String   // Required - always from a specific OEM
+  modelId         String   // Required - always from a specific Model
+  modelYearId     String   // Required - always from a specific Model Year
+
+  // Metadata
+  sourceId        String
+  confidence      Float    @default(1.0)
+  isVerified      Boolean  @default(false)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  modifiedBy      String?
+
+  // Relations
+  source          KnowledgeSource @relation(fields: [sourceId], references: [id])
+  oem             OEM             @relation(fields: [oemId], references: [id])
+  model           Model           @relation(fields: [modelId], references: [id])
+  modelYear       ModelYear       @relation(fields: [modelYearId], references: [id])
+  auditLogs       ServiceDefinitionAudit[]
+  subfunctions    ServiceSubfunction[]
+
+  @@unique([serviceId, oemId, modelId, modelYearId])
+  @@index([serviceId])
+  @@index([oemId])
+  @@index([modelId])
+  @@index([modelYearId])
+}
+
+model ServiceSubfunction {
+  id                  String   @id @default(cuid())
+  serviceDefinitionId String
+  subfunctionId       String   // e.g., "01", "02", "03"
+  name                String
+  description         String?
+
+  serviceDefinition   ServiceDefinition @relation(fields: [serviceDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceDefinitionId, subfunctionId])
+}
+
+// ==========================================
+// DID DEFINITIONS
+// ==========================================
+
+model DIDDefinition {
+  id              String   @id @default(cuid())
+  did             String   // e.g., "F190", "F187"
+  name            String   // e.g., "VIN", "ECU Software Number"
+  description     String?  // User-editable description
+  jobName         String?  // Name of the job that discovered this DID
+  dataType        String?  // e.g., "ASCII", "HEX", "UINT32"
+  length          Int?     // Expected data length in bytes
+  unit            String?  // e.g., "km/h", "°C", "V"
+  scalingFactor   Float?   // Scaling to apply to raw value
+  offset          Float?   // Offset to apply after scaling
+  minValue        Float?   // Minimum valid value
+  maxValue        Float?   // Maximum valid value
+  resolution      Float?   // Value resolution/precision
+
+  // OEM/Model/Year context - data is always collected from specific contexts
+  oemId           String   // Required - always from a specific OEM
+  modelId         String   // Required - always from a specific Model
+  modelYearId     String   // Required - always from a specific Model Year
+  ecuAddress      String?  // Specific to an ECU address
+
+  // Metadata
+  sourceId        String
+  confidence      Float    @default(1.0)
+  isVerified      Boolean  @default(false)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  modifiedBy      String?
+
+  // Relations
+  source          KnowledgeSource @relation(fields: [sourceId], references: [id])
+  oem             OEM             @relation(fields: [oemId], references: [id])
+  model           Model           @relation(fields: [modelId], references: [id])
+  modelYear       ModelYear       @relation(fields: [modelYearId], references: [id])
+  auditLogs       DIDDefinitionAudit[]
+  bitFields       DIDbitField[]
+
+  @@unique([did, ecuAddress, oemId, modelId, modelYearId])
+  @@index([did])
+  @@index([ecuAddress])
+  @@index([oemId])
+  @@index([modelId])
+  @@index([modelYearId])
+}
+
+model DIDbitField {
+  id              String   @id @default(cuid())
+  didDefinitionId String
+  bitPosition     Int      // Starting bit position
+  bitLength       Int      // Number of bits
+  name            String
+  description     String?
+  values          Json?    // Mapping of values to meanings
+
+  didDefinition   DIDDefinition @relation(fields: [didDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([didDefinitionId, bitPosition])
+}
+
+// ==========================================
+// DTC DEFINITIONS
+// ==========================================
+
+model DTCDefinition {
+  id              String   @id @default(cuid())
+  code            String   // e.g., "P0300", "B1234"
+  name            String   // e.g., "Random/Multiple Cylinder Misfire Detected"
+  description     String?  // User-editable description
+  severity        DTCSeverity @default(INFORMATIONAL)
+  category        String?  // e.g., "Powertrain", "Body", "Chassis", "Network"
+  system          String?  // e.g., "Engine", "Transmission", "ABS"
+  jobName         String?  // Name of the job that discovered this DTC
+
+  // OEM/Model/Year context - data is always collected from specific contexts
+  oemId           String   // Required - always from a specific OEM
+  modelId         String   // Required - always from a specific Model
+  modelYearId     String   // Required - always from a specific Model Year
+  ecuAddress      String?  // Specific to an ECU address
+
+  // Diagnostic information
+  symptoms        String?  // Common symptoms
+  causes          String?  // Possible causes
+  diagnosticSteps String?  // Recommended diagnostic steps
+  repairActions   String?  // Recommended repair actions
+
+  // Metadata
+  sourceId        String
+  confidence      Float    @default(1.0)
+  isVerified      Boolean  @default(false)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  modifiedBy      String?
+
+  // Relations
+  source          KnowledgeSource @relation(fields: [sourceId], references: [id])
+  oem             OEM             @relation(fields: [oemId], references: [id])
+  model           Model           @relation(fields: [modelId], references: [id])
+  modelYear       ModelYear       @relation(fields: [modelYearId], references: [id])
+  auditLogs       DTCDefinitionAudit[]
+  statusBits      DTCStatusBit[]
+
+  @@unique([code, ecuAddress, oemId, modelId, modelYearId])
+  @@index([code])
+  @@index([ecuAddress])
+  @@index([oemId])
+  @@index([modelId])
+  @@index([modelYearId])
+}
+
+model DTCStatusBit {
+  id              String   @id @default(cuid())
+  dtcDefinitionId String
+  bitPosition     Int      // 0-7 for status byte
+  name            String   // e.g., "TestFailed", "TestFailedThisOperationCycle"
+  description     String?
+
+  dtcDefinition   DTCDefinition @relation(fields: [dtcDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([dtcDefinitionId, bitPosition])
+}
+
+enum DTCSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFORMATIONAL
+}
+
+// ==========================================
+// ROUTINE DEFINITIONS
+// ==========================================
+
+model RoutineDefinition {
+  id              String   @id @default(cuid())
+  routineId       String   // e.g., "0202", "FF00"
+  name            String   // e.g., "Clear DTCs", "ECU Reset"
+  description     String?  // User-editable description
+  category        String?  // e.g., "Diagnostic", "Calibration", "Actuator Test"
+  jobName         String?  // Name of the job that discovered this routine
+
+  // Control types
+  supportsStart   Boolean  @default(false)
+  supportsStop    Boolean  @default(false)
+  supportsResults Boolean  @default(false)
+
+  // OEM/Model/Year context - data is always collected from specific contexts
+  oemId           String   // Required - always from a specific OEM
+  modelId         String   // Required - always from a specific Model
+  modelYearId     String   // Required - always from a specific Model Year
+  ecuAddress      String?  // Specific to an ECU address
+
+  // Input/Output specifications
+  inputFormat     String?  // Description of input parameters
+  outputFormat    String?  // Description of output/results
+  inputSchema     Json?    // JSON schema for input validation
+  outputSchema    Json?    // JSON schema for output parsing
+
+  // Execution details
+  estimatedTime   Int?     // Estimated execution time in seconds
+  preconditions   String?  // Required preconditions
+  postconditions  String?  // Expected postconditions
+
+  // Metadata
+  sourceId        String
+  confidence      Float    @default(1.0)
+  isVerified      Boolean  @default(false)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  modifiedBy      String?
+
+  // Relations
+  source          KnowledgeSource @relation(fields: [sourceId], references: [id])
+  oem             OEM             @relation(fields: [oemId], references: [id])
+  model           Model           @relation(fields: [modelId], references: [id])
+  modelYear       ModelYear       @relation(fields: [modelYearId], references: [id])
+  auditLogs       RoutineDefinitionAudit[]
+  parameters      RoutineParameter[]
+
+  @@unique([routineId, ecuAddress, oemId, modelId, modelYearId])
+  @@index([routineId])
+  @@index([ecuAddress])
+  @@index([oemId])
+  @@index([modelId])
+  @@index([modelYearId])
+}
+
+model RoutineParameter {
+  id                  String   @id @default(cuid())
+  routineDefinitionId String
+  name                String
+  direction           ParameterDirection
+  dataType            String   // e.g., "UINT8", "ARRAY", "STRUCT"
+  position            Int      // Order in parameter list
+  required            Boolean  @default(true)
+  defaultValue        String?
+  description         String?
+
+  routineDefinition   RoutineDefinition @relation(fields: [routineDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([routineDefinitionId, position, direction])
+}
+
+enum ParameterDirection {
+  INPUT
+  OUTPUT
+  INOUT
+}
+
+// ==========================================
+// AUDIT TABLES
+// ==========================================
+
+model ECUDefinitionAudit {
+  id              String   @id @default(cuid())
+  definitionId    String
+  action          AuditAction
+  previousValue   Json?
+  newValue        Json?
+  changedBy       String
+  changedAt       DateTime @default(now())
+  reason          String?
+
+  definition      ECUDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@index([definitionId])
+  @@index([changedAt])
+}
+
+model ServiceDefinitionAudit {
+  id              String   @id @default(cuid())
+  definitionId    String
+  action          AuditAction
+  previousValue   Json?
+  newValue        Json?
+  changedBy       String
+  changedAt       DateTime @default(now())
+  reason          String?
+
+  definition      ServiceDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@index([definitionId])
+  @@index([changedAt])
+}
+
+model DIDDefinitionAudit {
+  id              String   @id @default(cuid())
+  definitionId    String
+  action          AuditAction
+  previousValue   Json?
+  newValue        Json?
+  changedBy       String
+  changedAt       DateTime @default(now())
+  reason          String?
+
+  definition      DIDDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@index([definitionId])
+  @@index([changedAt])
+}
+
+model DTCDefinitionAudit {
+  id              String   @id @default(cuid())
+  definitionId    String
+  action          AuditAction
+  previousValue   Json?
+  newValue        Json?
+  changedBy       String
+  changedAt       DateTime @default(now())
+  reason          String?
+
+  definition      DTCDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@index([definitionId])
+  @@index([changedAt])
+}
+
+model RoutineDefinitionAudit {
+  id              String   @id @default(cuid())
+  definitionId    String
+  action          AuditAction
+  previousValue   Json?
+  newValue        Json?
+  changedBy       String
+  changedAt       DateTime @default(now())
+  reason          String?
+
+  definition      RoutineDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@index([definitionId])
+  @@index([changedAt])
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VERIFY
+  OVERRIDE
+}
+
+// ==========================================
+// KNOWLEDGE DISCOVERY
+// ==========================================
+
+model DiscoverySession {
+  id              String   @id @default(cuid())
+  jobId           String   // Reference to DiagnosticJob
+  status          DiscoveryStatus @default(PENDING)
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  // Statistics
+  ecuCount        Int      @default(0)
+  serviceCount    Int      @default(0)
+  didCount        Int      @default(0)
+  dtcCount        Int      @default(0)
+  routineCount    Int      @default(0)
+
+  // Discovery results
+  discoveries     Discovery[]
+
+  createdBy       String
+
+  @@index([jobId])
+  @@index([status])
+}
+
+model Discovery {
+  id              String   @id @default(cuid())
+  sessionId       String
+  type            DefinitionType
+  identifier      String   // e.g., ECU address, DID, DTC code, etc.
+  suggestedName   String?
+  confidence      Float    // 0-1 confidence score
+  evidence        Json     // Supporting evidence from trace
+  status          DiscoveryItemStatus @default(PENDING)
+  appliedAt       DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+
+  session         DiscoverySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([type])
+  @@index([status])
+}
+
+enum DiscoveryStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DiscoveryItemStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  AUTO_APPLIED
+}
+
+enum DefinitionType {
+  ECU
+  SERVICE
+  DID
+  DTC
+  ROUTINE
+}
+
+// ==========================================
+// IMPORT/EXPORT
+// ==========================================
+
+model ImportExportJob {
+  id              String   @id @default(cuid())
+  type            ImportExportType
+  format          DataFormat
+  status          JobProcessingStatus @default(PENDING)
+  fileName        String?
+  filePath        String?
+
+  // Scope
+  level           HierarchyLevel?
+  oemId           String?
+  modelId         String?
+  modelYearId     String?
+  vehicleId       String?
+
+  // Statistics
+  totalItems      Int      @default(0)
+  processedItems  Int      @default(0)
+  successCount    Int      @default(0)
+  errorCount      Int      @default(0)
+  errors          Json?    // Array of error messages
+
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  createdBy       String
+
+  @@index([status])
+  @@index([type])
+}
+
+enum ImportExportType {
+  IMPORT
+  EXPORT
+}
+
+enum DataFormat {
+  JSON
+  CSV
+  ODX
+  XML
+}
+
+enum JobProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
