@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--This File is created by INEOS ODX Tool-->
+<ODX xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="odx.xsd" MODEL-VERSION="2.2.0">
+  <DIAG-LAYER-CONTAINER ID="id-5069545a-cb72-4d62-8ee1-a9ba379b5fa3" OID="id-5069545a-cb72-4d62-8ee1-a9ba379b5fa3">
+    <SHORT-NAME>EV_EGS_CE590</SHORT-NAME>
+    <LONG-NAME>EV_EGS_CE590</LONG-NAME>
+    <COMPANY-DATAS>
+      <COMPANY-DATA ID="id-3e72f3b4-7b01-450a-9553-5f4e4d57b133" OID="id-3e72f3b4-7b01-450a-9553-5f4e4d57b133">
+        <SHORT-NAME>Softing</SHORT-NAME>
+        <LONG-NAME>Softing Automotive Electronics GmbH</LONG-NAME>
+        <ROLES>
+          <ROLE>SUPPLIER</ROLE>
+        </ROLES>
+        <TEAM-MEMBERS>
+          <TEAM-MEMBER ID="id-9e583680-7b47-4c30-852c-f97749432fc6" OID="id-9e583680-7b47-4c30-852c-f97749432fc6">
+            <SHORT-NAME>Development</SHORT-NAME>
+            <LONG-NAME>Development for BMW Industrial Customers</LONG-NAME>
+            <ROLES>
+              <ROLE>Development</ROLE>
+            </ROLES>
+            <DEPARTMENT>Automotive Electronics</DEPARTMENT>
+            <ADDRESS>Richard-Reitzner-Allee 6</ADDRESS>
+            <ZIP>85540</ZIP>
+            <CITY>Haar</CITY>
+            <PHONE>+49 (89) 456 56 - 424</PHONE>
+            <FAX>+49 (89) 456 56 - 499</FAX>
+            <EMAIL>support.automotive@softing.com</EMAIL>
+          </TEAM-MEMBER>
+        </TEAM-MEMBERS>
+      </COMPANY-DATA>
+    </COMPANY-DATAS>
+    <ECU-VARIANTS>
+      <ECU-VARIANT ID="id-e82382ed-a19d-4e67-9fb6-1d7bbad2819c" OID="id-e82382ed-a19d-4e67-9fb6-1d7bbad2819c">
+        <SHORT-NAME>EV_EGS_CE590</SHORT-NAME>
+        <LONG-NAME>EV_EGS_CE590</LONG-NAME>
+        <ADMIN-DATA>
+          <DOC-REVISIONS>
+            <DOC-REVISION>
+              <TEAM-MEMBER-REF ID-REF="id-055a5812-ecbd-498d-88c8-8c5d22d52631"/>
+              <REVISION-LABEL>001.000.000</REVISION-LABEL>
+              <STATE>Released</STATE>
+              <DATE>2020-07-29T12:10:01</DATE>
+              <TOOL>DTS-Venice 8</TOOL>
+              <MODIFICATIONS>
+                <MODIFICATION>
+                  <CHANGE>Initial creation</CHANGE>
+                  <REASON>Initial revision</REASON>
+                </MODIFICATION>
+              </MODIFICATIONS>
+            </DOC-REVISION>
+          </DOC-REVISIONS>
+        </ADMIN-DATA>
+        <COMPANY-DATAS>
+          <COMPANY-DATA ID="id-1153c1b4-f375-42f0-8202-ac5828da552e" OID="id-1153c1b4-f375-42f0-8202-ac5828da552e">
+            <SHORT-NAME>Softing</SHORT-NAME>
+            <LONG-NAME>Softing Automotive Electronics GmbH</LONG-NAME>
+            <ROLES>
+              <ROLE>SUPPLIER</ROLE>
+            </ROLES>
+            <TEAM-MEMBERS>
+              <TEAM-MEMBER ID="id-055a5812-ecbd-498d-88c8-8c5d22d52631" OID="id-055a5812-ecbd-498d-88c8-8c5d22d52631">
+                <SHORT-NAME>Development</SHORT-NAME>
+                <LONG-NAME>Development for BMW Industrial Customers</LONG-NAME>
+                <ROLES>
+                  <ROLE>Development</ROLE>
+                </ROLES>
+                <DEPARTMENT>Automotive Electronics</DEPARTMENT>
+                <ADDRESS>Richard-Reitzner-Allee 6</ADDRESS>
+                <ZIP>85540</ZIP>
+                <CITY>Haar</CITY>
+                <PHONE>+49 (89) 456 56 - 424</PHONE>
+                <FAX>+49 (89) 456 56 - 499</FAX>
+                <EMAIL>support.automotive@softing.com</EMAIL>
+              </TEAM-MEMBER>
+            </TEAM-MEMBERS>
+          </COMPANY-DATA>
+        </COMPANY-DATAS>
+        <ECU-VARIANT-PATTERNS>
+          <ECU-VARIANT-PATTERN>
+            <MATCHING-PARAMETERS>
+              <MATCHING-PARAMETER>
+                <EXPECTED-VALUE>992720</EXPECTED-VALUE>
+                <DIAG-COMM-SNREF SHORT-NAME="DS_RDBI_GENERIC_TR_IDENT"/>
+                <OUT-PARAM-IF-SNREF SHORT-NAME="PA_IDENT"/>
+              </MATCHING-PARAMETER>
+            </MATCHING-PARAMETERS>
+          </ECU-VARIANT-PATTERN>
+        </ECU-VARIANT-PATTERNS>
+        <PARENT-REFS>
+          <PARENT-REF xsi:type="BASE-VARIANT-REF" DOCREF="BV_EGS" DOCTYPE="CONTAINER" ID-REF="id-7ae60ff7-eea6-4d42-b374-06aba18a1ed0"/>
+        </PARENT-REFS>
+      </ECU-VARIANT>
+    </ECU-VARIANTS>
+  </DIAG-LAYER-CONTAINER>
+</ODX>
