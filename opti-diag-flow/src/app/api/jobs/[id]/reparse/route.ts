@@ -1,130 +1,128 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { JifelineParser } from '@/lib/trace-parser/jifeline-parser'
-import { discoverKnowledgeFromJob } from '@/lib/knowledge-discovery'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth-config'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
+    const { id: jobId } = await params
 
-    // Check authentication - temporarily skip for testing
-    const session = await getServerSession(authOptions)
-    let userId = session?.user?.id
-
-    // For testing - use test user if no session
-    if (!userId) {
-      let testUser = await prisma.user.findFirst({
-        where: { email: 'test@example.com' }
-      })
-      if (!testUser) {
-        testUser = await prisma.user.create({
-          data: {
-            name: 'Test User',
-            email: 'test@example.com'
-          }
-        })
-      }
-      userId = testUser.id
-    }
-
-    // Get the job with its metadata
+    // Get the job
     const job = await prisma.diagnosticJob.findUnique({
-      where: { id },
-      include: {
-        Vehicle: true
-      }
+      where: { id: jobId }
     })
 
     if (!job) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
-    // Check if we have trace data to reparse
-    if (!job.metadata || typeof job.metadata !== 'object') {
-      return NextResponse.json(
-        { error: 'No trace data available for reparsing' },
-        { status: 400 }
-      )
+    // Find the uploaded trace file for this job
+    const fs = require('fs')
+    const path = require('path')
+
+    // Find the trace file for this job
+    // Map job names to trace files based on what we know was uploaded
+    const jobNameToTraceMap: Record<string, string> = {
+      // Honda jobs
+      'Honda Jazz Test': 'HONDA_JAZZ_CAM_RYDS.txt',
+
+      // Land Rover jobs
+      '8873778': '8873778.txt',
+      '8884157': '8884157.txt'
     }
 
-    const metadata = job.metadata as any
-    const procedures = metadata.procedures
+    let traceFilePath = ''
+    const uploadsDir = path.join(process.cwd(), 'uploads', 'traces')
 
-    if (!procedures || procedures.length === 0) {
-      return NextResponse.json(
-        { error: 'No procedure data available for reparsing' },
-        { status: 400 }
-      )
-    }
-
-    console.log(`Reparsing job ${id} with ${procedures.length} procedures`)
-
-    // Clear existing parsed data
-    await Promise.all([
-      prisma.eCUConfiguration.deleteMany({ where: { jobId: id } }),
-      prisma.dataIdentifier.deleteMany({ where: { jobId: id } }),
-      prisma.dTC.deleteMany({ where: { jobId: id } }),
-      prisma.routine.deleteMany({ where: { jobId: id } })
-    ])
-
-    // Create new parser instance
-    const parser = new JifelineParser()
-
-    // Reconstruct trace content from stored procedures
-    const lines: string[] = []
-    let lineNum = 1
-
-    for (const procedure of procedures) {
-      if (!procedure.messages) continue
-
-      for (const msg of procedure.messages) {
-        const timestamp = msg.timestamp || '00:00:00.000'
-        const direction = msg.direction || 'Local->Remote'
-        let sourceAddr = msg.sourceAddr || '0000'
-        let targetAddr = msg.targetAddr || '0000'
-        const data = msg.data || ''
-
-        // Fix for old data that has incorrect addresses
-        // If this is a response (Remote->Local) and source is 0E80, swap them
-        if (direction === 'Remote->Local' && sourceAddr === '0E80') {
-          // This was stored incorrectly, swap to fix
-          [sourceAddr, targetAddr] = [targetAddr, sourceAddr]
-        }
-
-        // Reconstruct Jifeline format with corrected addresses
-        const line = `${lineNum}→${timestamp} | [${direction.split('->')[0]}]->[${direction.split('->')[1]}] DOIP => [0] source[${sourceAddr}] target[${targetAddr}] data[${data}]`
-        lines.push(line)
-        lineNum++
+    // First try to find based on job name mapping
+    const mappedFile = jobNameToTraceMap[job.name]
+    if (mappedFile) {
+      const files = fs.readdirSync(uploadsDir)
+      const matchingFile = files.find((f: string) => f.includes(mappedFile))
+      if (matchingFile) {
+        traceFilePath = path.join(uploadsDir, matchingFile)
+        console.log('Using mapped trace file:', matchingFile)
       }
     }
 
-    const traceContent = lines.join('\n')
+    // If not found, try to match by job name
+    if (!traceFilePath) {
+      const files = fs.readdirSync(uploadsDir)
 
-    // Parse the reconstructed trace
-    const parsedData = parser.parseTrace(traceContent)
-    console.log(`Reparsed ${parsedData.messages.length} messages`)
+      // Special handling for numeric job names (Land Rover files)
+      if (/^\d+$/.test(job.name)) {
+        // Look for files containing the job name as the numeric part
+        const matchingFile = files.find((f: string) => f.includes(job.name))
+        if (matchingFile) {
+          traceFilePath = path.join(uploadsDir, matchingFile)
+          console.log('Using numeric-matched trace file:', matchingFile)
+        }
+      } else {
+        // For other jobs, try fuzzy matching
+        const jobNamePart = job.name?.replace(/[^a-zA-Z0-9]/g, '') || ''
+        if (jobNamePart) {
+          const matchingFile = files.find((f: string) => {
+            const filePart = f.replace(/[^a-zA-Z0-9]/g, '')
+            return filePart.includes(jobNamePart) || jobNamePart.includes(filePart.substring(0, 7))
+          })
+
+          if (matchingFile) {
+            traceFilePath = path.join(uploadsDir, matchingFile)
+            console.log('Using name-matched trace file:', matchingFile)
+          }
+        }
+      }
+    }
+
+    if (!traceFilePath) {
+      return NextResponse.json({ error: 'No trace file found for this job' }, { status: 404 })
+    }
+
+    let rawContent: string
+    try {
+      rawContent = fs.readFileSync(traceFilePath, 'utf8')
+    } catch (error) {
+      console.error('Error reading trace file:', error)
+      return NextResponse.json({ error: 'Could not read trace file' }, { status: 500 })
+    }
+
+    // Parse the trace content with JifelineParser (same as job creation)
+    console.log('Reparsing trace file with JifelineParser...')
+    const parser = new JifelineParser()
+    const parsedData = parser.parseTrace(rawContent)
 
     // Get discovered ECUs
     const discoveredECUs = parser.getDiscoveredECUs()
-    console.log(`Discovered ${discoveredECUs.size} ECUs`)
 
-    // Store reparsed ECU data
+    console.log(`Parsed ${parsedData.messages.length} messages`)
+    console.log(`Discovered ${discoveredECUs.size} ECUs:`)
+
+    // Delete existing ECUs, DTCs, DIDs, and Routines for this job
+    await prisma.eCUConfiguration.deleteMany({ where: { jobId } })
+    await prisma.dTC.deleteMany({ where: { jobId } })
+    await prisma.dataIdentifier.deleteMany({ where: { jobId } })
+    await prisma.routine.deleteMany({ where: { jobId } })
+
+    // Store discovered ECUs and their data
+    let totalDTCs = 0
+    let totalDIDs = 0
+    let totalRoutines = 0
+
     for (const [address, ecu] of discoveredECUs) {
-      console.log(`Processing ECU ${ecu.name} (${address})`)
+      console.log(`Processing ECU ${ecu.name} (${address}): ${ecu.messageCount} messages`)
+      console.log(`  Services: ${Array.from(ecu.discoveredServices).join(', ')}`)
+      console.log(`  DTCs: ${ecu.discoveredDTCs.size}`)
+      console.log(`  DIDs: ${ecu.discoveredDIDs.size}`)
+      console.log(`  Routines: ${ecu.discoveredRoutines.size}`)
 
+      // Create ECU configuration
       await prisma.eCUConfiguration.create({
         data: {
-          jobId: id,
+          jobId,
           ecuName: ecu.name,
-          sourceAddress: '0E80',
+          sourceAddress: '0E80', // Tester address
           targetAddress: address,
           metadata: {
             protocol: ecu.protocol,
@@ -132,99 +130,110 @@ export async function POST(
             firstSeen: ecu.firstSeen.toISOString(),
             lastSeen: ecu.lastSeen.toISOString(),
             sessionTypes: Array.from(ecu.sessionTypes),
-            securityLevels: Array.from(ecu.securityLevels)
+            securityLevels: Array.from(ecu.securityLevels),
+            services: Array.from(ecu.discoveredServices)
           }
         }
       })
 
-      // Store discovered DIDs
+      // Store DTCs for this ECU
+      for (const [dtcCode, dtcInfo] of ecu.discoveredDTCs) {
+        await prisma.dTC.create({
+          data: {
+            code: dtcCode,
+            jobId,
+            ecuName: ecu.name,
+            status: dtcInfo.status || 'UNKNOWN',
+            statusByte: dtcInfo.statusByte || '',
+            rawHex: dtcInfo.rawHex || '', // Re-enabled after Prisma client regeneration
+            description: dtcInfo.description || `DTC ${dtcCode}`
+          }
+        })
+        totalDTCs++
+      }
+
+      // Store DIDs for this ECU
       for (const [did, didInfo] of ecu.discoveredDIDs) {
         await prisma.dataIdentifier.create({
           data: {
-            jobId: id,
+            jobId,
             ecuName: ecu.name,
             did,
             name: didInfo.name || `DID_${did}`,
             dataLength: didInfo.dataLength,
             dataType: didInfo.dataType || 'BINARY',
-            sampleValues: didInfo.sampleValues
+            sampleValues: didInfo.sampleValues || []
           }
         })
+        totalDIDs++
       }
 
-      // Store discovered DTCs
-      for (const [code, dtcInfo] of ecu.discoveredDTCs) {
-        await prisma.dTC.create({
-          data: {
-            jobId: id,
-            ecuName: ecu.name,
-            code,
-            status: dtcInfo.status,
-            statusByte: dtcInfo.statusByte,
-            description: dtcInfo.description
-          }
-        })
-      }
-
-      // Store discovered routines
+      // Store Routines for this ECU
       for (const [routineId, routineInfo] of ecu.discoveredRoutines) {
         await prisma.routine.create({
           data: {
-            jobId: id,
-            ecuName: ecu.name,
             routineId,
+            jobId,
+            ecuName: ecu.name,
             name: routineInfo.name || `Routine_${routineId}`,
-            controlType: routineInfo.controlType,
-            hasInput: !!routineInfo.inputData,
-            hasOutput: routineInfo.outputData && routineInfo.outputData.length > 0
+            controlType: routineInfo.metadata?.controlType || routineInfo.controlType || 'unknown',
+            hasInput: !!(routineInfo.metadata?.inputData || routineInfo.inputData),
+            hasOutput: !!(routineInfo.metadata?.outputData?.length || routineInfo.outputData?.length)
           }
         })
+        totalRoutines++
       }
     }
 
-    // Update job metadata with reparse info
+    // Update job metadata - store ALL messages for complete UDS Flow display
+    // Store messages in chunks if needed for very large traces
+    const allMessages = parsedData.messages
+    const metadata = {
+      messageCount: allMessages.length,
+      ecuCount: discoveredECUs.size,
+      // Store ALL messages for UDS Flow tab - critical for diagnostic analysis
+      messages: allMessages, // Store ALL messages, not just first 1000
+      ecus: Array.from(discoveredECUs.values()).map(ecu => ({
+        address: ecu.address,
+        name: ecu.name,
+        protocol: ecu.protocol,
+        messageCount: ecu.messageCount,
+        services: Array.from(ecu.discoveredServices),
+        dtcCount: ecu.discoveredDTCs.size,
+        didCount: ecu.discoveredDIDs.size,
+        routineCount: ecu.discoveredRoutines.size
+      })),
+      startTime: parsedData.metadata?.startTime,
+      endTime: parsedData.metadata?.endTime,
+      duration: parsedData.metadata?.duration,
+      // Add flag to indicate if messages were truncated (for future use)
+      messagesComplete: true
+    }
+
+    // Update the job
     await prisma.diagnosticJob.update({
-      where: { id },
+      where: { id: jobId },
       data: {
-        metadata: {
-          ...metadata,
-          procedures: parsedData.procedures,
-          ecuCount: discoveredECUs.size,
-          lastReparsedAt: new Date().toISOString()
-        },
-        messageCount: parsedData.messages.length
+        messageCount: parsedData.messages.length,
+        metadata: metadata as any,
+        status: 'ACTIVE'
       }
     })
 
-    // Discover and update knowledge base with new data
-    console.log(`Running knowledge discovery for reparsed job ${id}`)
-    try {
-      await discoverKnowledgeFromJob(id)
-      console.log(`Knowledge discovery completed for reparsed job ${id}`)
-    } catch (knowledgeError) {
-      console.error(`Knowledge discovery failed for reparsed job ${id}:`, knowledgeError)
-    }
-
-    // Fetch updated job with counts
-    const updatedJob = await prisma.diagnosticJob.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            ECUConfiguration: true,
-            DataIdentifier: true,
-            DTC: true,
-            Routine: true
-          }
-        }
-      }
-    })
+    console.log(`Reparse complete: ${discoveredECUs.size} ECUs, ${totalDTCs} DTCs, ${totalDIDs} DIDs, ${totalRoutines} Routines`)
 
     return NextResponse.json({
       success: true,
-      message: `Successfully reparsed job. Found ${discoveredECUs.size} ECUs.`,
-      job: updatedJob
+      message: 'Job reparsed successfully',
+      stats: {
+        messages: parsedData.messages.length,
+        ecus: discoveredECUs.size,
+        dtcs: totalDTCs,
+        dids: totalDIDs,
+        routines: totalRoutines
+      }
     })
+
   } catch (error) {
     console.error('Error reparsing job:', error)
     return NextResponse.json(

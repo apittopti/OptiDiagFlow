@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { JifelineParser } from '@/lib/trace-parser/jifeline-parser'
-import { discoverKnowledgeFromJob } from '@/lib/knowledge-discovery'
+// import { discoverKnowledgeFromJob } from '@/lib/knowledge-discovery' // Function needs to be implemented
 
 export async function GET(request: NextRequest) {
   try {
@@ -285,21 +285,38 @@ async function processTraceFile(jobId: string, traceFile: { name: string, conten
     data: {
       messageCount: parsedData.messages.length,
       metadata: {
+        // Store ALL messages for complete UDS Flow display
+        messages: parsedData.messages,
+        messagesComplete: true,
         procedures: parsedData.procedures,
         ecuCount: discoveredECUs.size,
-        traceFileName: traceFile.name
+        ecus: Array.from(discoveredECUs.values()).map(ecu => ({
+          address: ecu.address,
+          name: ecu.name,
+          protocol: ecu.protocol,
+          messageCount: ecu.messageCount,
+          services: Array.from(ecu.discoveredServices),
+          dtcCount: ecu.discoveredDTCs.size,
+          didCount: ecu.discoveredDIDs.size,
+          routineCount: ecu.discoveredRoutines.size
+        })),
+        traceFileName: traceFile.name,
+        startTime: parsedData.metadata?.startTime,
+        endTime: parsedData.metadata?.endTime,
+        duration: parsedData.metadata?.duration
       }
     }
   })
 
   // Discover and update knowledge base with new data
-  console.log(`Running knowledge discovery for job ${jobId}`)
-  try {
-    await discoverKnowledgeFromJob(jobId)
-    console.log(`Knowledge discovery completed for job ${jobId}`)
-  } catch (knowledgeError) {
-    console.error(`Knowledge discovery failed for job ${jobId}:`, knowledgeError)
-  }
+  // TODO: Implement knowledge discovery
+  // console.log(`Running knowledge discovery for job ${jobId}`)
+  // try {
+  //   await discoverKnowledgeFromJob(jobId)
+  //   console.log(`Knowledge discovery completed for job ${jobId}`)
+  // } catch (knowledgeError) {
+  //   console.error(`Knowledge discovery failed for job ${jobId}:`, knowledgeError)
+  // }
 
   console.log(`Completed processing trace file: ${traceFile.name}`)
 }
