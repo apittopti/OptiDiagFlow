@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap, Car, Calendar, Info, Shield, GitBranch, AlertTriangle, Hash, Wrench, Settings, Gauge, Lock, Key, FileText, Play, Square, RotateCw, HardDrive, Network, Power, Terminal, Binary, Upload, Trash2, Clock } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, Dot } from 'recharts'
 import { PageLayout } from '@/components/layout/page-layout'
 import { Card, Button, Badge, StatCard } from '@/components/design-system'
 import { colors, spacing } from '@/lib/design-system/tokens'
@@ -2872,6 +2872,83 @@ export default function JobDetailsPage() {
                            (timeB[0] * 3600 + timeB[1] * 60 + timeB[2])
                   })
 
+                  // Extract significant diagnostic events for overlay
+                  const diagnosticEvents = messages
+                    .filter(msg => {
+                      const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+                      const service = decoded.service
+
+                      // Track significant events
+                      return (
+                        // Security Access (0x27)
+                        (service === '27' && (
+                          decoded.description.includes('Send Key') ||
+                          decoded.description.includes('Positive Response')
+                        )) ||
+                        // Routine Control (0x31)
+                        (service === '31' && msg.isRequest) ||
+                        (service === '71' && decoded.description.includes('Results')) ||
+                        // Session Control (0x10)
+                        (service === '10' && msg.isRequest && decoded.description.includes('Extended')) ||
+                        // ECU Reset (0x11)
+                        (service === '11' && msg.isRequest) ||
+                        // Clear DTCs (0x14)
+                        (service === '14' && msg.isRequest)
+                      )
+                    })
+                    .map(msg => {
+                      const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+                      let eventType = 'Other'
+                      let eventColor = colors.gray[600]
+                      let eventLabel = ''
+
+                      if (decoded.service === '27') {
+                        if (decoded.description.includes('Send Key')) {
+                          eventType = 'Security Key'
+                          eventColor = colors.warning[600]
+                          eventLabel = 'Key Sent'
+                        } else if (decoded.description.includes('Positive Response')) {
+                          eventType = 'Security Success'
+                          eventColor = colors.success[600]
+                          eventLabel = 'Authenticated'
+                        }
+                      } else if (decoded.service === '31') {
+                        eventType = 'Routine Start'
+                        eventColor = '#EA580C'
+                        eventLabel = 'Routine'
+                        if (decoded.description.includes('0201')) {
+                          eventLabel = 'Start Routine'
+                        } else if (decoded.description.includes('0203')) {
+                          eventLabel = 'Get Results'
+                        }
+                      } else if (decoded.service === '71') {
+                        eventType = 'Routine Response'
+                        eventColor = colors.success[600]
+                        eventLabel = 'Results'
+                      } else if (decoded.service === '10') {
+                        eventType = 'Session Change'
+                        eventColor = colors.primary[600]
+                        eventLabel = 'Extended Session'
+                      } else if (decoded.service === '11') {
+                        eventType = 'ECU Reset'
+                        eventColor = colors.info[600]
+                        eventLabel = 'Reset'
+                      } else if (decoded.service === '14') {
+                        eventType = 'Clear DTCs'
+                        eventColor = '#7C3AED'
+                        eventLabel = 'Clear DTCs'
+                      }
+
+                      return {
+                        time: msg.timestamp,
+                        type: eventType,
+                        color: eventColor,
+                        label: eventLabel,
+                        ecu: msg.isRequest ? msg.targetAddr : msg.sourceAddr,
+                        description: decoded.description
+                      }
+                    })
+
                   if (voltageData.length === 0) {
                     return (
                       <div className="ds-empty-state" style={{ padding: spacing[6] }}>
@@ -2909,34 +2986,173 @@ export default function JobDetailsPage() {
                         </div>
                       </div>
 
-                      <div style={{ width: '100%', height: '400px', marginTop: spacing[4] }}>
+                      {/* Enhanced Voltage Graph with Diagnostic Events */}
+                      <div style={{ marginTop: spacing[3], marginBottom: spacing[2] }}>
+                        <h4 className="ds-heading-5">Voltage Timeline with Diagnostic Events</h4>
+                        {diagnosticEvents.length > 0 && (
+                          <div style={{ display: 'flex', gap: spacing[2], marginTop: spacing[2], flexWrap: 'wrap' }}>
+                            <Badge variant="warning" size="small">
+                              <Lock size={12} style={{ marginRight: '4px' }} />
+                              Security: {diagnosticEvents.filter(e => e.type.includes('Security')).length}
+                            </Badge>
+                            <Badge variant="info" size="small">
+                              <Play size={12} style={{ marginRight: '4px' }} />
+                              Routines: {diagnosticEvents.filter(e => e.type.includes('Routine')).length}
+                            </Badge>
+                            <Badge variant="secondary" size="small">
+                              <Settings size={12} style={{ marginRight: '4px' }} />
+                              Other: {diagnosticEvents.filter(e => !e.type.includes('Security') && !e.type.includes('Routine')).length}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ width: '100%', height: '450px', marginTop: spacing[4] }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={voltageData}>
+                          <LineChart data={voltageData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke={colors.border.light} />
                             <XAxis
                               dataKey="time"
-                              tick={{ fontSize: 12 }}
+                              tick={{ fontSize: 11 }}
                               angle={-45}
                               textAnchor="end"
-                              height={80}
+                              height={100}
                             />
                             <YAxis
                               tick={{ fontSize: 12 }}
                               label={{ value: 'Voltage (V)', angle: -90, position: 'insideLeft' }}
+                              domain={['dataMin - 0.5', 'dataMax + 0.5']}
                             />
-                            <Tooltip />
+                            <Tooltip
+                              content={({ active, payload, label }) => {
+                                if (active && payload && payload.length) {
+                                  const voltage = payload[0].value
+                                  const events = diagnosticEvents.filter(e => e.time === label)
+                                  return (
+                                    <div style={{
+                                      backgroundColor: 'white',
+                                      border: `1px solid ${colors.border.light}`,
+                                      borderRadius: '4px',
+                                      padding: spacing[2]
+                                    }}>
+                                      <p style={{ fontWeight: 600, marginBottom: '4px' }}>{label}</p>
+                                      <p style={{ color: colors.primary[600] }}>
+                                        Voltage: {voltage}V
+                                      </p>
+                                      {events.map((event, idx) => (
+                                        <div key={idx} style={{ marginTop: '4px' }}>
+                                          <p style={{ color: event.color, fontSize: '12px', fontWeight: 500 }}>
+                                            {event.label} ({event.ecu})
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                }
+                                return null
+                              }}
+                            />
                             <Legend />
                             <Line
                               type="monotone"
                               dataKey="voltage"
                               stroke={colors.primary[600]}
                               strokeWidth={2}
-                              dot={{ r: 3 }}
+                              dot={(props: any) => {
+                                const events = diagnosticEvents.filter(e => e.time === props.payload.time)
+                                if (events.length > 0) {
+                                  const event = events[0]
+                                  return (
+                                    <g key={props.key}>
+                                      <circle
+                                        cx={props.cx}
+                                        cy={props.cy}
+                                        r={6}
+                                        fill={event.color}
+                                        stroke="white"
+                                        strokeWidth={2}
+                                      />
+                                    </g>
+                                  )
+                                }
+                                return <circle cx={props.cx} cy={props.cy} r={3} fill={colors.primary[600]} />
+                              }}
                               name="Battery Voltage (V)"
                             />
+
+                            {/* Add vertical reference lines for major events */}
+                            {diagnosticEvents
+                              .filter(e => e.type.includes('Security Success') || e.type.includes('Routine') || e.type === 'ECU Reset')
+                              .map((event, idx) => {
+                                const dataPoint = voltageData.find(d => d.time === event.time)
+                                if (!dataPoint) return null
+                                return (
+                                  <ReferenceLine
+                                    key={`event-${idx}`}
+                                    x={event.time}
+                                    stroke={event.color}
+                                    strokeDasharray="3 3"
+                                    strokeWidth={1}
+                                    opacity={0.5}
+                                  />
+                                )
+                              })}
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
+
+                      {/* Diagnostic Events Table */}
+                      {diagnosticEvents.length > 0 && (
+                        <div style={{ marginTop: spacing[4] }}>
+                          <h5 className="ds-heading-6" style={{ marginBottom: spacing[2] }}>Diagnostic Events During Voltage Monitoring</h5>
+                          <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                              <thead>
+                                <tr style={{ backgroundColor: colors.background.secondary }}>
+                                  <th style={{ padding: spacing[2], textAlign: 'left', fontWeight: 600 }}>Time</th>
+                                  <th style={{ padding: spacing[2], textAlign: 'left', fontWeight: 600 }}>Event</th>
+                                  <th style={{ padding: spacing[2], textAlign: 'left', fontWeight: 600 }}>ECU</th>
+                                  <th style={{ padding: spacing[2], textAlign: 'left', fontWeight: 600 }}>Voltage</th>
+                                  <th style={{ padding: spacing[2], textAlign: 'left', fontWeight: 600 }}>Details</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {diagnosticEvents.map((event, idx) => {
+                                  const voltageAtEvent = voltageData.find(v => v.time === event.time)
+                                  return (
+                                    <tr key={idx} style={{
+                                      borderBottom: `1px solid ${colors.border.light}`,
+                                      backgroundColor: idx % 2 === 0 ? 'transparent' : colors.background.secondary + '40'
+                                    }}>
+                                      <td style={{ padding: spacing[2], fontFamily: 'monospace' }}>{event.time}</td>
+                                      <td style={{ padding: spacing[2] }}>
+                                        <Badge
+                                          variant={event.type.includes('Security') ? 'warning' :
+                                                  event.type.includes('Routine') ? 'info' : 'secondary'}
+                                          size="small"
+                                        >
+                                          {event.label}
+                                        </Badge>
+                                      </td>
+                                      <td style={{ padding: spacing[2] }}>
+                                        {ecuNames[event.ecu]?.name || event.ecu}
+                                      </td>
+                                      <td style={{ padding: spacing[2] }}>
+                                        {voltageAtEvent ? (
+                                          <Badge variant="info" size="small">{voltageAtEvent.voltage}V</Badge>
+                                        ) : '-'}
+                                      </td>
+                                      <td style={{ padding: spacing[2], fontSize: '11px', color: colors.text.secondary }}>
+                                        {event.description.substring(0, 50)}...
+                                      </td>
+                                    </tr>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
 
                       <div style={{ marginTop: spacing[4] }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
