@@ -1,29 +1,24 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Scrape DTCs from dtcdecode.com for one or more OEMs, including full detail-page
-content (sections, lists, tables). Converts DTCs to UDS 3-byte hex and includes
-FMI meanings.
+Playwright-only scraper for dtcdecode.com (Python 3.12 friendly)
 
-Anti-403 measures:
- - Session warm-up (home + OEM page) to collect cookies
- - Browser-like headers, rotating realistic User-Agents
- - Referer headers
- - Jittered delays + exponential backoff retries
- - Optional 'cloudscraper' fetcher
- - Optional headless browser fetcher via undetected-chromedriver
+- Uses Playwright (Chromium) to fetch pages and auto-accept cookie consent banners.
+- Scrapes one or more OEMs (default: Land-Rover).
+- Extracts full DTC detail content (definition + h2/h3 sections, lists, tables).
+- Converts DTCs to UDS 3-byte hex; includes FMI meanings.
+- Outputs per OEM:
+    <OEM>_dtcs_with_hex.csv
+    <OEM>_dtcs_sections_long.csv
+    <OEM>_dtcs.json
+    tables/<OEM>/<DTC>/table_#.csv
 
-Outputs per OEM (slug as in URL, e.g. "Land-Rover"):
- - <OEM>_dtcs_with_hex.csv          (key fields per DTC)
- - <OEM>_dtcs_sections_long.csv     (long format of all textual content)
- - <OEM>_dtcs.json                  (FULL structured JSON, one file per OEM)
- - tables/<OEM>/<DTC>/table_#.csv   (any tables, exported to CSV)
+Install:
+  python -m pip install playwright beautifulsoup4 pandas tqdm
+  python -m playwright install chromium
 
-Usage examples:
-  python scrape_dtcs.py
-  python scrape_dtcs.py --oems Land-Rover Jaguar --delay 1.8
-  python scrape_dtcs.py --fetcher cloudscraper
-  python scrape_dtcs.py --fetcher browser --headless
-  python scrape_dtcs.py --user-agent "Mozilla/5.0 ..."
+Usage:
+  python scrape_dtcs_playwright.py --oems Land-Rover --headless --delay 1.8 --verbose
 """
 
 import argparse
@@ -35,7 +30,6 @@ import re
 import time
 from typing import Dict, List, Any, Tuple, Optional
 
-import requests
 from bs4 import BeautifulSoup, Tag
 from urllib.parse import urljoin, urlparse, urlunparse, parse_qs, urlencode
 from tqdm import tqdm
@@ -43,7 +37,12 @@ import pandas as pd
 
 BASE = "https://www.dtcdecode.com"
 
-# ---------- FMI (suffix) meanings (Ford/JLR style commonly seen) ----------
+# ----------------------------- small logger -----------------------------------
+def vlog(enabled: bool, *args):
+    if enabled:
+        print("[debug]", *args)
+
+# ------------------- FMI (suffix) meanings (Ford/JLR style) -------------------
 FMI_MEANINGS = {
     "00": "General failure / no sub-type",
     "11": "Circuit short to ground",
@@ -72,214 +71,131 @@ FMI_MEANINGS = {
 def fmi_meaning(fmi_hex: str) -> str:
     return FMI_MEANINGS.get(fmi_hex.upper(), "")
 
-# ---------- UA rotation & headers ----------
-FALLBACK_UAS = [
+# ------------------------------ helper utils ----------------------------------
+FALLBACK_UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/605.1.15 "
-    "(KHTML, like Gecko) Version/17.3 Safari/605.1.15",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-]
-
-def make_headers(ua: Optional[str] = None, referer: Optional[str] = None) -> Dict[str, str]:
-    h = {
-        "User-Agent": ua or FALLBACK_UAS[0],
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-GB,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
-    }
-    if referer:
-        h["Referer"] = referer
-    return h
+    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+)
 
 def gentle_sleep(base_delay: float):
-    # Add 20–60% jitter
     time.sleep(max(0.05, base_delay * random.uniform(1.2, 1.6)))
 
-# ---------- Fetchers ----------
-class BaseFetcher:
-    def warmup(self, oem_slug: str): ...
-    def get(self, url: str, referer: Optional[str] = None) -> str: ...
-
-class RequestsFetcher(BaseFetcher):
-    def __init__(self, base_delay=1.2, user_agent: Optional[str]=None):
-        self.s = requests.Session()
-        self.base_delay = base_delay
-        self.ua_index = 0
-        self.custom_ua = user_agent
-
-    def _current_ua(self) -> str:
-        return self.custom_ua or FALLBACK_UAS[self.ua_index]
-
-    def rotate_ua(self):
-        if self.custom_ua:
-            return
-        self.ua_index = (self.ua_index + 1) % len(FALLBACK_UAS)
-
-    def warmup(self, oem_slug: str):
-        self.s.headers.update(make_headers(self._current_ua()))
-        # Visit homepage and OEM list page to collect cookies
-        self.get(f"{BASE}/", referer=None)
-        self.get(f"{BASE}/{oem_slug}", referer=f"{BASE}/")
-
-    def get(self, url: str, referer: Optional[str] = None) -> str:
-        headers = make_headers(self._current_ua(), referer=referer)
-        backoff = self.base_delay
-        last_exc = None
-        for attempt in range(1, 6):
-            try:
-                resp = self.s.get(url, headers=headers, timeout=25)
-                status = resp.status_code
-                if status == 403:
-                    # rotate UA + wait longer
-                    self.rotate_ua()
-                    gentle_sleep(backoff * 1.5)
-                    backoff *= 1.8
-                    continue
-                if status in (429, 500, 502, 503, 504):
-                    gentle_sleep(backoff)
-                    backoff *= 1.7
-                    continue
-                resp.raise_for_status()
-                gentle_sleep(self.base_delay)
-                return resp.text
-            except requests.RequestException as e:
-                last_exc = e
-                gentle_sleep(backoff)
-                backoff *= 1.7
-        if last_exc:
-            raise last_exc
-        raise RuntimeError("Unreachable")
-
-class CloudscraperFetcher(RequestsFetcher):
-    def __init__(self, base_delay=1.2, user_agent: Optional[str]=None):
-        try:
-            import cloudscraper  # type: ignore
-        except ImportError as e:
-            raise SystemExit("cloudscraper not installed. pip install cloudscraper") from e
-        self.scraper_mod = __import__("cloudscraper")
-        self.s = self.scraper_mod.create_scraper()
-        self.base_delay = base_delay
-        self.ua_index = 0
-        self.custom_ua = user_agent
-
-class BrowserFetcher(BaseFetcher):
-    def __init__(self, base_delay=1.2, headless=True):
-        try:
-            import undetected_chromedriver as uc  # type: ignore
-            from selenium.webdriver.common.by import By  # type: ignore
-            from selenium.webdriver.support.ui import WebDriverWait  # type: ignore
-            from selenium.webdriver.support import expected_conditions as EC  # type: ignore
-        except ImportError as e:
-            raise SystemExit("Browser fetcher requires: pip install undetected-chromedriver selenium") from e
-        self.uc = __import__("undetected_chromedriver")
-        self.By = __import__("selenium.webdriver.common.by", fromlist=['By']).By
-        self.WebDriverWait = __import__("selenium.webdriver.support.ui", fromlist=['WebDriverWait']).WebDriverWait
-        self.EC = __import__("selenium.webdriver.support.expected_conditions", fromlist=['EC'])
-        opts = self.uc.ChromeOptions()
-        if headless:
-            opts.add_argument("--headless=new")
-        opts.add_argument("--disable-gpu")
-        opts.add_argument("--no-sandbox")
-        opts.add_argument("--disable-dev-shm-usage")
-        self.driver = self.uc.Chrome(options=opts)
-        self.base_delay = base_delay
-
-    def warmup(self, oem_slug: str):
-        self.get(f"{BASE}/")
-        self.get(f"{BASE}/{oem_slug}")
-
-    def get(self, url: str, referer: Optional[str] = None) -> str:
-        self.driver.get(url)
-        self.WebDriverWait(self.driver, 25).until(
-            self.EC.presence_of_element_located((self.By.TAG_NAME, "body"))
-        )
-        gentle_sleep(self.base_delay)
-        return self.driver.page_source
-
-    def close(self):
-        try:
-            self.driver.quit()
-        except Exception:
-            pass
-
-# ---------- Utility ----------
 def normalize_url(u: str) -> str:
     p = urlparse(u)
     q = parse_qs(p.query, keep_blank_values=True)
     q_sorted = urlencode(sorted((k, v[0]) for k, v in q.items()))
     return urlunparse((p.scheme, p.netloc, p.path, "", q_sorted, ""))
 
-# ---------- Patterns ----------
+# --------------------------------- patterns -----------------------------------
 DTC_SEGMENT_RE = re.compile(r"^[PCBU][0-9A-F]{4}-[0-9A-F]{2}$", re.IGNORECASE)
 
-# ---------- Discovery ----------
-def discover_listing_pages(oem_slug: str, fetcher: BaseFetcher, delay: float, max_pages: Optional[int]=None) -> List[str]:
-    list_url = f"{BASE}/{oem_slug}"
-    seen = set()
-    q = [list_url]
-    pages = []
+# ----------------------------- Playwright fetcher ------------------------------
+class PlaywrightFetcher:
+    def __init__(self, base_delay=1.5, headless=True, proxy: Optional[str]=None,
+                 cookie_header: Optional[str]=None, verbose: bool=False):
+        try:
+            from playwright.sync_api import sync_playwright  # type: ignore
+        except ImportError as e:
+            raise SystemExit("Playwright not installed. Run:\n"
+                             "  python -m pip install playwright\n"
+                             "  python -m playwright install chromium") from e
+        self._pw = sync_playwright().start()
+        launch_args = {"headless": headless}
+        if proxy:
+            launch_args["proxy"] = {"server": proxy}
+        self.browser = self._pw.chromium.launch(**launch_args)
+        # Extra headers (UA & language) to look more like a real browser
+        self.context = self.browser.new_context(
+            locale="en-GB",
+            user_agent=FALLBACK_UA,
+        )
+        if cookie_header:
+            self._apply_cookie_header(cookie_header)
+        self.page = self.context.new_page()
+        self.base_delay = base_delay
+        self.verbose = verbose
 
-    while q:
-        url = q.pop(0)
-        nu = normalize_url(url)
-        if nu in seen:
-            continue
-        seen.add(nu)
+    def _apply_cookie_header(self, cookie_header: str):
+        # crude Cookie: "k=v; k2=v2" parser -> add cookies for dtcdecode.com
+        pairs = [c.strip() for c in cookie_header.split(";") if "=" in c]
+        cookies = []
+        for p in pairs:
+            k, v = p.split("=", 1)
+            cookies.append({
+                "name": k.strip(),
+                "value": v.strip(),
+                "domain": "www.dtcdecode.com",
+                "path": "/",
+                "httpOnly": False,
+                "secure": True,
+            })
+        if cookies:
+            self.context.add_cookies(cookies)
 
-        html = fetcher.get(url, referer=f"{BASE}/")
-        soup = BeautifulSoup(html, "html.parser")
-        pages.append(url)
-        if max_pages and len(pages) >= max_pages:
-            break
+    def _log(self, *a):
+        if self.verbose:
+            print("[playwright]", *a)
 
-        # Follow pagination that stays under /<OEM>
-        for a in soup.select("a[href]"):
-            href = a.get("href", "").strip()
-            if not href:
-                continue
-            absu = urljoin(BASE, href)
-            if absu.startswith(list_url):
-                q.append(absu)
+    # rudimentary consent clicker
+    def _accept_consent(self):
+        sel_candidates = [
+            "#onetrust-accept-btn-handler",
+            "button#onetrust-accept-btn-handler",
+            ".qc-cmp2-summary-buttons .qc-cmp2-accept-all",
+            ".qc-cmp2-footer .qc-cmp2-accept-all",
+            "button[aria-label*='Accept' i]",
+            "button[aria-label*='Agree' i]",
+            "button[data-action='accept-all']",
+            "text=/^(Accept all|I agree|Agree|Allow all)$/i",
+        ]
+        # try main page
+        for sel in sel_candidates:
+            try:
+                el = self.page.locator(sel)
+                if el.first.is_visible():
+                    el.first.click(timeout=1000)
+                    self._log("consent accepted:", sel)
+                    return
+            except Exception:
+                pass
+        # try iframes
+        for frame in self.page.frames:
+            for sel in sel_candidates:
+                try:
+                    el = frame.locator(sel)
+                    if el.first.is_visible():
+                        el.first.click(timeout=1000)
+                        self._log("consent accepted in iframe:", sel)
+                        return
+                except Exception:
+                    pass
 
-        gentle_sleep(delay)
+    def warmup(self, oem_slug: str):
+        self.get(f"{BASE}/")
+        self.get(f"{BASE}/{oem_slug}")
 
-    return sorted(set(pages))
+    def get(self, url: str, referer: Optional[str] = None) -> str:
+        self._log("GET", url)
+        kwargs = {"wait_until": "domcontentloaded", "timeout": 30000}
+        if referer:
+            kwargs["referer"] = referer
+        self.page.goto(url, **kwargs)
+        try:
+            self._accept_consent()
+        except Exception:
+            pass
+        gentle_sleep(self.base_delay)  # polite & let JS settle
+        return self.page.content()
 
-def extract_dtc_links(oem_slug: str, listing_html: str) -> List[str]:
-    soup = BeautifulSoup(listing_html, "html.parser")
-    dtc_path_re = re.compile(rf"^/{re.escape(oem_slug)}/[PCBU][0-9A-F]{{4}}-[0-9A-F]{{2}}$", re.IGNORECASE)
-    links = []
-    for a in soup.select("a[href]"):
-        href = a.get("href", "").strip()
-        if href and dtc_path_re.match(href):
-            links.append(urljoin(BASE, href))
-    return sorted(set(links), key=str.lower)
+    def close(self):
+        try:
+            self.context.close()
+            self.browser.close()
+            self._pw.stop()
+        except Exception:
+            pass
 
-# ---------- DTC helpers ----------
-def dtc_to_hex_triplet(dtc: str) -> str:
-    """
-    Convert 'P05FF-00' -> '05 FF 00'
-    """
-    base, fmi = dtc.upper().split('-')
-    letter, digits = base[0], base[1:]
-
-    nibble_map = {'P': 0x0, 'C': 0x1, 'B': 0x2, 'U': 0x3}
-    if letter not in nibble_map:
-        raise ValueError(f"Unknown DTC type: {letter}")
-
-    # First two bytes: (type nibble << 12) + 4 hex digits of base
-    value = (nibble_map[letter] << 12) + int(digits, 16)
-    high = (value >> 8) & 0xFF
-    mid = value & 0xFF
-    low = int(fmi, 16)
-    return f"{high:02X} {mid:02X} {low:02X}"
-
+# ---------------------------------- parsing -----------------------------------
 def parse_title_and_definition(soup: BeautifulSoup) -> Tuple[Optional[str], Optional[str]]:
     h1 = soup.find("h1")
     dtc, definition = None, None
@@ -295,7 +211,18 @@ def parse_title_and_definition(soup: BeautifulSoup) -> Tuple[Optional[str], Opti
                 definition = text[len(tok[0]):].strip(" –-:") or None
     return dtc, definition
 
-# ---------- Section & table extraction ----------
+def dtc_to_hex_triplet(dtc: str) -> str:
+    base, fmi = dtc.upper().split('-')
+    letter, digits = base[0], base[1:]
+    nibble_map = {'P': 0x0, 'C': 0x1, 'B': 0x2, 'U': 0x3}
+    if letter not in nibble_map:
+        raise ValueError(f"Unknown DTC type: {letter}")
+    value = (nibble_map[letter] << 12) + int(digits, 16)
+    high = (value >> 8) & 0xFF
+    mid = value & 0xFF
+    low = int(fmi, 16)
+    return f"{high:02X} {mid:02X} {low:02X}"
+
 def html_table_to_data(table_tag: Tag) -> Dict[str, Any]:
     headers = []
     for th in table_tag.select("thead th"):
@@ -308,7 +235,6 @@ def html_table_to_data(table_tag: Tag) -> Dict[str, Any]:
     if not headers and rows:
         headers = rows[0]
         rows = rows[1:]
-    # Normalize row lengths
     norm_rows = []
     h = len(headers)
     for r in rows:
@@ -363,6 +289,75 @@ def extract_sections(soup: BeautifulSoup) -> List[Dict[str, Any]]:
             sections.append({"title": title, "order_index": idx, "content": content})
     return sections
 
+def parse_detail_page(html: str, url: str, verbose: bool=False) -> Dict[str, Any]:
+    soup = BeautifulSoup(html, "html.parser")
+    dtc, definition = parse_title_and_definition(soup)
+    if not dtc:
+        dtc = url.rstrip("/").split("/")[-1].upper()
+    record: Dict[str, Any] = {"dtc": dtc, "url": url, "definition": definition}
+    if DTC_SEGMENT_RE.match(dtc):
+        base, fmi = dtc.upper().split("-")
+        record["base_code"] = base
+        record["fmi_hex"] = fmi
+        record["fmi_meaning"] = fmi_meaning(fmi)
+        try:
+            record["hex_triplet"] = dtc_to_hex_triplet(dtc)
+        except Exception as e:
+            vlog(verbose, f"hex_triplet conversion failed for {dtc}: {e}")
+    record["sections"] = extract_sections(soup)
+    return record
+
+# -------------------------- discovery & orchestration --------------------------
+def discover_listing_pages(oem_slug: str, fetcher: PlaywrightFetcher, delay: float,
+                           max_pages: Optional[int]=None, verbose: bool=False) -> List[str]:
+    list_url = f"{BASE}/{oem_slug}"
+    seen = set()
+    q = [list_url]
+    pages = []
+    while q:
+        url = q.pop(0)
+        nu = normalize_url(url)
+        if nu in seen:
+            continue
+        seen.add(nu)
+        html = fetcher.get(url, referer=f"{BASE}/")
+        soup = BeautifulSoup(html, "html.parser")
+        pages.append(url)
+        if max_pages and len(pages) >= max_pages:
+            break
+        for a in soup.select("a[href]"):
+            href = a.get("href", "").strip()
+            if not href:
+                continue
+            absu = urljoin(BASE, href)
+            if absu.startswith(list_url):
+                q.append(absu)
+        gentle_sleep(delay)
+    vlog(verbose, f"discovered listing pages: {pages}")
+    return sorted(set(pages))
+
+def extract_dtc_links(oem_slug: str, listing_html: str, verbose: bool=False) -> List[str]:
+    soup = BeautifulSoup(listing_html, "html.parser")
+    dtc_path_re = re.compile(rf"^/{re.escape(oem_slug)}/[PCBU][0-9A-F]{{4}}-[0-9A-F]{{2}}$", re.IGNORECASE)
+    links = []
+    for a in soup.select("a[href]"):
+        href = a.get("href", "").strip()
+        if href and dtc_path_re.match(href):
+            links.append(urljoin(BASE, href))
+    links = sorted(set(links), key=str.lower)
+    vlog(verbose, f"found {len(links)} dtc links on listing page")
+    return links
+
+def discover_listing_and_links(oem_slug: str, fetcher: PlaywrightFetcher, delay: float,
+                               max_pages: Optional[int], verbose: bool=False) -> List[str]:
+    pages = discover_listing_pages(oem_slug, fetcher, delay, max_pages, verbose)
+    links: List[str] = []
+    for p in pages:
+        html = fetcher.get(p, referer=f"{BASE}/{oem_slug}")
+        links.extend(extract_dtc_links(oem_slug, html, verbose))
+        gentle_sleep(delay)
+    return sorted(set(links), key=str.lower)
+
 def save_tables_for_dtc(oem_slug: str, dtc: str, sections: List[Dict[str, Any]]):
     out_dir = os.path.join("tables", oem_slug, dtc)
     os.makedirs(out_dir, exist_ok=True)
@@ -376,46 +371,18 @@ def save_tables_for_dtc(oem_slug: str, dtc: str, sections: List[Dict[str, Any]])
                 df.to_csv(os.path.join(out_dir, f"table_{table_idx}.csv"), index=False, encoding="utf-8")
                 table_idx += 1
 
-# ---------- Page parsing ----------
-def parse_detail_page(html: str, url: str) -> Dict[str, Any]:
-    soup = BeautifulSoup(html, "html.parser")
-    dtc, definition = parse_title_and_definition(soup)
-    if not dtc:
-        dtc = url.rstrip("/").split("/")[-1].upper()
-
-    record: Dict[str, Any] = {"dtc": dtc, "url": url, "definition": definition}
-
-    if DTC_SEGMENT_RE.match(dtc):
-        base, fmi = dtc.upper().split("-")
-        record["base_code"] = base
-        record["fmi_hex"] = fmi
-        record["fmi_meaning"] = fmi_meaning(fmi)
-        try:
-            record["hex_triplet"] = dtc_to_hex_triplet(dtc)
-        except Exception:
-            pass
-
-    sections = extract_sections(soup)
-    record["sections"] = sections
-    return record
-
-# ---------- Orchestration per OEM ----------
-def scrape_oem(oem_slug: str, fetcher: BaseFetcher, delay: float, max_pages: Optional[int]=None):
+def scrape_oem(oem_slug: str, fetcher: PlaywrightFetcher, delay: float, max_pages: Optional[int],
+               no_warmup: bool, verbose: bool):
     print(f"\n=== {oem_slug} ===")
-    print("Warming up session…")
-    fetcher.warmup(oem_slug)
+    if not no_warmup:
+        print("Warming up session…")
+        try:
+            fetcher.warmup(oem_slug)
+        except Exception as e:
+            print("Warmup failed (continuing):", e)
 
     print("Discovering listing pages…")
-    pages = discover_listing_pages(oem_slug, fetcher, delay, max_pages=max_pages)
-    print(f"Found {len(pages)} listing page(s).")
-
-    print("Collecting DTC links…")
-    links: List[str] = []
-    for p in pages:
-        html = fetcher.get(p, referer=f"{BASE}/{oem_slug}")
-        links.extend(extract_dtc_links(oem_slug, html))
-        gentle_sleep(delay)
-    links = sorted(set(links), key=str.lower)
+    links = discover_listing_and_links(oem_slug, fetcher, delay, max_pages, verbose)
     print(f"Found {len(links)} DTC detail pages.")
 
     print("Scraping detail pages…")
@@ -424,9 +391,8 @@ def scrape_oem(oem_slug: str, fetcher: BaseFetcher, delay: float, max_pages: Opt
 
     for url in tqdm(links, desc=f"{oem_slug} DTC pages"):
         try:
-            # Set referer to the OEM list page by default
             html = fetcher.get(url, referer=f"{BASE}/{oem_slug}")
-            rec = parse_detail_page(html, url)
+            rec = parse_detail_page(html, url, verbose=verbose)
             dtc_fs = rec.get("dtc", "UNKNOWN").replace("/", "_")
             if rec.get("sections"):
                 save_tables_for_dtc(oem_slug, dtc_fs, rec["sections"])
@@ -494,46 +460,43 @@ def scrape_oem(oem_slug: str, fetcher: BaseFetcher, delay: float, max_pages: Opt
     print(" -", json_path)
     print(" - tables/{}/<DTC>/table_#.csv".format(oem_slug))
 
-# ---------- CLI ----------
-def build_fetcher(kind: str, delay: float, user_agent: Optional[str], headless: bool):
-    kind = kind.lower().strip()
-    if kind == "requests":
-        return RequestsFetcher(base_delay=delay, user_agent=user_agent)
-    if kind == "cloudscraper":
-        return CloudscraperFetcher(base_delay=delay, user_agent=user_agent)
-    if kind == "browser":
-        return BrowserFetcher(base_delay=delay, headless=headless)
-    raise SystemExit(f"Unknown --fetcher '{kind}'. Choose: requests | cloudscraper | browser")
-
+# -------------------------------------- CLI -----------------------------------
 def main():
-    ap = argparse.ArgumentParser(description="Scrape DTCs (and subpage content) from dtcdecode.com")
+    ap = argparse.ArgumentParser(description="Playwright scraper for dtcdecode.com (full DTC pages)")
     ap.add_argument("--oems", nargs="+", default=["Land-Rover"],
-                    help="OEM slugs as in the site URL (e.g., Land-Rover, Jaguar, Ford)")
-    ap.add_argument("--delay", type=float, default=1.4,
+                    help="OEM slugs as in the URL (e.g., Land-Rover, Jaguar, Ford)")
+    ap.add_argument("--delay", type=float, default=1.8,
                     help="Base delay (seconds) between requests (jitter added automatically)")
-    ap.add_argument("--user-agent", type=str, default=None,
-                    help="Optional custom User-Agent (disables UA rotation)")
-    ap.add_argument("--fetcher", type=str, default="requests",
-                    help="Fetcher: requests | cloudscraper | browser")
     ap.add_argument("--headless", action="store_true",
-                    help="Headless mode for browser fetcher")
+                    help="Run Chromium headless")
+    ap.add_argument("--proxy", type=str, default=None,
+                    help="Proxy URL, e.g. http://user:pass@host:port")
+    ap.add_argument("--cookie", type=str, default=None,
+                    help='Optional Cookie header (e.g., "cf_clearance=...; other=...")')
     ap.add_argument("--max-pages", type=int, default=None,
-                    help="Optional cap on listing pages to crawl (debugging)")
+                    help="Cap listing pages for debugging")
+    ap.add_argument("--no-warmup", action="store_true",
+                    help="Skip warmup hits")
+    ap.add_argument("--verbose", action="store_true",
+                    help="Verbose logs")
     args = ap.parse_args()
 
-    # Respect robots.txt / terms and use polite delays.
     print("Note: Please ensure scraping complies with the site's Terms and robots.txt.")
 
-    fetcher = build_fetcher(args.fetcher, args.delay, args.user_agent, args.headless)
+    fetcher = PlaywrightFetcher(
+        base_delay=args.delay,
+        headless=args.headless,
+        proxy=args.proxy,
+        cookie_header=args.cookie,
+        verbose=args.verbose
+    )
 
     try:
         for oem in args.oems:
             oem_slug = oem.strip().strip("/")
-            scrape_oem(oem_slug, fetcher, args.delay, max_pages=args.max_pages)
+            scrape_oem(oem_slug, fetcher, args.delay, args.max_pages, args.no_warmup, args.verbose)
     finally:
-        # Close browser if used
-        if isinstance(fetcher, BrowserFetcher):
-            fetcher.close()
+        fetcher.close()
 
 if __name__ == "__main__":
     main()

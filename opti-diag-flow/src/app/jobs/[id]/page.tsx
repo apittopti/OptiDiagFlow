@@ -1969,10 +1969,6 @@ export default function JobDetailsPage() {
               <Card variant="nested">
                 <div className="ds-grid-2" style={{ gap: spacing[5] }}>
                   <div>
-                    <p className="ds-label">Session ID</p>
-                    <p className="ds-value">{job.diagSessionId || 'N/A'}</p>
-                  </div>
-                  <div>
                     <p className="ds-label">Vehicle VIN</p>
                     <p className="ds-value">{job.Vehicle?.vin || 'Unknown'}</p>
                   </div>
