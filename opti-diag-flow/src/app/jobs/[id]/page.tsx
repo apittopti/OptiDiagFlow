@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap } from 'lucide-react'
+import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap, Car, Calendar } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { PageLayout } from '@/components/layout/page-layout'
 import { Card, Button, Badge, StatCard } from '@/components/design-system'
@@ -1867,6 +1867,49 @@ export default function JobDetailsPage() {
             >
               Download Report
             </Button>
+          </div>
+        </div>
+
+        {/* Vehicle Information Banner */}
+        <div style={{
+          padding: spacing[4],
+          backgroundColor: colors.primary[50],
+          borderRadius: '12px',
+          border: `1px solid ${colors.primary[200]}`,
+          marginBottom: spacing[6],
+          display: 'flex',
+          alignItems: 'center',
+          gap: spacing[4]
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            backgroundColor: colors.primary[100],
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Car size={24} color={colors.primary[600]} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '20px', fontWeight: 600, color: colors.primary[900], marginBottom: '4px' }}>
+              {job.Vehicle?.ModelYear?.Model?.OEM?.name || ''} {job.Vehicle?.ModelYear?.Model?.name || 'Unknown Vehicle'}
+            </div>
+            <div style={{ display: 'flex', gap: spacing[4], alignItems: 'center' }}>
+              <span style={{ fontSize: '16px', color: colors.primary[700] }}>
+                <Calendar size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                {job.Vehicle?.ModelYear?.year || 'Unknown Year'}
+              </span>
+              {job.Vehicle?.vin && (
+                <span style={{ fontSize: '14px', color: colors.primary[600] }}>
+                  VIN: {job.Vehicle.vin}
+                </span>
+              )}
+              <Badge variant="secondary">
+                Job #{job.id.slice(0, 8).toUpperCase()}
+              </Badge>
+            </div>
           </div>
         </div>
 
