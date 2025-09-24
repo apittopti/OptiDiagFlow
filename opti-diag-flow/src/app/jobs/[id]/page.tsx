@@ -2009,7 +2009,7 @@ export default function JobDetailsPage() {
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
                     <p className="ds-label">Trace File</p>
-                    <p className="ds-value">{job.traceFileName || 'N/A'}</p>
+                    <p className="ds-value">{job.metadata?.traceFileName || 'N/A'}</p>
                   </div>
                 </div>
               </Card>
