@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Playwright scraper for dtcdecode.com — STREAMING writes
+Playwright scraper for dtcdecode.com — STREAMING writes + lazy-load discovery
 
+Features
+- Auto-accepts common cookie consent banners.
+- Robust discovery: auto-scrolls to trigger lazy loading and collects links; also falls
+  back to scanning visible text for DTC-shaped tokens if anchors are missing.
 - Writes per DTC page immediately:
     * <OEM>_dtcs.ndjson            (one JSON object per line)
     * <OEM>_dtcs_with_hex.csv      (summary, appended & flushed)
     * <OEM>_dtcs_sections_long.csv (all text/list/table markers, appended & flushed)
     * tables/<OEM>/<DTC>/table_#.csv  (any tables)
-
-- Auto-accepts common cookie consent banners.
-- Robust discovery (handles absolute/relative links).
 - Debug option saves a few raw HTML pages.
-
-Run:
-  python Landrover.py --oems Land-Rover --headless --delay 1.8 --verbose --output-dir out
 """
 
 import argparse, csv, json, os, random, re, time
@@ -169,31 +167,59 @@ class PlaywrightFetcher:
         gentle_sleep(self.base_delay)  # polite
         return self.page.content()
 
-    def get_dtc_links(self, oem_slug: str) -> List[str]:
-        # Wait for potential DTC links; continue even if timeout
+    def get_dtc_links(self, oem_slug: str, max_scrolls: int = 8, scroll_wait_ms: int = 500) -> List[str]:
+        """
+        Scrolls the page to trigger lazy loading, then collects anchors that look
+        like DTC detail links. Falls back to scanning visible text for DTC tokens.
+        """
+        # 1) Trigger lazy loading by scrolling
         try:
-            self.page.wait_for_selector(f'a[href*="/{oem_slug}/"]', timeout=10000)
+            last_h = 0
+            for _ in range(max_scrolls):
+                self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                self.page.wait_for_timeout(scroll_wait_ms)
+                h = self.page.evaluate("document.body.scrollHeight")
+                if h == last_h:
+                    break
+                last_h = h
         except Exception:
             pass
-        anchors = self.page.locator("a[href]").all()
+
         hrefs = []
-        base = f"/{oem_slug}/"
-        for a in anchors:
-            try:
+        # 2) Collect anchors
+        try:
+            anchors = self.page.locator("a[href]").all()
+            for a in anchors:
                 href = a.get_attribute("href") or ""
                 if not href:
                     continue
-                if href.startswith("http"):
-                    if f"/{oem_slug}/" not in href:
-                        continue
+                if href.startswith(("http://", "https://")):
                     hrefs.append(href)
                 else:
-                    if base in href:
-                        hrefs.append(urljoin(BASE, href))
+                    hrefs.append(urljoin(BASE, href))
+        except Exception:
+            pass
+
+        # 3) Fallback: scan page text for DTC-shaped tokens
+        try:
+            body_text = self.page.locator("body").inner_text(timeout=2000)
+            codes = set(re.findall(r"\b[PCBU][0-9A-F]{4}-[0-9A-F]{2}\b", body_text, flags=re.IGNORECASE))
+            for code in codes:
+                hrefs.append(f"{BASE}/{oem_slug}/{code.upper()}")
+        except Exception:
+            pass
+
+        # 4) Keep only this OEM + DTC detail shape
+        dtc_pat = re.compile(rf"/{re.escape(oem_slug)}/[PCBU][0-9A-F]{{4}}-[0-9A-F]{{2}}$", re.IGNORECASE)
+        cleaned = []
+        for u in hrefs:
+            try:
+                u = normalize_url(u)
+                if dtc_pat.search(urlparse(u).path):
+                    cleaned.append(u)
             except Exception:
                 continue
-        # normalize + dedup
-        return sorted(set(normalize_url(u) for u in hrefs))
+        return sorted(set(cleaned))
 
     def close(self):
         try:
@@ -315,9 +341,10 @@ def discover_listing_pages(oem_slug: str, fetcher: PlaywrightFetcher, delay: flo
     return sorted(set(pages))
 
 def extract_dtc_links_playwright(oem_slug: str, fetcher: PlaywrightFetcher,
-                                 listing_url: str, verbose: bool=False) -> List[str]:
+                                 listing_url: str, verbose: bool=False,
+                                 max_scrolls: int = 8, scroll_wait_ms: int = 500) -> List[str]:
     fetcher.get(listing_url, referer=f"{BASE}/")
-    links = fetcher.get_dtc_links(oem_slug)
+    links = fetcher.get_dtc_links(oem_slug, max_scrolls=max_scrolls, scroll_wait_ms=scroll_wait_ms)
     pat = re.compile(rf"/{re.escape(oem_slug)}/[PCBU][0-9A-F]{{4}}-[0-9A-F]{{2}}$", re.IGNORECASE)
     cleaned = []
     for u in links:
@@ -329,18 +356,22 @@ def extract_dtc_links_playwright(oem_slug: str, fetcher: PlaywrightFetcher,
     return cleaned
 
 def discover_listing_and_links(oem_slug: str, fetcher: PlaywrightFetcher, delay: float,
-                               max_pages: Optional[int], verbose: bool=False) -> List[str]:
+                               max_pages: Optional[int], verbose: bool=False,
+                               max_scrolls: int = 8, scroll_wait_ms: int = 500) -> List[str]:
     pages = discover_listing_pages(oem_slug, fetcher, delay, max_pages, verbose)
     all_links: List[str] = []
     for p in pages:
-        all_links.extend(extract_dtc_links_playwright(oem_slug, fetcher, p, verbose))
+        all_links.extend(extract_dtc_links_playwright(
+            oem_slug, fetcher, p, verbose, max_scrolls=max_scrolls, scroll_wait_ms=scroll_wait_ms
+        ))
         gentle_sleep(delay)
     return sorted(set(all_links), key=str.lower)
 
 def ensure_dir(p): os.makedirs(p, exist_ok=True)
 
 def scrape_oem(oem_slug: str, fetcher: PlaywrightFetcher, delay: float, max_pages: Optional[int],
-               no_warmup: bool, verbose: bool, output_dir: str, flush_every: int, debug_html_max: int):
+               no_warmup: bool, verbose: bool, output_dir: str, flush_every: int, debug_html_max: int,
+               max_scrolls: int, scroll_wait_ms: int):
     print(f"\n=== {oem_slug} ===")
     ensure_dir(output_dir)
     dbg_dir = os.path.join(output_dir, "debug_html"); ensure_dir(dbg_dir)
@@ -366,7 +397,8 @@ def scrape_oem(oem_slug: str, fetcher: PlaywrightFetcher, delay: float, max_page
         except Exception as e: print("Warmup failed (continuing):", e)
 
     print("Discovering listing pages & DTC links…")
-    links = discover_listing_and_links(oem_slug, fetcher, delay, max_pages, verbose)
+    links = discover_listing_and_links(oem_slug, fetcher, delay, max_pages, verbose,
+                                       max_scrolls=max_scrolls, scroll_wait_ms=scroll_wait_ms)
     print(f"Found {len(links)} DTC detail pages.")
 
     records: List[Dict[str, Any]] = []
@@ -460,6 +492,8 @@ def main():
     ap.add_argument("--output-dir", type=str, default=".", help="Directory to write outputs")
     ap.add_argument("--flush-every", type=int, default=25, help="Flush CSV/JSONL every N records")
     ap.add_argument("--debug-html-max", type=int, default=5, help="Save up to N raw HTML pages to debug_html/ (verbose only)")
+    ap.add_argument("--max-scrolls", type=int, default=8, help="Max scroll passes to load lazy content")
+    ap.add_argument("--scroll-wait", type=int, default=500, help="Wait (ms) between scrolls")
     args = ap.parse_args()
 
     print("Note: Please ensure scraping complies with the site's Terms and robots.txt.")
@@ -477,7 +511,8 @@ def main():
         for oem in args.oems:
             oem_slug = oem.strip().strip("/")
             scrape_oem(oem_slug, fetcher, args.delay, args.max_pages, args.no_warmup,
-                       args.verbose, args.output_dir, args.flush_every, args.debug_html_max)
+                       args.verbose, args.output_dir, args.flush_every, args.debug_html_max,
+                       args.max_scrolls, args.scroll_wait)
     finally:
         fetcher.close()
 

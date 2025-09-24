@@ -1834,8 +1834,14 @@ export default function JobDetailsPage() {
     )
   }
 
+  const vehicleInfo = job.Vehicle?.ModelYear ?
+    `${job.Vehicle.ModelYear.Model?.OEM?.name || ''} ${job.Vehicle.ModelYear.Model?.name || 'Unknown'} ${job.Vehicle.ModelYear.year || ''}`.trim() :
+    'Unknown Vehicle'
+
   return (
-    <PageLayout title={job.name || "Job Details"} description={`Job #${job.id.slice(0, 8).toUpperCase()}`}>
+    <PageLayout
+      title={job.name || "Job Details"}
+      description={`Job #${job.id.slice(0, 8).toUpperCase()} • ${vehicleInfo}`}>
       <div className="ds-container">
         {/* Action Bar */}
         <div className="ds-flex-between" style={{ marginBottom: spacing[6] }}>
