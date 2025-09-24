@@ -529,24 +529,29 @@
 
   /* Tabs - Clean Modern Design */
   .ds-tab-group {
-    display: inline-flex;
-    gap: 8px;
+    display: flex;
+    gap: 6px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 12px;
     padding: 6px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    width: 100%;
+    overflow-x: auto;
   }
 
   .ds-tab {
-    padding: 10px 24px;
+    padding: 10px 16px;
     border-radius: 8px;
     border: none;
     background-color: transparent;
     color: rgba(255, 255, 255, 0.9);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
     position: relative;
     white-space: nowrap;
   }

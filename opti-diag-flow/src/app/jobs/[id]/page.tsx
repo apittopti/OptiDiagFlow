@@ -2864,7 +2864,7 @@ export default function JobDetailsPage() {
                     .filter(d => d.voltage > 0 && d.voltage < 30) // Filter reasonable voltage values
 
                   // Combine both sources
-                  const voltageData = [...metadataVoltage, ...udsVoltage].sort((a, b) => {
+                  let voltageData = [...metadataVoltage, ...udsVoltage].sort((a, b) => {
                     // Sort by timestamp
                     const timeA = a.time.split(':').map(Number)
                     const timeB = b.time.split(':').map(Number)
@@ -2949,6 +2949,58 @@ export default function JobDetailsPage() {
                       }
                     })
 
+                  // Merge events into voltage data for visualization
+                  // If voltage data exists, add event markers
+                  if (voltageData.length > 0 && diagnosticEvents.length > 0) {
+                    // Create a map of events by time for quick lookup
+                    const eventsByTime = diagnosticEvents.reduce((acc, event) => {
+                      if (!acc[event.time]) acc[event.time] = []
+                      acc[event.time].push(event)
+                      return acc
+                    }, {} as Record<string, typeof diagnosticEvents>)
+
+                    // Add events property to matching voltage data points
+                    voltageData = voltageData.map(vData => ({
+                      ...vData,
+                      events: eventsByTime[vData.time] || []
+                    }))
+
+                    // Also add standalone event points if they don't have corresponding voltage data
+                    const voltageTimeSet = new Set(voltageData.map(v => v.time))
+                    diagnosticEvents.forEach(event => {
+                      if (!voltageTimeSet.has(event.time)) {
+                        // Find nearest voltage value for interpolation
+                        const nearestVoltage = voltageData.reduce((prev, curr) => {
+                          const prevDiff = Math.abs(parseTime(prev.time) - parseTime(event.time))
+                          const currDiff = Math.abs(parseTime(curr.time) - parseTime(event.time))
+                          return currDiff < prevDiff ? curr : prev
+                        })
+
+                        voltageData.push({
+                          time: event.time,
+                          voltage: nearestVoltage ? nearestVoltage.voltage : '0',
+                          ecu: event.ecu,
+                          source: 'Event',
+                          events: [event]
+                        })
+                      }
+                    })
+
+                    // Re-sort after adding event points
+                    voltageData.sort((a, b) => {
+                      const timeA = a.time.split(':').map(Number)
+                      const timeB = b.time.split(':').map(Number)
+                      return (timeA[0] * 3600 + timeA[1] * 60 + timeA[2]) -
+                             (timeB[0] * 3600 + timeB[1] * 60 + timeB[2])
+                    })
+                  }
+
+                  // Helper to parse time string to seconds
+                  function parseTime(timeStr: string): number {
+                    const parts = timeStr.split(':').map(Number)
+                    return parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0)
+                  }
+
                   if (voltageData.length === 0) {
                     return (
                       <div className="ds-empty-state" style={{ padding: spacing[6] }}>
@@ -3027,22 +3079,36 @@ export default function JobDetailsPage() {
                               content={({ active, payload, label }) => {
                                 if (active && payload && payload.length) {
                                   const voltage = payload[0].value
-                                  const events = diagnosticEvents.filter(e => e.time === label)
+                                  const pointData = payload[0].payload
+                                  const events = pointData.events || []
                                   return (
                                     <div style={{
                                       backgroundColor: 'white',
                                       border: `1px solid ${colors.border.light}`,
                                       borderRadius: '4px',
-                                      padding: spacing[2]
+                                      padding: spacing[2],
+                                      maxWidth: '300px'
                                     }}>
                                       <p style={{ fontWeight: 600, marginBottom: '4px' }}>{label}</p>
                                       <p style={{ color: colors.primary[600] }}>
                                         Voltage: {voltage}V
                                       </p>
+                                      {pointData.ecu && (
+                                        <p style={{ fontSize: '11px', color: colors.text.secondary }}>
+                                          ECU: {pointData.ecu}
+                                        </p>
+                                      )}
                                       {events.map((event, idx) => (
-                                        <div key={idx} style={{ marginTop: '4px' }}>
-                                          <p style={{ color: event.color, fontSize: '12px', fontWeight: 500 }}>
-                                            {event.label} ({event.ecu})
+                                        <div key={idx} style={{
+                                          marginTop: '6px',
+                                          paddingTop: '6px',
+                                          borderTop: `1px solid ${colors.border.light}`
+                                        }}>
+                                          <p style={{ color: event.color, fontSize: '12px', fontWeight: 600 }}>
+                                            {event.label}
+                                          </p>
+                                          <p style={{ fontSize: '10px', color: colors.text.secondary }}>
+                                            {ecuNames[event.ecu]?.name || event.ecu}
                                           </p>
                                         </div>
                                       ))}
@@ -3059,23 +3125,35 @@ export default function JobDetailsPage() {
                               stroke={colors.primary[600]}
                               strokeWidth={2}
                               dot={(props: any) => {
-                                const events = diagnosticEvents.filter(e => e.time === props.payload.time)
-                                if (events.length > 0) {
-                                  const event = events[0]
+                                const pointEvents = props.payload.events || []
+                                if (pointEvents.length > 0) {
+                                  const event = pointEvents[0]
                                   return (
                                     <g key={props.key}>
                                       <circle
                                         cx={props.cx}
                                         cy={props.cy}
-                                        r={6}
+                                        r={8}
                                         fill={event.color}
                                         stroke="white"
                                         strokeWidth={2}
                                       />
+                                      {pointEvents.length > 1 && (
+                                        <text
+                                          x={props.cx}
+                                          y={props.cy - 12}
+                                          fill={event.color}
+                                          fontSize="10"
+                                          textAnchor="middle"
+                                          fontWeight="bold"
+                                        >
+                                          {pointEvents.length}
+                                        </text>
+                                      )}
                                     </g>
                                   )
                                 }
-                                return <circle cx={props.cx} cy={props.cy} r={3} fill={colors.primary[600]} />
+                                return <circle cx={props.cx} cy={props.cy} r={2} fill={colors.primary[600]} />
                               }}
                               name="Battery Voltage (V)"
                             />
