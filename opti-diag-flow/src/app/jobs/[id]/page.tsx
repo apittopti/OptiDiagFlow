@@ -1835,7 +1835,7 @@ export default function JobDetailsPage() {
   }
 
   return (
-    <PageLayout title="Job Details" description={`Job ID: ${job.id}`}>
+    <PageLayout title={job.name || "Job Details"} description={`Job #${job.id.slice(0, 8).toUpperCase()}`}>
       <div className="ds-container">
         {/* Action Bar */}
         <div className="ds-flex-between" style={{ marginBottom: spacing[6] }}>
