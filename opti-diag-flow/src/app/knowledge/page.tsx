@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from '@/components/layout/page-layout'
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, Button, Badge, StatCard } from '@/components/design-system'
+import { colors, spacing } from '@/lib/design-system/tokens'
 import { AlertCircle, CheckCircle, Database, Search, Upload, Download, Zap, BookOpen, Code, Wrench, Package } from 'lucide-react';
 
 interface ECUDefinition {
@@ -334,434 +333,226 @@ export default function KnowledgePage() {
       title="Knowledge Repository"
       description="Manage ECU, DID, DTC, and Routine definitions across different vehicle hierarchies"
     >
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        padding: '32px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-      }}>
+      <div className="ds-container">
 
       {/* Stats Cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '16px',
-        marginBottom: '32px'
-      }}>
-        <div style={{
-          backgroundColor: '#f9fafb',
-          borderRadius: '8px',
-          padding: '20px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>ECU Definitions</p>
-              <p style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>{stats?.ecuCount || 0}</p>
-              <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>Discovered from parsed jobs</p>
-            </div>
-            <Package size={24} style={{ color: '#3b82f6' }} />
-          </div>
-        </div>
-
-        <div style={{
-          backgroundColor: '#f9fafb',
-          borderRadius: '8px',
-          padding: '20px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>DID Definitions</p>
-              <p style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>{stats?.didCount || 0}</p>
-              <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>Discovered from parsed jobs</p>
-            </div>
-            <BookOpen size={24} style={{ color: '#10b981' }} />
-          </div>
-        </div>
-
-        <div style={{
-          backgroundColor: '#f9fafb',
-          borderRadius: '8px',
-          padding: '20px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>DTC Definitions</p>
-              <p style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>{stats?.dtcCount || 0}</p>
-              <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>Discovered from parsed jobs</p>
-            </div>
-            <AlertCircle size={24} style={{ color: '#f97316' }} />
-          </div>
-        </div>
-
-        <div style={{
-          backgroundColor: '#f9fafb',
-          borderRadius: '8px',
-          padding: '20px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Routine Definitions</p>
-              <p style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>{stats?.routineCount || 0}</p>
-              <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>Discovered from parsed jobs</p>
-            </div>
-            <Wrench size={24} style={{ color: '#8b5cf6' }} />
-          </div>
-        </div>
+      <div className="ds-grid-4" style={{ marginBottom: spacing[8] }}>
+        <StatCard
+          label="ECU Definitions"
+          value={stats?.ecuCount || 0}
+          icon={<Package size={24} />}
+          color="primary"
+          loading={loading}
+          helpText="Discovered from parsed jobs"
+        />
+        <StatCard
+          label="DID Definitions"
+          value={stats?.didCount || 0}
+          icon={<BookOpen size={24} />}
+          color="success"
+          loading={loading}
+          helpText="Discovered from parsed jobs"
+        />
+        <StatCard
+          label="DTC Definitions"
+          value={stats?.dtcCount || 0}
+          icon={<AlertCircle size={24} />}
+          color="warning"
+          loading={loading}
+          helpText="Discovered from parsed jobs"
+        />
+        <StatCard
+          label="Routine Definitions"
+          value={stats?.routineCount || 0}
+          icon={<Wrench size={24} />}
+          color="purple"
+          loading={loading}
+          helpText="Discovered from parsed jobs"
+        />
       </div>
 
       {/* Reparse All Jobs Button */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        marginBottom: '24px'
-      }}>
+      <div className="ds-flex-center" style={{ marginBottom: spacing[6] }}>
         <Button
+          variant="error"
           onClick={handleReparseAllJobs}
           disabled={reparsingAll}
-          style={{
-            backgroundColor: reparsingAll ? '#9ca3af' : '#dc2626',
-            color: '#ffffff',
-            padding: '12px 24px',
-            fontSize: '16px',
-            fontWeight: '600',
-            borderRadius: '8px',
-            border: 'none',
-            cursor: reparsingAll ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
+          icon={reparsingAll ? undefined : <Zap size={16} />}
         >
-          {reparsingAll ? (
-            <>
-              ⏳ Reparsing All Jobs...
-            </>
-          ) : (
-            <>
-              <Zap size={16} />
-              Reparse All Jobs
-            </>
-          )}
+          {reparsingAll ? 'Reparsing All Jobs...' : 'Reparse All Jobs'}
         </Button>
       </div>
 
       {/* Main Content */}
-      <div style={{
-        backgroundColor: '#fafafa',
-        borderRadius: '8px',
-        padding: '24px',
-        border: '1px solid #e5e7eb'
-      }}>
+      <Card>
+        <div className="ds-flex-between" style={{ marginBottom: spacing[6] }}>
+          <div className="ds-tab-group">
+            <button
+              className={`ds-tab ${activeTab === 'ecu' ? 'ds-tab-active' : ''}`}
+              onClick={() => setActiveTab('ecu')}
+            >
+              ECUs
+            </button>
+            <button
+              className={`ds-tab ${activeTab === 'did' ? 'ds-tab-active' : ''}`}
+              onClick={() => setActiveTab('did')}
+            >
+              DIDs
+            </button>
+            <button
+              className={`ds-tab ${activeTab === 'dtc' ? 'ds-tab-active' : ''}`}
+              onClick={() => setActiveTab('dtc')}
+            >
+              DTCs
+            </button>
+            <button
+              className={`ds-tab ${activeTab === 'routine' ? 'ds-tab-active' : ''}`}
+              onClick={() => setActiveTab('routine')}
+            >
+              Routines
+            </button>
+          </div>
+          <div className="ds-flex-row" style={{ gap: spacing[3] }}>
+            <Button
+              variant="secondary"
+              onClick={handleExport}
+              icon={<Download size={16} />}
+            >
+              Export
+            </Button>
+          </div>
+        </div>
+
+        {/* Filters */}
         <div style={{
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '24px'
+          gap: spacing[4],
+          marginBottom: spacing[6],
+          flexWrap: 'wrap'
         }}>
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            backgroundColor: '#e5e7eb',
-            borderRadius: '8px',
-            padding: '4px'
-          }}>
-              <button
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: activeTab === 'ecu' ? '#3b82f6' : 'transparent',
-                  color: activeTab === 'ecu' ? '#ffffff' : '#6b7280',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-                onClick={() => setActiveTab('ecu')}
-              >
-                ECUs
-              </button>
-              <button
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: activeTab === 'did' ? '#3b82f6' : 'transparent',
-                  color: activeTab === 'did' ? '#ffffff' : '#6b7280',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-                onClick={() => setActiveTab('did')}
-              >
-                DIDs
-              </button>
-              <button
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: activeTab === 'dtc' ? '#3b82f6' : 'transparent',
-                  color: activeTab === 'dtc' ? '#ffffff' : '#6b7280',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-                onClick={() => setActiveTab('dtc')}
-              >
-                DTCs
-              </button>
-              <button
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: activeTab === 'routine' ? '#3b82f6' : 'transparent',
-                  color: activeTab === 'routine' ? '#ffffff' : '#6b7280',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-                onClick={() => setActiveTab('routine')}
-              >
-                Routines
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={handleExport}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 16px',
-                  backgroundColor: '#ffffff',
-                  color: '#374151',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                <Download size={16} />
-                Export
-              </button>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                backgroundColor: '#ffffff',
-                color: '#374151',
-                border: '1px solid #e5e7eb',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}>
-                <Upload size={16} />
-                Import
-                <input
-                  type="file"
-                  accept=".json"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImport(file);
-                  }}
-                />
-              </label>
-            </div>
+          <div className="ds-form-group" style={{ minWidth: '150px', flex: '0 1 200px' }}>
+            <label className="ds-label">OEM</label>
+            <select
+              value={selectedOem}
+              onChange={(e) => {
+                setSelectedOem(e.target.value);
+                setSelectedModel('all');
+                setSelectedModelYear('all');
+              }}
+              className="ds-select"
+            >
+              <option value="all">All OEMs</option>
+              {oems.map(oem => (
+                <option key={oem.id} value={oem.id}>
+                  {oem.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Filters */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-            gap: '16px',
-            marginBottom: '24px'
-          }}>
-            <div>
-              <p style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>OEM</p>
+          {selectedOem !== 'all' && (
+            <div className="ds-form-group" style={{ minWidth: '150px', flex: '0 1 200px' }}>
+              <label className="ds-label">Model</label>
               <select
-                value={selectedOem}
+                value={selectedModel}
                 onChange={(e) => {
-                  setSelectedOem(e.target.value);
-                  setSelectedModel('all');
+                  setSelectedModel(e.target.value);
                   setSelectedModelYear('all');
                 }}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px',
-                  backgroundColor: '#ffffff',
-                  color: '#374151',
-                  fontSize: '14px',
-                  outline: 'none',
-                  cursor: 'pointer'
-                }}
+                className="ds-select"
               >
-                <option value="all">All OEMs</option>
-                {oems.map(oem => (
-                  <option key={oem.id} value={oem.id}>
-                    {oem.name}
+                <option value="all">All Models</option>
+                {filteredModels.map(model => (
+                  <option key={model.id} value={model.id}>
+                    {model.name}
                   </option>
                 ))}
               </select>
             </div>
+          )}
 
-            {selectedOem !== 'all' && (
-              <div>
-                <p style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>Model</p>
-                <select
-                  value={selectedModel}
-                  onChange={(e) => {
-                    setSelectedModel(e.target.value);
-                    setSelectedModelYear('all');
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    backgroundColor: '#ffffff',
-                    color: '#374151',
-                    fontSize: '14px',
-                    outline: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="all">All Models</option>
-                  {filteredModels.map(model => (
-                    <option key={model.id} value={model.id}>
-                      {model.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+          {selectedModel !== 'all' && (
+            <div className="ds-form-group" style={{ minWidth: '150px', flex: '0 1 200px' }}>
+              <label className="ds-label">Model Year</label>
+              <select
+                value={selectedModelYear}
+                onChange={(e) => setSelectedModelYear(e.target.value)}
+                className="ds-select"
+              >
+                <option value="all">All Years</option>
+                {filteredModelYears.map(year => (
+                  <option key={year.id} value={year.id}>
+                    {year.year}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-            {selectedModel !== 'all' && (
-              <div>
-                <p style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>Model Year</p>
-                <select
-                  value={selectedModelYear}
-                  onChange={(e) => setSelectedModelYear(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    backgroundColor: '#ffffff',
-                    color: '#374151',
-                    fontSize: '14px',
-                    outline: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="all">All Years</option>
-                  {filteredModelYears.map(year => (
-                    <option key={year.id} value={year.id}>
-                      {year.year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div style={{ gridColumn: 'span 2' }}>
-              <p style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>Search</p>
-              <div style={{ position: 'relative' }}>
-                <Search size={16} style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af'
-                }} />
-                <input
-                  type="text"
-                  placeholder="Search definitions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px 8px 40px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
+          <div className="ds-form-group" style={{ minWidth: '200px', flex: '1 1 300px', maxWidth: '400px' }}>
+            <label className="ds-label">Search</label>
+            <div className="ds-search-wrapper">
+              <Search size={16} className="ds-search-icon" />
+              <input
+                type="text"
+                placeholder="Search definitions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="ds-search-input"
+                style={{ width: '100%' }}
+              />
             </div>
           </div>
+        </div>
 
-          {/* Definitions Table */}
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '8px',
-            border: '1px solid #e5e7eb',
-            overflow: 'hidden'
-          }}>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: '13px'
-            }}>
-              <thead style={{
-                backgroundColor: '#f9fafb',
-                borderBottom: '2px solid #e5e7eb'
-              }}>
+        {/* Definitions Table */}
+        <Card variant="nested">
+            <table className="ds-table">
+              <thead>
                 <tr>
                   {activeTab === 'ecu' && (
                     <>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Address</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Name</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Description</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Job Name</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>OEM</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Model</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Model Year</th>
+                      <th>Address</th>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Job Name</th>
+                      <th>OEM</th>
+                      <th>Model</th>
+                      <th>Model Year</th>
                     </>
                   )}
                   {activeTab === 'did' && (
                     <>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>DID</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Name</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Description</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Data Type</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Job Name</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>OEM</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Model</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Model Year</th>
+                      <th>DID</th>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Data Type</th>
+                      <th>Job Name</th>
+                      <th>OEM</th>
+                      <th>Model</th>
+                      <th>Model Year</th>
                     </>
                   )}
                   {activeTab === 'dtc' && (
                     <>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Code</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Description</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Severity</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Job Name</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>OEM</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Model</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Model Year</th>
+                      <th>Code</th>
+                      <th>Description</th>
+                      <th>Severity</th>
+                      <th>Job Name</th>
+                      <th>OEM</th>
+                      <th>Model</th>
+                      <th>Model Year</th>
                     </>
                   )}
                   {activeTab === 'routine' && (
                     <>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Routine ID</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Name</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Description</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Job Name</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>OEM</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Model</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Model Year</th>
+                      <th>Routine ID</th>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Job Name</th>
+                      <th>OEM</th>
+                      <th>Model</th>
+                      <th>Model Year</th>
                     </>
                   )}
                 </tr>
@@ -769,154 +560,91 @@ export default function KnowledgePage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={activeTab === 'ecu' ? 7 : activeTab === 'did' ? 8 : activeTab === 'dtc' ? 7 : 7} style={{
-                      textAlign: 'center',
-                      padding: '32px',
-                      color: '#9ca3af'
-                    }}>
-                      Loading definitions...
+                    <td colSpan={activeTab === 'ecu' ? 7 : activeTab === 'did' ? 8 : activeTab === 'dtc' ? 7 : 7} className="ds-table-empty">
+                      <div className="ds-loading-container">
+                        <div className="ds-spinner-large" />
+                        <p className="ds-text-secondary">Loading definitions...</p>
+                      </div>
                     </td>
                   </tr>
                 ) : filteredDefinitions.length === 0 ? (
                   <tr>
-                    <td colSpan={activeTab === 'ecu' ? 7 : activeTab === 'did' ? 8 : activeTab === 'dtc' ? 7 : 7} style={{
-                      textAlign: 'center',
-                      padding: '48px',
-                      color: '#6b7280'
-                    }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                        <Database size={32} style={{ color: '#9ca3af' }} />
-                        <div>
-                          <p style={{ fontSize: '16px', fontWeight: '500', margin: '0 0 8px 0' }}>
-                            No {activeTab.toUpperCase()} definitions yet
-                          </p>
-                          <p style={{ fontSize: '14px', margin: 0, lineHeight: '1.5' }}>
-                            Knowledge base definitions are automatically discovered and populated<br/>
-                            when processing diagnostic jobs. Upload and parse trace files to build your knowledge base.
-                          </p>
-                        </div>
+                    <td colSpan={activeTab === 'ecu' ? 7 : activeTab === 'did' ? 8 : activeTab === 'dtc' ? 7 : 7} className="ds-table-empty">
+                      <div className="ds-empty-state">
+                        <Database size={32} color={colors.gray[400]} />
+                        <h3 className="ds-heading-3">
+                          No {activeTab.toUpperCase()} definitions yet
+                        </h3>
+                        <p className="ds-text-secondary">
+                          Knowledge base definitions are automatically discovered and populated<br/>
+                          when processing diagnostic jobs. Upload and parse trace files to build your knowledge base.
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   filteredDefinitions.map((def) => (
-                    <tr key={def.id} style={{
-                      borderBottom: '1px solid #f3f4f6'
-                    }}>
+                    <tr key={def.id}>
                       {activeTab === 'ecu' && (
                         <>
-                          <td style={{
-                            padding: '12px 16px',
-                            fontFamily: 'monospace',
-                            fontSize: '12px'
-                          }}>{def.address}</td>
-                          <td style={{ padding: '12px 16px' }} onClick={() => !editingId && handleEditStart(def)}>
+                          <td className="ds-text-mono">{def.address}</td>
+                          <td onClick={() => !editingId && handleEditStart(def)}>
                             {editingId === def.id ? (
                               <input
                                 type="text"
                                 value={editingValues.name || ''}
                                 onChange={(e) => setEditingValues({...editingValues, name: e.target.value})}
                                 onClick={(e) => e.stopPropagation()}
-                                style={{
-                                  padding: '4px 8px',
-                                  fontSize: '13px',
-                                  border: '1px solid #3b82f6',
-                                  borderRadius: '4px',
-                                  backgroundColor: '#ffffff',
-                                  outline: 'none'
-                                }}
+                                className="ds-input-inline"
                               />
                             ) : (
-                              <span style={{
-                                fontSize: '11px',
-                                backgroundColor: '#f3f4f6',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                border: '1px solid #e5e7eb',
-                                cursor: 'pointer'
-                              }}>{def.name}</span>
+                              <Badge variant="secondary" size="small">{def.name}</Badge>
                             )}
                           </td>
-                          <td style={{ padding: '12px 16px' }}>
+                          <td>
                             {editingId === def.id ? (
-                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <div className="ds-flex-row" style={{ gap: spacing[2] }}>
                                 <input
                                   type="text"
                                   value={editingValues.description || ''}
                                   onChange={(e) => setEditingValues({...editingValues, description: e.target.value})}
                                   placeholder="Add description"
-                                  style={{
-                                    flex: 1,
-                                    padding: '4px 8px',
-                                    fontSize: '13px',
-                                    border: '1px solid #3b82f6',
-                                    borderRadius: '4px',
-                                    backgroundColor: '#ffffff',
-                                    outline: 'none'
-                                  }}
+                                  className="ds-input-inline"
+                                  style={{ flex: 1 }}
                                 />
-                                <button
+                                <Button
+                                  variant="success"
+                                  size="small"
                                   onClick={() => handleEditSave(def)}
-                                  style={{
-                                    padding: '4px 8px',
-                                    backgroundColor: '#10b981',
-                                    color: '#ffffff',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    fontSize: '12px',
-                                    cursor: 'pointer'
-                                  }}
-                                >✓</button>
-                                <button
+                                >
+                                  ✓
+                                </Button>
+                                <Button
+                                  variant="error"
+                                  size="small"
                                   onClick={handleEditCancel}
-                                  style={{
-                                    padding: '4px 8px',
-                                    backgroundColor: '#ef4444',
-                                    color: '#ffffff',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    fontSize: '12px',
-                                    cursor: 'pointer'
-                                  }}
-                                >✕</button>
+                                >
+                                  ✕
+                                </Button>
                               </div>
                             ) : (
                               <span
                                 onClick={() => handleEditStart(def)}
-                                style={{
-                                  display: 'block',
-                                  padding: '4px 8px',
-                                  fontSize: '13px',
-                                  color: def.description ? '#374151' : '#9ca3af',
-                                  cursor: 'pointer',
-                                  borderRadius: '4px',
-                                  border: '1px solid transparent',
-                                  transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                className="ds-editable-text"
                               >
                                 {def.description || 'Click to add description'}
                               </span>
                             )}
                           </td>
-                          <td style={{
-                            padding: '12px 16px',
-                            fontSize: '13px',
-                            color: '#6b7280'
-                          }}>{def.jobName || '-'}</td>
-                          <td style={{ padding: '12px 16px', fontSize: '13px' }}>{def.oem?.name || '-'}</td>
-                          <td style={{ padding: '12px 16px', fontSize: '13px' }}>{def.model?.name || '-'}</td>
-                          <td style={{ padding: '12px 16px', fontSize: '13px' }}>{def.modelYear?.year || '-'}</td>
+                          <td className="ds-text-secondary">{def.jobName || '-'}</td>
+                          <td>{def.oem?.name || '-'}</td>
+                          <td>{def.model?.name || '-'}</td>
+                          <td>{def.modelYear?.year || '-'}</td>
                         </>
                       )}
                       {activeTab === 'did' && (
                         <>
-                          <td style={{
-                            padding: '12px 16px',
-                            fontFamily: 'monospace',
-                            fontSize: '12px'
-                          }}>{def.did}</td>
+                          <td className="ds-text-mono">{def.did}</td>
                           <td style={{ padding: '12px 16px' }} onClick={() => !editingId && handleEditStart(def)}>
                             {editingId === def.id ? (
                               <input
@@ -1224,8 +952,8 @@ export default function KnowledgePage() {
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
+        </Card>
+      </Card>
       </div>
     </PageLayout>
   );

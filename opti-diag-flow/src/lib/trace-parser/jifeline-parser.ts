@@ -1,4 +1,135 @@
-import { DoipTraceMessage, DTCInfo, DiagnosticProcedure, DoipTraceData } from '../doip-parser'
+// All types are now defined in this file - single parser for all Jifeline trace files
+
+// Core message types
+export interface DoipTraceMessage {
+  lineNumber: number
+  timestamp: string
+  direction: 'Local->Remote' | 'Remote->Local' | 'Server->Tracer'
+  protocol: string
+  diagnosticProtocol?: 'OBD-II' | 'UDS' | 'KWP2000' // Indicates diagnostic protocol: OBD-II, UDS, or KWP2000
+  messageId?: string
+  sourceAddr?: string
+  targetAddr?: string
+  data?: string
+  metadata?: {
+    key: string
+    value: string
+    module?: string
+    canId?: string
+    args?: string[]
+  }
+}
+
+export interface DTCInfo {
+  code: string
+  status: string
+  statusByte: string
+  rawHex?: string  // Original hex bytes before conversion to P/B/U code
+  description?: string
+  snapshotData?: {
+    recordNumber: string
+    data: string
+    decodedData?: { [key: string]: any }
+  }[]
+  extendedData?: {
+    recordNumber: string
+    data: string
+    decodedData?: { [key: string]: any }
+  }[]
+}
+
+export interface DiagnosticProcedure {
+  id: string
+  ecuAddress: string
+  procedureType: 'session_control' | 'security_access' | 'data_reading' | 'dtc_management' | 'routine_control' | 'tester_present'
+  procedureName: string
+  startTime?: Date
+  endTime?: Date
+  status: 'started' | 'completed' | 'failed' | 'timeout'
+  messages: DoipTraceMessage[]
+  extractedData?: {
+    dataIdentifiers?: { [key: string]: string }
+    partNumbers?: string[]
+    dtcs?: string[]
+    dtcDetails?: DTCInfo[]
+    dtcPhase?: 'pre-scan' | 'post-scan'
+    routineResults?: string[]
+    sessionType?: string
+    securityLevel?: string
+  }
+  requestCount: number
+  responseCount: number
+  errorCount: number
+}
+
+export interface EcuDiagnosticSummary {
+  address: string
+  name?: string
+  procedures: DiagnosticProcedure[]
+  totalProcedures: number
+  successfulProcedures: number
+  failedProcedures: number
+  dataIdentifiersRead: number
+  dtcsFound: number
+  routinesExecuted: number
+  securityAccess: boolean
+  lastActivity?: Date
+}
+
+export interface ParsedTraceData {
+  messages: DoipTraceMessage[]
+  ecus: Map<string, EcuInfo>
+  services: Map<string, ServiceInfo>
+  procedures: DiagnosticProcedure[]
+  ecuDiagnostics: Map<string, EcuDiagnosticSummary>
+  metadata: {
+    protocol?: string
+    probableOEM?: string
+    startTime?: Date
+    endTime?: Date
+    duration?: number
+    messageCount: number
+    ecuCount: number
+    totalProcedures: number
+    successfulProcedures: number
+    failedProcedures: number
+    procedureCount?: number
+    discoveries?: any
+    // Jifeline metadata
+    metadataMessages?: DoipTraceMessage[]
+    vehicleVoltage?: Array<{ timestamp: string; voltage: number }>
+    connectionInfo?: Record<string, any>
+    connectorMetrics?: Record<string, any>
+    ecuChannels?: Array<{
+      name: string
+      protocol: string
+      pins?: string
+      addresses?: string
+      status?: string
+      timestamp?: string
+    }>
+  }
+}
+
+export interface EcuInfo {
+  address: string
+  name?: string
+  messagesSent: number
+  messagesReceived: number
+  firstSeen?: Date
+  lastSeen?: Date
+}
+
+export interface ServiceInfo {
+  serviceId: string
+  serviceName: string
+  requestCount: number
+  responseCount: number
+  errorCount: number
+}
+
+// Compatibility alias for legacy code
+export type DoipTraceData = ParsedTraceData
 
 export interface JifelineMessage {
   lineNumber: number
@@ -127,19 +258,98 @@ export class JifelineParser {
     const procedures: DiagnosticProcedure[] = []
     let currentProcedure: DiagnosticProcedure | null = null
 
+    // Metadata collection
+    const metadataMessages: DoipTraceMessage[] = []
+    const vehicleVoltage: Array<{ timestamp: string; voltage: number }> = []
+    const connectionInfo: Record<string, any> = {}
+    const connectorMetrics: Record<string, any> = {}
+    const ecuChannels: Array<any> = []
+
     for (const line of lines) {
       const message = this.parseJifelineLine(line)
       if (!message) continue
 
-      // Track ECUs
-      this.trackECU(message)
+      // Collect metadata messages separately
+      if (message.direction === 'Server->Tracer' && message.metadata) {
+        metadataMessages.push(message)
 
-      // Convert to DoipTraceMessage for compatibility
-      const doipMsg = this.toDoipMessage(message)
-      messages.push(doipMsg)
+        // Extract specific metadata
+        const { key, value } = message.metadata
+
+        // Extract voltage
+        if (key === 'vehicle:info:voltage' && value) {
+          const voltage = parseFloat(value)
+          if (!isNaN(voltage)) {
+            vehicleVoltage.push({ timestamp: message.timestamp, voltage })
+          }
+        }
+
+        // Extract connection info
+        if (key.startsWith('connection:')) {
+          const subKey = key.replace('connection:', '').replace(/:/g, '_')
+          connectionInfo[subKey] = value
+        }
+
+        // Extract connector metrics
+        if (key.startsWith('connectors:')) {
+          const parts = key.split(':')
+          if (parts.length >= 3) {
+            const connectorId = parts[1]
+            const metricType = parts.slice(2).join('_')
+            if (!connectorMetrics[connectorId]) {
+              connectorMetrics[connectorId] = {}
+            }
+            connectorMetrics[connectorId][metricType] = value
+          }
+        }
+
+        // Extract ECU channel info
+        if (key.startsWith('ecu:channel:')) {
+          const parts = key.split(':')
+          if (parts.length >= 4) {
+            const channelInfo = {
+              name: parts.slice(2, -1).join(':'),
+              protocol: parts[2] || 'unknown',
+              timestamp: message.timestamp
+            }
+
+            // Parse additional info from the key
+            if (parts[3].includes('-')) {
+              const subParts = parts[3].split('-')
+              if (subParts.length >= 4) {
+                channelInfo['pins'] = `${subParts[0]}-${subParts[1]}`
+                channelInfo['addresses'] = `${subParts[2]}-${subParts[3]}`
+              }
+            }
+
+            // Get status from last part
+            const lastPart = parts[parts.length - 1]
+            if (lastPart === 'since' || lastPart === 'until') {
+              channelInfo['status'] = lastPart
+            }
+
+            ecuChannels.push(channelInfo)
+          }
+        }
+
+        continue // Skip adding to UDS Flow
+      }
+
+      // Track ECUs (only for messages with actual data)
+      if (message.data && message.data.trim().length > 0) {
+        this.trackECU(message)
+      }
+
+      // Convert to unified message format for all protocols
+      const unifiedMsg = this.toUnifiedMessage(message)
+
+      // Only add messages with valid UDS data to the flow
+      if (unifiedMsg.data && unifiedMsg.data.trim().length > 0) {
+        messages.push(unifiedMsg)
+      }
 
       // Track procedures
-      const newProcedure = this.detectProcedure(doipMsg)
+      const newProcedure = this.detectProcedure(unifiedMsg)
       if (newProcedure) {
         if (currentProcedure) {
           currentProcedure.endTime = this.currentTime
@@ -150,8 +360,8 @@ export class JifelineParser {
       }
 
       if (currentProcedure) {
-        currentProcedure.messages.push(doipMsg)
-        this.updateProcedureData(currentProcedure, doipMsg)
+        currentProcedure.messages.push(unifiedMsg)
+        this.updateProcedureData(currentProcedure, unifiedMsg)
       }
     }
 
@@ -165,17 +375,28 @@ export class JifelineParser {
     // Generate summary of discoveries
     const ecuSummary = this.generateECUSummary()
 
+    // Detect protocol and probable OEM
+    const detectedProtocol = this.detectProtocol(messages)
+    const probableOEM = this.detectProbableOEM(detectedProtocol, messages)
+
     return {
       messages,
       procedures,
       metadata: {
-        protocol: this.detectProtocol(messages),
-        startTime: messages[0]?.timestamp || '',
-        endTime: messages[messages.length - 1]?.timestamp || '',
+        protocol: detectedProtocol,
+        probableOEM,
+        startTime: messages[0] ? this.parseTime(messages[0].timestamp) : this.currentTime,
+        endTime: messages[messages.length - 1] ? this.parseTime(messages[messages.length - 1].timestamp) : this.currentTime,
         messageCount: messages.length,
         procedureCount: procedures.length,
         ecuCount: this.ecus.size,
-        discoveries: ecuSummary
+        discoveries: ecuSummary,
+        // Include Jifeline metadata
+        metadataMessages,
+        vehicleVoltage: vehicleVoltage.length > 0 ? vehicleVoltage : undefined,
+        connectionInfo: Object.keys(connectionInfo).length > 0 ? connectionInfo : undefined,
+        connectorMetrics: Object.keys(connectorMetrics).length > 0 ? connectorMetrics : undefined,
+        ecuChannels: ecuChannels.length > 0 ? ecuChannels : undefined
       }
     }
   }
@@ -255,7 +476,7 @@ export class JifelineParser {
     return null
   }
 
-  private toDoipMessage(msg: JifelineMessage): DoipTraceMessage {
+  private toUnifiedMessage(msg: JifelineMessage): DoipTraceMessage {
     // Extract addresses from args
     let sourceAddr = ''
     let targetAddr = ''
@@ -266,27 +487,116 @@ export class JifelineParser {
       targetAddr = msg.args[1]
     } else if (msg.args.length > 0) {
       // CAN/ISOTP format
-      const canId = msg.args[0]
-      if (canId.startsWith('0x18DA') || canId.startsWith('18DA')) {
-        // Extended CAN ID format: 0x18DAxxYY where xx is target, YY is source
-        const id = canId.replace('0x', '')
-        targetAddr = id.slice(6, 8)
-        sourceAddr = id.slice(8, 10)
+      const canId = msg.args[0].replace(/^0x/i, '').toUpperCase()
+      if (canId.startsWith('18DA') || canId.startsWith('18DB')) {
+        // Extended CAN ID format for Honda/Hyundai/Kia: 18DAttSS or 18DBttSS where tt is target, SS is source
+        // Honda uses 18DA (e.g., 18DAB0F1)
+        // Hyundai/Kia uses 18DB (e.g., 18DB33F1)
+        // Examples:
+        // - 0x18DAB0F1 (Local->Remote): target=B0, source=F1 (tester to ECU)
+        // - 0x18DAF1B0 (Remote->Local): target=F1, source=B0 (ECU to tester)
+        const target = canId.slice(4, 6) // Characters 4-5 (target address)
+        const source = canId.slice(6, 8) // Characters 6-7 (source address)
+
+        // The CAN ID already contains the correct source and target
+        // No need to swap based on direction
+        sourceAddr = source
+        targetAddr = target
+      } else if (canId.startsWith('07')) {
+        // Standard OBD-II addressing for EOBD and HYUNDAI/KIA ISOTP
+        if (msg.protocol === 'HYUNDAI/KIA ISOTP') {
+          // For Hyundai/KIA, recognize paired addressing
+          // Tester uses 07Cx, ECU responds on 07Cx+8
+          // Example: Tester 07C4 <-> ECU 07CC
+          if (msg.direction === 'Local->Remote') {
+            // This is a request from tester (e.g., 07C4)
+            // The ECU will be at this address + 8
+            const testerAddr = parseInt(canId, 16)
+            const ecuAddrNum = testerAddr + 8
+            const ecuAddr = ecuAddrNum.toString(16).toUpperCase().padStart(4, '0')
+            sourceAddr = 'TESTER'
+            targetAddr = ecuAddr
+          } else if (msg.direction === 'Remote->Local') {
+            // This is a response from ECU (e.g., 07CC)
+            sourceAddr = canId
+            targetAddr = 'TESTER'
+          }
+        } else {
+          // Standard EOBD addressing
+          if (msg.direction === 'Local->Remote') {
+            sourceAddr = 'TESTER'
+            targetAddr = canId
+          } else if (msg.direction === 'Remote->Local') {
+            sourceAddr = canId
+            targetAddr = 'TESTER'
+          }
+        }
+      }
+    } else if (msg.protocol === 'ISO14230') {
+      // ISO14230 K-line protocol - no CAN addressing, use module names
+      if (msg.module && msg.module.startsWith('K-line')) {
+        // For K-line, we'll use a generic addressing scheme
+        if (msg.direction === 'Local->Remote') {
+          sourceAddr = 'TESTER'
+          targetAddr = msg.module
+        } else if (msg.direction === 'Remote->Local') {
+          sourceAddr = msg.module
+          targetAddr = 'TESTER'
+        }
       }
     }
 
     // Keep addresses as they are in the trace file
     // The trace file already has the correct source and target
 
+    // Determine the diagnostic protocol based on transport protocol and service ID
+    let diagnosticProtocol: 'OBD-II' | 'UDS' | 'KWP2000' | undefined
+
+    // EOBD and PLUGIN 56 use OBD-II protocol
+    if (msg.protocol === 'EOBD' || msg.protocol === 'PLUGIN 56') {
+      diagnosticProtocol = 'OBD-II'
+    } else if (msg.protocol === 'ISO14230') {
+      // ISO 14230 is KWP2000 (Keyword Protocol 2000), not UDS
+      diagnosticProtocol = 'KWP2000'
+    } else if (msg.protocol === 'DoIP' || msg.protocol === 'HONDA ISOTP' ||
+               msg.protocol === 'HYUNDAI/KIA ISOTP') {
+      // These protocols use full UDS
+      diagnosticProtocol = 'UDS'
+    }
+    // If protocol is undefined, empty, or "UNDEFINED", leave diagnosticProtocol as undefined
+
+    // Additionally validate if service ID matches expected protocol
+    if (msg.data) {
+      // Remove any 0x prefix and get the service ID
+      let cleanData = msg.data.trim().replace(/^0x/i, '')
+
+      // Skip ISO-TP frame header if present (single frame 01-07)
+      const firstByte = cleanData.substring(0, 2)
+      if (['01', '02', '03', '04', '05', '06', '07'].includes(firstByte)) {
+        cleanData = cleanData.substring(2)
+      }
+
+      const serviceId = cleanData.substring(0, 2).toUpperCase()
+
+      // For EOBD, validate it's using OBD-II services
+      if (msg.protocol === 'EOBD') {
+        const obdiiServices = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '0A',
+                              '41', '42', '43', '44', '45', '46', '47', '48', '49', '4A']
+        // EOBD should always be OBD-II regardless of service
+        diagnosticProtocol = 'OBD-II'
+      }
+    }
+
     return {
       lineNumber: msg.lineNumber,
       timestamp: msg.timestamp,
       direction: msg.direction,
       protocol: msg.protocol,
+      diagnosticProtocol,
       messageId: msg.command,
       sourceAddr,
       targetAddr,
-      data: msg.data,
+      data: msg.data || '',
       metadata: msg.metadata
     }
   }
@@ -312,17 +622,59 @@ export class JifelineParser {
           ecuAddr = source
         }
       }
-    } else if (msg.direction === 'Local->Remote' && msg.args.length > 0) {
-      const canId = msg.args[0]
-      if (canId.includes('DA')) {
-        // Extract target address from CAN ID
-        ecuAddr = canId.slice(-4, -2)
+    } else if ((msg.direction === 'Local->Remote' || msg.direction === 'Remote->Local') && msg.args.length > 0) {
+      // Handle CAN-based protocols (ISO-TP, EOBD, HYUNDAI/KIA ISOTP, etc)
+      const canId = msg.args[0].replace(/^0x/i, '').toUpperCase()
+
+      if (canId.startsWith('18DA') || canId.startsWith('18DB')) {
+        // ISO-TP Extended for Honda/Hyundai/Kia: 18DAttSS or 18DBttSS where tt=target, SS=source
+        // Honda uses 18DA (e.g., 18DAB0F1)
+        // Hyundai/Kia uses 18DB (e.g., 18DB33F1)
+        const target = canId.slice(4, 6)
+        const source = canId.slice(6, 8)
+
+        // Identify the ECU address (not the tester F1)
+        if (source === 'F1') {
+          // Tester is source, ECU is target
+          ecuAddr = target
+        } else if (target === 'F1') {
+          // Tester is target, ECU is source
+          ecuAddr = source
+        } else {
+          // Neither is F1, use the non-tester address
+          // F1 is typically the tester for both Honda and Hyundai/Kia
+          ecuAddr = msg.direction === 'Local->Remote' ? target : source
+        }
+      } else if (canId.startsWith('07')) {
+        // Standard OBD-II and HYUNDAI/KIA ISOTP addressing
+        if (msg.protocol === 'HYUNDAI/KIA ISOTP') {
+          // For Hyundai/KIA, recognize paired addressing
+          // Tester uses 07Cx, ECU responds on 07Cx+8
+          // Example: Tester 07C4 <-> ECU 07CC
+          if (msg.direction === 'Local->Remote') {
+            // This is a request from tester (e.g., 07C4)
+            // The ECU will be at this address + 8
+            const testerAddr = parseInt(canId, 16)
+            const ecuAddrNum = testerAddr + 8
+            ecuAddr = ecuAddrNum.toString(16).toUpperCase().padStart(4, '0')
+          } else {
+            // This is a response from ECU (e.g., 07CC)
+            // This is already the ECU address
+            ecuAddr = canId
+          }
+        } else {
+          // Standard EOBD or other protocols
+          ecuAddr = canId
+        }
+      } else if (canId.length === 3 || canId.length === 4) {
+        // Standard CAN IDs
+        ecuAddr = canId
       }
-    } else if (msg.direction === 'Remote->Local' && msg.args.length > 0) {
-      const canId = msg.args[0]
-      if (canId.includes('DA')) {
-        // Extract source address from CAN ID
-        ecuAddr = canId.slice(-2)
+    } else if (msg.protocol === 'ISO14230') {
+      // ISO14230 K-line protocol - extract ECU address from module
+      // Example: mod[K-line1] or mod[K-line2]
+      if (msg.module && msg.module.startsWith('K-line')) {
+        ecuAddr = msg.module // Use module name as ECU identifier for K-line
       }
     }
 
@@ -330,10 +682,10 @@ export class JifelineParser {
 
     // Get or create ECU entry
     if (!this.ecus.has(ecuAddr)) {
-      const ecuName = this.guessECUName(ecuAddr)
+      // Don't guess ECU names - let the knowledge base handle naming
       this.ecus.set(ecuAddr, {
         address: ecuAddr,
-        name: ecuName,
+        name: `ECU_${ecuAddr}`,  // Generic name until user assigns one in knowledge base
         protocol: msg.protocol,
         discoveredServices: new Set(),
         discoveredDIDs: new Map(),
@@ -356,21 +708,23 @@ export class JifelineParser {
   }
 
   private parseUDSData(ecu: DiscoveredECU, msg: JifelineMessage) {
-    const data = msg.data.replace('0x', '')
+    const data = msg.data.replace(/^0x/i, '')
     if (data.length < 2) return
 
-    const serviceId = data.slice(0, 2)
+    const serviceId = data.slice(0, 2).toLowerCase()
 
     // Check for positive responses (service ID + 0x40)
+    // Note: 0x7F is Negative Response, not a positive response
     let actualServiceId = serviceId
     if (msg.direction === 'Remote->Local') {
       const serviceNum = parseInt(serviceId, 16)
-      if (serviceNum >= 0x40) {
+      if (serviceNum >= 0x40 && serviceNum !== 0x7F) {
         // This is a positive response, calculate the original service
         actualServiceId = (serviceNum - 0x40).toString(16).padStart(2, '0')
       }
     }
 
+    // Add the actual service ID
     ecu.discoveredServices.add(actualServiceId)
 
     // Parse based on service ID
@@ -465,15 +819,30 @@ export class JifelineParser {
           // Handle different subfunctions of service 19
           switch (subfunction) {
             case '02': // Report DTC By Status Mask
-            case '0A': // Report Supported DTC
+            case '0a': // Report Supported DTC (case insensitive)
+            case '0A':
+              // Format: 59 02 [StatusAvailabilityMask] [DTC1:3bytes][Status1:1byte]...
+              if (data.length > 6) {
+                // Has status mask (1 byte) + at least one DTC (4 bytes)
+                const statusMask = data.slice(4, 6)
+                console.log(`Status availability mask: ${statusMask}`)
+                if (data.length > 6) {
+                  this.parseDTCReport(ecu, data.slice(6))
+                }
+              }
+              break
+
             case '04': // Report DTC Snapshot Data
             case '06': // Report DTC Extended Data Record
-            case '0F': // Report Mirror Memory DTC By Status Mask
+            case '0f': // Report Mirror Memory DTC By Status Mask
+            case '0F':
             case '14': // Report DTC Fault Detection Counter
             case '15': // Report DTC With Permanent Status
               // All these subfunctions contain DTC data in the response
               console.log(`Parsing DTCs from subfunction ${subfunction}`)
-              this.parseDTCReport(ecu, data.slice(4))
+              if (data.length > 4) {
+                this.parseDTCReport(ecu, data.slice(4))
+              }
               break
 
             case '01': // Report Number Of DTC By Status Mask
@@ -590,6 +959,7 @@ export class JifelineParser {
             code: dtcCode,
             status,
             statusByte,
+            rawHex: dtcBytes, // Store original hex bytes before conversion
             description: `DTC ${dtcCode}`
           })
         }
@@ -677,45 +1047,6 @@ export class JifelineParser {
     return 'binary'
   }
 
-  private guessECUName(address: string): string {
-    const addr = parseInt(address, 16)
-
-    // Check standard ranges
-    for (const [, pattern] of this.ECU_ADDRESS_PATTERNS) {
-      if (addr >= pattern.range[0] && addr <= pattern.range[1]) {
-        // Try to pick a more specific name based on exact address
-        const offset = addr - pattern.range[0]
-        if (offset < pattern.names.length) {
-          return `${pattern.names[offset]}_${address}`
-        }
-        return `${pattern.category}_${address}`
-      }
-    }
-
-    // Special cases for common addresses
-    switch (address.toUpperCase()) {
-      case 'F1': return 'Tester'
-      case 'B0': return 'Camera_B0'
-      case '10': return 'Engine_10'
-      case '11': return 'Transmission_11'
-      case '15': return 'Airbag_15'
-      case '17': return 'Instrument_17'
-      case '19': return 'CAN_Gateway_19'
-      case '25': return 'ABS_ESP_25'
-      case '28': return 'Steering_28'
-      case '40': return 'BCM_40'
-      case '60': return 'Battery_60'
-      case '61': return 'Charger_61'
-      case '1421': return 'Camera_Front_1421'
-      case '1020': return 'Gateway_1020'
-      case '0E80': return 'Tester_0E80'
-      case '1421': return 'Camera_1421'
-      case '1020': return 'Gateway_1020'
-      case '1021': return 'BCM_1021'
-      case '1FFF': return 'Broadcast'
-      default: return `ECU_${address}`
-    }
-  }
 
   private detectProcedure(msg: DoipTraceMessage): DiagnosticProcedure | null {
     if (!msg.data || msg.direction !== 'Local->Remote') return null
@@ -762,7 +1093,10 @@ export class JifelineParser {
       procedureName,
       startTime: this.currentTime,
       status: 'started',
-      messages: []
+      messages: [],
+      requestCount: 0,
+      responseCount: 0,
+      errorCount: 0
     }
   }
 
@@ -772,15 +1106,154 @@ export class JifelineParser {
   }
 
   private detectProtocol(messages: DoipTraceMessage[]): string {
-    // Detect the primary protocol used
-    const protocols = new Set(messages.map(m => m.protocol).filter(Boolean))
-    if (protocols.size === 1) return Array.from(protocols)[0]
+    // Detect the primary protocol used and normalize the naming
+    const protocolCounts = new Map<string, number>()
+    const protocolDetails = new Map<string, { canIdType?: string, addresses?: Set<string> }>()
 
-    // Check for specific manufacturers
-    if (protocols.has('HONDA ISOTP')) return 'HONDA ISOTP'
-    if (protocols.has('DoIP')) return 'DoIP'
+    for (const msg of messages) {
+      if (!msg.protocol) continue
 
-    return 'Mixed'
+      const count = protocolCounts.get(msg.protocol) || 0
+      protocolCounts.set(msg.protocol, count + 1)
+
+      // Collect protocol details for analysis
+      if (!protocolDetails.has(msg.protocol)) {
+        protocolDetails.set(msg.protocol, { addresses: new Set() })
+      }
+
+      const details = protocolDetails.get(msg.protocol)!
+
+      // Analyze CAN ID types for ISO-TP variants
+      if (msg.protocol.includes('ISOTP')) {
+        if (msg.sourceAddr || msg.targetAddr) {
+          // Check if using 29-bit extended CAN IDs (Honda style)
+          if (msg.sourceAddr?.length > 2 || msg.targetAddr?.length > 2) {
+            details.canIdType = '11-bit'
+          }
+        }
+
+        // Track addresses used
+        if (msg.sourceAddr && msg.sourceAddr !== 'TESTER') {
+          details.addresses!.add(msg.sourceAddr)
+        }
+        if (msg.targetAddr && msg.targetAddr !== 'TESTER') {
+          details.addresses!.add(msg.targetAddr)
+        }
+      }
+    }
+
+    // Find the most common protocol
+    let primaryProtocol = ''
+    let maxCount = 0
+
+    for (const [protocol, count] of protocolCounts) {
+      if (count > maxCount) {
+        maxCount = count
+        primaryProtocol = protocol
+      }
+    }
+
+    // Normalize protocol names and add metadata
+    if (primaryProtocol === 'DoIP') {
+      return 'DoIP'
+    } else if (primaryProtocol.includes('ISOTP')) {
+      // All ISOTP variants are actually ISO-TP with different CAN ID addressing
+      const details = protocolDetails.get(primaryProtocol)
+
+      // Determine CAN ID type based on the protocol name pattern
+      if (primaryProtocol === 'HONDA ISOTP') {
+        return 'ISO-TP (29-bit Extended CAN)'
+      } else if (primaryProtocol === 'HYUNDAI/KIA ISOTP' ||
+                 primaryProtocol === 'HYUNDAI ISOTP' ||
+                 primaryProtocol === 'KIA ISOTP') {
+        return 'ISO-TP (11-bit Standard CAN)'
+      } else if (primaryProtocol === 'FORD ISOTP' ||
+                 primaryProtocol === 'TOYOTA ISOTP' ||
+                 primaryProtocol === 'RENAULT ISOTP') {
+        return 'ISO-TP (11-bit Standard CAN)'
+      } else {
+        return 'ISO-TP'
+      }
+    } else if (primaryProtocol === 'ISO14230') {
+      return 'ISO14230 (K-Line)'
+    } else if (primaryProtocol === 'EOBD') {
+      return 'OBD-II/EOBD'
+    } else if (protocolCounts.size > 1) {
+      return 'Mixed'
+    }
+
+    return primaryProtocol || 'Unknown'
+  }
+
+  private detectProbableOEM(protocol: string, messages: DoipTraceMessage[]): string | undefined {
+    // This is a placeholder for OEM detection
+    // In a real system, this would be matched against the knowledge base
+    // or learned from previously identified traces
+
+    // For now, we just return undefined to indicate OEM is unknown
+    // The user will select the correct OEM when creating a job
+    // and the system will learn from that association
+    return undefined
+  }
+
+  // Public method to get protocol characteristics for analysis
+  getProtocolCharacteristics(messages: DoipTraceMessage[]): {
+    protocol: string
+    canIdType?: '11-bit' | '29-bit' | 'mixed'
+    ecuAddresses: string[]
+    addressingScheme?: string
+    originalProtocolLabels: string[]
+  } {
+    const ecuAddresses = new Set<string>()
+    const originalProtocols = new Set<string>()
+    let canIdType: '11-bit' | '29-bit' | 'mixed' | undefined
+
+    for (const msg of messages) {
+      // Collect ECU addresses
+      if (msg.sourceAddr && msg.sourceAddr !== 'TESTER' && msg.sourceAddr !== '0E80' && msg.sourceAddr !== 'F1') {
+        ecuAddresses.add(msg.sourceAddr)
+      }
+      if (msg.targetAddr && msg.targetAddr !== 'TESTER' && msg.targetAddr !== '0E80' && msg.targetAddr !== 'F1') {
+        ecuAddresses.add(msg.targetAddr)
+      }
+
+      // Collect original protocol labels
+      if (msg.protocol) {
+        originalProtocols.add(msg.protocol)
+      }
+
+      // Detect CAN ID type for ISO-TP protocols
+      if (msg.protocol?.includes('ISOTP')) {
+        // Check if using extended CAN IDs (29-bit)
+        if (msg.protocol === 'HONDA ISOTP') {
+          canIdType = canIdType === '11-bit' ? 'mixed' : '29-bit'
+        } else {
+          canIdType = canIdType === '29-bit' ? 'mixed' : '11-bit'
+        }
+      }
+    }
+
+    // Determine addressing scheme
+    let addressingScheme: string | undefined
+    const protocol = this.detectProtocol(messages)
+
+    if (protocol === 'DoIP') {
+      addressingScheme = 'Direct hex addresses (e.g., 1726, 14B3)'
+    } else if (protocol.includes('29-bit')) {
+      addressingScheme = 'Extended CAN ID (0x18DAxxYY format)'
+    } else if (protocol.includes('11-bit')) {
+      addressingScheme = 'Standard CAN ID (0x07xx format)'
+    } else if (protocol === 'ISO14230 (K-Line)') {
+      addressingScheme = 'K-line module identifiers'
+    }
+
+    return {
+      protocol,
+      canIdType,
+      ecuAddresses: Array.from(ecuAddresses).sort(),
+      addressingScheme,
+      originalProtocolLabels: Array.from(originalProtocols)
+    }
   }
 
   private parseTime(timestamp: string): Date {

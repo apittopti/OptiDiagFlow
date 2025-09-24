@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown } from 'lucide-react'
+import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { PageLayout } from '@/components/layout/page-layout'
 import { Card, Button, Badge, StatCard } from '@/components/design-system'
 import { colors, spacing } from '@/lib/design-system/tokens'
@@ -55,6 +56,16 @@ export default function JobDetailsPage() {
   const [messageDisplayLimit, setMessageDisplayLimit] = useState(500) // Increased initial display
   const MESSAGE_INCREMENT = 500 // Load 500 more messages at a time
 
+  // Diagnostic Flow table filters
+  const [flowFilters, setFlowFilters] = useState({
+    transport: '',
+    source: '',
+    target: '',
+    service: '',
+    serviceName: '', // Service name filter
+    direction: '' // Request/Response filter
+  })
+
   // Knowledge base state
   const [knowledgeBaseData, setKnowledgeBaseData] = useState<Record<string, Record<string, string>>>({
     routine: {},
@@ -62,6 +73,56 @@ export default function JobDetailsPage() {
     dtc: {},
     ecu: {}
   })
+
+  // Calculate tab counts and filter options
+  const tabCounts = useMemo(() => {
+    // Services count - count unique service codes from messages
+    const uniqueServices = new Set<string>()
+    const filterOptions = {
+      transports: new Set<string>(),
+      sources: new Set<string>(),
+      targets: new Set<string>(),
+      services: new Set<string>(),
+      serviceNames: new Set<string>(),
+      directions: new Set<string>()
+    }
+
+    if (messages && messages.length > 0) {
+      messages.forEach((msg: any) => {
+        if (msg.data && msg.data.length >= 2) {
+          const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+          if (decoded.service) {
+            uniqueServices.add(decoded.service)
+            filterOptions.services.add(decoded.service)
+            // Add service name to filter options
+            const serviceName = getServiceName(decoded.service, msg.diagnosticProtocol)
+            if (serviceName && serviceName !== 'Unknown') {
+              filterOptions.serviceNames.add(serviceName)
+            }
+          }
+        }
+
+        // Collect filter options
+        if (msg.protocol) filterOptions.transports.add(msg.protocol)
+        if (msg.sourceAddr) filterOptions.sources.add(msg.sourceAddr)
+        if (msg.targetAddr) filterOptions.targets.add(msg.targetAddr)
+        filterOptions.directions.add(msg.isRequest ? 'Request' : 'Response')
+      })
+    }
+
+    return {
+      messages: messages.length || 0,
+      services: uniqueServices.size || 0,
+      filterOptions: {
+        transports: Array.from(filterOptions.transports).sort(),
+        sources: Array.from(filterOptions.sources).sort(),
+        targets: Array.from(filterOptions.targets).sort(),
+        services: Array.from(filterOptions.services).sort(),
+        serviceNames: Array.from(filterOptions.serviceNames).sort(),
+        directions: Array.from(filterOptions.directions).sort()
+      }
+    }
+  }, [messages])
 
   useEffect(() => {
     fetchJob()
@@ -928,8 +989,8 @@ export default function JobDetailsPage() {
           })
           if (pidDescriptions.length > 0) {
             return isRequest
-              ? `Read Current Data - ${pidDescriptions.join(', ')}`
-              : `Current Data Response - ${pidDescriptions.join(', ')}`
+              ? `Read Current Data\n${pidDescriptions.join('\n')}`
+              : `Current Data Response\n${pidDescriptions.join('\n')}`
           }
         }
         return isRequest ? 'Read Current Data' : 'Current Data Response'
@@ -943,8 +1004,8 @@ export default function JobDetailsPage() {
           })
           if (pidDescriptions.length > 0) {
             return isRequest
-              ? `Read Freeze Frame - ${pidDescriptions.join(', ')}`
-              : `Freeze Frame Response - ${pidDescriptions.join(', ')}`
+              ? `Read Freeze Frame\n${pidDescriptions.join('\n')}`
+              : `Freeze Frame Response\n${pidDescriptions.join('\n')}`
           }
         }
         return isRequest ? 'Read Freeze Frame Data' : 'Freeze Frame Data Response'
@@ -1027,7 +1088,7 @@ export default function JobDetailsPage() {
     if (!data || data.length < 2) return { service: '', description: '', details: {} }
 
     // Strip "0x" or "0X" prefix if present
-    const cleanData = data.startsWith('0x') || data.startsWith('0X') ? data.substring(2) : data
+    let cleanData = data.startsWith('0x') || data.startsWith('0X') ? data.substring(2) : data
 
     // Extract service ID from the cleaned data
     const serviceId = cleanData.substring(0, 2)
@@ -1040,18 +1101,32 @@ export default function JobDetailsPage() {
       case 0x10: // Session Control
       case 0x50: // Session Control Response
         if (dataBytes.length >= 2) {
-          const sessionType = dataBytes.substring(0, 2)
+          // For session control, if the data appears to be padded (e.g., "810000000000")
+          // extract just the session type byte
+          let sessionType = dataBytes.substring(0, 2)
+
+          // Check if this looks like ISO-TP padded data (very long with zeros)
+          if (dataBytes.length >= 12 && dataBytes.substring(2).match(/^0+$/)) {
+            // Data is padded with zeros, session type is the first byte
+            sessionType = dataBytes.substring(0, 2)
+          }
+
           const sessionTypes: Record<string, string> = {
             '01': 'Default Session',
             '02': 'Programming Session',
             '03': 'Extended Diagnostic Session',
             '04': 'Safety System Diagnostic Session',
-            '81': 'Default Session (Response)',
-            '82': 'Programming Session (Response)',
-            '83': 'Extended Diagnostic Session (Response)',
-            '84': 'Safety System Diagnostic Session (Response)'
+            '40': 'EOL Session',  // End of line session
+            '60': 'Development Session',  // Development/engineering session
+            '81': 'Default Session',  // KWP2000 default
+            '82': 'Flash Programming Session',  // KWP2000 programming
+            '83': 'Extended Diagnostic Session',  // KWP2000 extended
+            '84': 'Safety System Diagnostic Session',  // KWP2000 safety
+            '85': 'Supplier Session',  // Supplier specific
+            '92': 'Supplier Programming Session'  // Supplier programming
           }
-          description = sessionTypes[sessionType] || `Session Type 0x${sessionType}`
+          const sessionName = sessionTypes[sessionType] || `Session Type 0x${sessionType}`
+          description = `Diagnostic Session Control - ${sessionName}`
           details.sessionType = sessionType
         }
         break
@@ -1167,27 +1242,66 @@ export default function JobDetailsPage() {
       case 0x59: // Read DTC Information Response
         if (dataBytes.length >= 2) {
           const subFunction = dataBytes.substring(0, 2)
-          if (subFunction === '02' && dataBytes.length >= 8) {
+          const subFunctionNames: Record<string, string> = {
+            '01': 'Number of DTCs',
+            '02': 'DTC by Status Mask',
+            '03': 'DTC Snapshot Identification',
+            '04': 'DTC Snapshot Record by DTC Number',
+            '06': 'DTC Extended Data Record',
+            '0A': 'Supported DTCs'
+          }
+          const subFuncName = subFunctionNames[subFunction] || `Subfunction 0x${subFunction}`
+
+          if (subFunction === '02') {
             // DTC by status mask response
-            const statusMask = dataBytes.substring(2, 4)
-            const dtcData = dataBytes.substring(4)
-            description = `DTC Report - Status Mask: ${statusMask}`
-            if (dtcData.length >= 6) {
-              // Extract DTCs (3 bytes DTC + 1 byte status)
-              const dtcs = []
-              for (let i = 0; i < dtcData.length; i += 8) {
-                if (i + 6 <= dtcData.length) {
-                  const dtcCode = dtcData.substring(i, i + 6)
-                  const dtcStatus = dtcData.substring(i + 6, i + 8)
-                  dtcs.push(`${dtcCode}:${dtcStatus}`)
+            if (dataBytes.length >= 4) {
+              const statusMask = dataBytes.substring(2, 4)
+              const dtcData = dataBytes.substring(4)
+
+              // Decode status mask
+              const maskValue = parseInt(statusMask, 16)
+              const statusBits = []
+              if (maskValue & 0x01) statusBits.push('TestFailed')
+              if (maskValue & 0x02) statusBits.push('TestFailedThisOpCycle')
+              if (maskValue & 0x04) statusBits.push('PendingDTC')
+              if (maskValue & 0x08) statusBits.push('ConfirmedDTC')
+              if (maskValue & 0x10) statusBits.push('TestNotCompletedSinceLastClear')
+              if (maskValue & 0x20) statusBits.push('TestFailedSinceLastClear')
+              if (maskValue & 0x40) statusBits.push('TestNotCompletedThisOpCycle')
+              if (maskValue & 0x80) statusBits.push('WarningIndicatorRequested')
+
+              if (dtcData.length === 0) {
+                description = `No DTCs matching status mask 0x${statusMask}${statusBits.length > 0 ? ` (${statusBits.join(', ')})` : ''}`
+              } else if (dtcData.length >= 6) {
+                // Extract DTCs (3 bytes DTC + 1 byte status)
+                const dtcs = []
+                for (let i = 0; i < dtcData.length; i += 8) {
+                  if (i + 6 <= dtcData.length) {
+                    const dtcCode = dtcData.substring(i, i + 6).toUpperCase()
+                    const dtcStatus = dtcData.substring(i + 6, i + 8)
+                    dtcs.push(`${dtcCode}:${dtcStatus}`)
+                  }
                 }
+                if (dtcs.length > 0) {
+                  description = `${dtcs.length} DTC${dtcs.length > 1 ? 's' : ''} found\nStatus Mask: 0x${statusMask}${statusBits.length > 0 ? ` (${statusBits.join(', ')})` : ''}\nDTCs: ${dtcs.join(', ')}`
+                } else {
+                  description = `${subFuncName} - Status Mask: 0x${statusMask}`
+                }
+              } else {
+                description = `${subFuncName} - Status Mask: 0x${statusMask}`
               }
-              if (dtcs.length > 0) {
-                description += ` - DTCs: ${dtcs.join(', ')}`
-              }
+            } else {
+              description = subFuncName
             }
+          } else if (subFunction === '01' && dataBytes.length >= 6) {
+            // Number of DTCs response
+            const statusMask = dataBytes.substring(2, 4)
+            const dtcFormat = dataBytes.substring(4, 6)
+            const dtcCount = dataBytes.substring(6, 8)
+            const count = parseInt(dtcCount, 16)
+            description = `${count} DTC${count !== 1 ? 's' : ''} found\nStatus Mask: 0x${statusMask}`
           } else {
-            description = `DTC Response - Subfunction 0x${subFunction}`
+            description = subFuncName
           }
           details.subFunction = subFunction
         }
@@ -1231,10 +1345,48 @@ export default function JobDetailsPage() {
           details.resetType = resetType
         }
         break
+      case 0x60: // Manufacturer Specific Service
+        description = 'Manufacturer Specific'
+        if (dataBytes.length > 0) {
+          description += ` - Data: ${dataBytes}`
+        }
+        break
       case 0x7F: // Negative Response
         if (dataBytes.length >= 4) {
           const rejectedService = dataBytes.substring(0, 2)
           const nrc = dataBytes.substring(2, 4)
+
+          // Map of service IDs to service names for negative responses
+          const serviceNamesMap: Record<string, string> = {
+            '10': 'Diagnostic Session Control',
+            '11': 'ECU Reset',
+            '14': 'Clear Diagnostic Information',
+            '19': 'Read DTC Information',
+            '20': 'Stop Diagnostic Session',  // KWP2000 service
+            '21': 'Read Data By Local ID',     // KWP2000 service
+            '22': 'Read Data By Identifier',
+            '23': 'Read Memory By Address',
+            '24': 'Read Scaling Data By Identifier',
+            '27': 'Security Access',
+            '28': 'Communication Control',
+            '29': 'Authentication',
+            '2A': 'Read Data By Periodic Identifier',
+            '2C': 'Dynamically Define Data Identifier',
+            '2E': 'Write Data By Identifier',
+            '2F': 'Input Output Control By Identifier',
+            '31': 'Routine Control',
+            '34': 'Request Download',
+            '35': 'Request Upload',
+            '36': 'Transfer Data',
+            '37': 'Request Transfer Exit',
+            '38': 'Request File Transfer',
+            '3D': 'Write Memory By Address',
+            '3E': 'Tester Present',
+            '85': 'Control DTC Setting',
+            '86': 'Response On Event',
+            '87': 'Link Control'
+          }
+
           const nrcCodes: Record<string, string> = {
             '10': 'General Reject',
             '11': 'Service Not Supported',
@@ -1250,11 +1402,22 @@ export default function JobDetailsPage() {
             '35': 'Invalid Key',
             '36': 'Exceeded Number Of Attempts',
             '37': 'Required Time Delay Not Expired',
-            '78': 'Request Correctly Received - Response Pending'
+            '70': 'Upload/Download Not Accepted',
+            '71': 'Transfer Data Suspended',
+            '72': 'General Programming Failure',
+            '73': 'Wrong Block Sequence Counter',
+            '78': 'Request Correctly Received - Response Pending',
+            '7E': 'Sub-function Not Supported In Active Session',
+            '7F': 'Service Not Supported In Active Session'
           }
-          const nrcText = nrcCodes[nrc] || `NRC 0x${nrc}`
-          description = `Negative Response - Service 0x${rejectedService}: ${nrcText}`
+
+          const rejectedServiceName = serviceNamesMap[rejectedService.toUpperCase()] || `Service 0x${rejectedService}`
+          const nrcText = nrcCodes[nrc.toUpperCase()] || `NRC 0x${nrc}`
+
+          // Format with newline for better readability
+          description = `Negative Response\n${rejectedServiceName}: ${nrcText}`
           details.rejectedService = rejectedService
+          details.rejectedServiceName = rejectedServiceName
           details.nrc = nrc
         }
         break
@@ -1282,8 +1445,17 @@ export default function JobDetailsPage() {
       return decodeOBDIIService(serviceId, dataPortionOnly, isRequest)
     }
 
-    // Otherwise use UDS decoding - reconstruct the full data with service ID
-    const fullData = serviceId + cleanData.substring(2)  // Skip the service ID bytes that are already in cleanData
+    // Otherwise use UDS decoding
+    // Check if the data already starts with the service ID
+    let fullData = ''
+    if (cleanData.startsWith(serviceId.toLowerCase()) || cleanData.startsWith(serviceId.toUpperCase())) {
+      // Data already contains the service ID, use as-is
+      fullData = cleanData
+    } else {
+      // Data doesn't contain service ID, prepend it
+      fullData = serviceId + cleanData
+    }
+
     const decoded = decodeUDSMessage(fullData, isRequest, protocol)
     if (decoded.description) {
       return decoded.description
@@ -1374,11 +1546,35 @@ export default function JobDetailsPage() {
       '38': 'Request File Transfer',
       '3D': 'Write Memory By Address',
       '3E': 'Tester Present',
+      '60': 'Manufacturer Specific',
+      // Response codes (0x40 offset)
+      '50': 'Diagnostic Session Control',
+      '51': 'ECU Reset',
+      '54': 'Clear Diagnostic Information',
+      '59': 'Read DTC Information',
+      '62': 'Read Data By Identifier',
+      '63': 'Read Memory By Address',
+      '64': 'Read Scaling Data By Identifier',
+      '67': 'Security Access',
+      '68': 'Communication Control',
+      '69': 'Authentication',
+      '6A': 'Read Data By Periodic Identifier',
+      '6C': 'Dynamically Define Data Identifier',
+      '6E': 'Write Data By Identifier',
+      '6F': 'Input Output Control By Identifier',
+      '71': 'Routine Control',
+      '74': 'Request Download',
+      '75': 'Request Upload',
+      '76': 'Transfer Data',
+      '77': 'Request Transfer Exit',
+      '78': 'Request File Transfer',
+      '7D': 'Write Memory By Address',
+      '7E': 'Tester Present',
       '7F': 'Negative Response',
-      '84': 'Secured Data Transmission',
-      '85': 'Control DTC Setting',
-      '86': 'Response On Event',
-      '87': 'Link Control'
+      'C4': 'Secured Data Transmission',
+      'C5': 'Control DTC Setting',
+      'C6': 'Response On Event',
+      'C7': 'Link Control'
     }
 
     // Convert to uppercase and ensure 2 digits for consistency with map keys
@@ -1708,6 +1904,20 @@ export default function JobDetailsPage() {
                 Overview
               </button>
               <button
+                className={`ds-tab ${activeTab === 'jifeline' ? 'ds-tab-active' : ''}`}
+                onClick={() => setActiveTab('jifeline')}
+              >
+                <FileDigit size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
+                Jifeline
+              </button>
+              <button
+                className={`ds-tab ${activeTab === 'voltage' ? 'ds-tab-active' : ''}`}
+                onClick={() => setActiveTab('voltage')}
+              >
+                <Zap size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
+                Battery Voltage
+              </button>
+              <button
                 className={`ds-tab ${activeTab === 'ecus' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('ecus')}
               >
@@ -1717,7 +1927,7 @@ export default function JobDetailsPage() {
                 className={`ds-tab ${activeTab === 'flow' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('flow')}
               >
-                UDS Flow
+                Diagnostic Flow ({tabCounts.messages})
               </button>
               <button
                 className={`ds-tab ${activeTab === 'dtcs' ? 'ds-tab-active' : ''}`}
@@ -1741,7 +1951,7 @@ export default function JobDetailsPage() {
                 className={`ds-tab ${activeTab === 'services' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('services')}
               >
-                Services
+                Services ({tabCounts.services})
               </button>
               <button
                 className={`ds-tab ${activeTab === 'eobd' ? 'ds-tab-active' : ''}`}
@@ -1956,6 +2166,544 @@ export default function JobDetailsPage() {
             </div>
           )}
 
+          {activeTab === 'jifeline' && (
+            <div className="ds-section">
+              <h3 className="ds-heading-3">Jifeline Trace Metadata</h3>
+
+              {/* Connection Information */}
+              <Card variant="nested" style={{ marginBottom: spacing[4] }}>
+                <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>Connection Information</h4>
+                <div className="ds-grid-2" style={{ gap: spacing[5] }}>
+                  <div>
+                    <p className="ds-label">Protocol</p>
+                    <p className="ds-value">{job.metadata?.protocol || messages?.[0]?.protocol || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="ds-label">Diagnostic Protocol</p>
+                    <p className="ds-value">{messages?.[0]?.diagnosticProtocol || 'UDS'}</p>
+                  </div>
+                  {job.metadata?.connectionInfo?.state && (
+                    <div>
+                      <p className="ds-label">Connection State</p>
+                      <Badge variant={job.metadata.connectionInfo.state === 'connected' ? 'success' : 'secondary'}>
+                        {job.metadata.connectionInfo.state}
+                      </Badge>
+                    </div>
+                  )}
+                  {job.metadata?.connectionInfo?.protocol && (
+                    <div>
+                      <p className="ds-label">Connection Protocol</p>
+                      <p className="ds-value">{job.metadata.connectionInfo.protocol}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="ds-label">Tester Address</p>
+                    <p className="ds-value">
+                      <Badge variant="secondary">0E80</Badge>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="ds-label">Total ECUs</p>
+                    <p className="ds-value">{ecus.length}</p>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Trace Statistics */}
+              <Card variant="nested" style={{ marginBottom: spacing[4] }}>
+                <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>Trace Statistics</h4>
+                <div className="ds-grid-3" style={{ gap: spacing[5] }}>
+                  <div>
+                    <p className="ds-label">Start Time</p>
+                    <p className="ds-value">{messages?.[0]?.timestamp || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="ds-label">End Time</p>
+                    <p className="ds-value">{messages?.[messages.length - 1]?.timestamp || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="ds-label">Duration</p>
+                    <p className="ds-value">
+                      {(() => {
+                        if (!messages || messages.length < 2) return 'N/A'
+                        const start = messages[0].timestamp
+                        const end = messages[messages.length - 1].timestamp
+                        // Parse timestamps (format: HH:MM:SS.mmm)
+                        const parseTime = (time: string) => {
+                          const parts = time.split(':')
+                          if (parts.length !== 3) return 0
+                          const [hours, minutes, seconds] = parts
+                          const [secs, ms] = seconds.split('.')
+                          return parseInt(hours) * 3600000 + parseInt(minutes) * 60000 + parseInt(secs) * 1000 + parseInt(ms || '0')
+                        }
+                        const durationMs = parseTime(end) - parseTime(start)
+                        const minutes = Math.floor(durationMs / 60000)
+                        const seconds = Math.floor((durationMs % 60000) / 1000)
+                        const ms = durationMs % 1000
+                        return `${minutes}m ${seconds}s ${ms}ms`
+                      })()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="ds-label">Total Messages</p>
+                    <p className="ds-value">{messages.length}</p>
+                  </div>
+                  <div>
+                    <p className="ds-label">Request Messages</p>
+                    <p className="ds-value">{messages.filter(m => m.isRequest).length}</p>
+                  </div>
+                  <div>
+                    <p className="ds-label">Response Messages</p>
+                    <p className="ds-value">{messages.filter(m => !m.isRequest).length}</p>
+                  </div>
+                  <div>
+                    <p className="ds-label">Negative Responses</p>
+                    <p className="ds-value">
+                      {messages.filter(m => {
+                        const decoded = decodeUDSMessage(m.data || '', m.isRequest, m.diagnosticProtocol, m.protocol)
+                        return decoded.service === '7F'
+                      }).length}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="ds-label">Unique Services</p>
+                    <p className="ds-value">{tabCounts.filterOptions.services.length}</p>
+                  </div>
+                  <div>
+                    <p className="ds-label">Average Message Rate</p>
+                    <p className="ds-value">
+                      {(() => {
+                        if (!messages || messages.length < 2) return 'N/A'
+                        const start = messages[0].timestamp
+                        const end = messages[messages.length - 1].timestamp
+                        const parseTime = (time: string) => {
+                          const parts = time.split(':')
+                          if (parts.length !== 3) return 0
+                          const [hours, minutes, seconds] = parts
+                          const [secs, ms] = seconds.split('.')
+                          return parseInt(hours) * 3600000 + parseInt(minutes) * 60000 + parseInt(secs) * 1000 + parseInt(ms || '0')
+                        }
+                        const durationSec = (parseTime(end) - parseTime(start)) / 1000
+                        if (durationSec === 0) return 'N/A'
+                        return `${(messages.length / durationSec).toFixed(1)} msg/s`
+                      })()}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Protocol Distribution */}
+              <Card variant="nested" style={{ marginBottom: spacing[4] }}>
+                <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>Protocol Distribution</h4>
+                <div className="ds-stack" style={{ gap: spacing[3] }}>
+                  {Object.entries(
+                    messages.reduce((acc: any, msg: any) => {
+                      const protocol = msg.protocol || 'Unknown'
+                      acc[protocol] = (acc[protocol] || 0) + 1
+                      return acc
+                    }, {})
+                  ).map(([protocol, count]: any) => (
+                    <div key={protocol} className="ds-flex-between" style={{
+                      padding: spacing[3],
+                      backgroundColor: colors.background.secondary,
+                      borderRadius: '8px'
+                    }}>
+                      <span className="ds-label">{protocol}</span>
+                      <div className="ds-flex-row" style={{ gap: spacing[3] }}>
+                        <span className="ds-value">{count} messages</span>
+                        <Badge variant="info">
+                          {((count / messages.length) * 100).toFixed(1)}%
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* ECU Channel Information */}
+              {job.metadata?.ecuChannels && job.metadata.ecuChannels.length > 0 && (
+                <Card variant="nested" style={{ marginBottom: spacing[4] }}>
+                  <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>ECU Channel Information</h4>
+                  <div className="ds-stack" style={{ gap: spacing[3] }}>
+                    {job.metadata.ecuChannels.map((channel: any, idx: number) => (
+                      <div key={idx} style={{
+                        padding: spacing[3],
+                        backgroundColor: colors.background.secondary,
+                        borderRadius: '8px',
+                        borderLeft: `3px solid ${colors.primary[600]}`
+                      }}>
+                        <div className="ds-flex-row" style={{ gap: spacing[4], marginBottom: spacing[2] }}>
+                          <div>
+                            <span className="ds-label" style={{ fontSize: '11px' }}>CHANNEL NAME</span>
+                            <p className="ds-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                              {channel.name}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="ds-label" style={{ fontSize: '11px' }}>PROTOCOL</span>
+                            <p className="ds-value" style={{ fontSize: '14px' }}>
+                              {channel.protocol.toUpperCase()}
+                            </p>
+                          </div>
+                          {channel.pins && (
+                            <div>
+                              <span className="ds-label" style={{ fontSize: '11px' }}>PINS</span>
+                              <p className="ds-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                                {channel.pins}
+                              </p>
+                            </div>
+                          )}
+                          {channel.addresses && (
+                            <div>
+                              <span className="ds-label" style={{ fontSize: '11px' }}>ECU ADDRESSES</span>
+                              <p className="ds-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                                {channel.addresses}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        {channel.status && (
+                          <div style={{ marginTop: spacing[2] }}>
+                            <Badge variant={channel.status === 'since' ? 'success' : 'secondary'}>
+                              {channel.status === 'since' ? 'Connected' : 'Status: ' + channel.status}
+                            </Badge>
+                            {channel.timestamp && (
+                              <span className="ds-text-secondary" style={{ fontSize: '12px', marginLeft: spacing[2] }}>
+                                at {channel.timestamp}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Connector Information */}
+              {(() => {
+                // Extract connector metadata
+                const connectorData = messages
+                  .filter(msg => {
+                    if (msg.metadata &&
+                        typeof msg.metadata === 'object' &&
+                        'key' in msg.metadata &&
+                        'value' in msg.metadata) {
+                      const key = msg.metadata.key as string
+                      return key.startsWith('connectors:')
+                    }
+                    return false
+                  })
+                  .reduce((acc: any, msg) => {
+                    const key = msg.metadata.key as string
+                    const value = msg.metadata.value
+                    const keyParts = key.split(':')
+
+                    if (keyParts.length >= 3) {
+                      const connectorId = keyParts[1]
+                      const metricType = keyParts.slice(2).join(':') // Handle nested keys like uplink:state
+
+                      if (!acc[connectorId]) {
+                        acc[connectorId] = {
+                          id: connectorId,
+                          metrics: {},
+                          latestTimestamp: msg.timestamp
+                        }
+                      }
+
+                      if (!acc[connectorId].metrics[metricType]) {
+                        acc[connectorId].metrics[metricType] = []
+                      }
+
+                      acc[connectorId].metrics[metricType].push({
+                        timestamp: msg.timestamp,
+                        value: value
+                      })
+                      acc[connectorId].latestTimestamp = msg.timestamp
+                    }
+                    return acc
+                  }, {})
+
+                const connectors = Object.values(connectorData)
+
+                if (connectors.length > 0) {
+                  return (
+                    <Card variant="nested">
+                      <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>Jifeline Adapter Information</h4>
+                      {connectors.map((connector: any) => (
+                        <div key={connector.id} style={{ marginBottom: spacing[4] }}>
+                          <div className="ds-flex-between" style={{ marginBottom: spacing[3] }}>
+                            <div>
+                              <p className="ds-label">Connector ID</p>
+                              <p className="ds-value" style={{ fontSize: '12px', fontFamily: 'monospace' }}>
+                                {connector.id}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Uplink Connection State */}
+                          {connector.metrics['uplink:state'] && (
+                            <div style={{ marginTop: spacing[3] }}>
+                              <p className="ds-label" style={{ marginBottom: spacing[2] }}>Uplink Connection</p>
+                              <div className="ds-grid-2" style={{ gap: spacing[3] }}>
+                                <div>
+                                  <p className="ds-text-secondary" style={{ fontSize: '12px' }}>State</p>
+                                  <Badge variant={
+                                    connector.metrics['uplink:state'][connector.metrics['uplink:state'].length - 1].value === 'connected'
+                                      ? 'success'
+                                      : 'secondary'
+                                  }>
+                                    {connector.metrics['uplink:state'][connector.metrics['uplink:state'].length - 1].value}
+                                  </Badge>
+                                </div>
+                                {connector.metrics['uplink:since'] && (
+                                  <div>
+                                    <p className="ds-text-secondary" style={{ fontSize: '12px' }}>Connected Since</p>
+                                    <p className="ds-value" style={{ fontSize: '12px' }}>
+                                      {(() => {
+                                        const value = connector.metrics['uplink:since'][connector.metrics['uplink:since'].length - 1].value
+                                        const match = value.match(/\((.*?)\)/)
+                                        return match ? match[1] : value
+                                      })()}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                              {connector.metrics['uplink:client'] && (
+                                <div style={{ marginTop: spacing[2] }}>
+                                  <p className="ds-text-secondary" style={{ fontSize: '12px' }}>Connection Details</p>
+                                  <div style={{
+                                    padding: spacing[2],
+                                    backgroundColor: colors.background.secondary,
+                                    borderRadius: '4px',
+                                    marginTop: spacing[1],
+                                    fontSize: '11px',
+                                    fontFamily: 'monospace',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-all'
+                                  }}>
+                                    {connector.metrics['uplink:client'][connector.metrics['uplink:client'].length - 1].value}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {connector.metrics.rtt && connector.metrics.rtt.length > 0 && (
+                            <div style={{ marginTop: spacing[3] }}>
+                              <p className="ds-label" style={{ marginBottom: spacing[2] }}>Round-Trip Time (RTT)</p>
+                              <div className="ds-grid-3" style={{ gap: spacing[3] }}>
+                                <div>
+                                  <p className="ds-text-secondary" style={{ fontSize: '12px' }}>Average</p>
+                                  <p className="ds-value">
+                                    {Math.round(
+                                      connector.metrics.rtt.reduce((sum: number, item: any) =>
+                                        sum + parseFloat(item.value), 0) / connector.metrics.rtt.length
+                                    )}ms
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="ds-text-secondary" style={{ fontSize: '12px' }}>Min</p>
+                                  <p className="ds-value">
+                                    {Math.min(...connector.metrics.rtt.map((item: any) => parseFloat(item.value)))}ms
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="ds-text-secondary" style={{ fontSize: '12px' }}>Max</p>
+                                  <p className="ds-value">
+                                    {Math.max(...connector.metrics.rtt.map((item: any) => parseFloat(item.value)))}ms
+                                  </p>
+                                </div>
+                              </div>
+                              <div style={{ marginTop: spacing[2] }}>
+                                <p className="ds-text-secondary" style={{ fontSize: '12px' }}>
+                                  Latest: {connector.metrics.rtt[connector.metrics.rtt.length - 1].value}ms at {connector.metrics.rtt[connector.metrics.rtt.length - 1].timestamp}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Display other metrics if present (excluding already displayed ones) */}
+                          {Object.entries(connector.metrics)
+                            .filter(([key]) => !['rtt', 'uplink:state', 'uplink:since', 'uplink:client'].includes(key))
+                            .map(([metricType, values]: any) => (
+                              <div key={metricType} style={{ marginTop: spacing[3] }}>
+                                <p className="ds-label" style={{ marginBottom: spacing[2] }}>{metricType.replace(/:/g, ' ').toUpperCase()}</p>
+                                <p className="ds-value" style={{ fontSize: '12px' }}>
+                                  Latest: {values[values.length - 1].value} at {values[values.length - 1].timestamp}
+                                </p>
+                              </div>
+                            ))}
+                        </div>
+                      ))}
+                    </Card>
+                  )
+                }
+                return null
+              })()}
+            </div>
+          )}
+
+          {activeTab === 'voltage' && (
+            <div className="ds-section">
+              <h3 className="ds-heading-3">Battery Voltage Over Time</h3>
+              <Card variant="nested">
+                {(() => {
+                  // Extract battery voltage data from metadata
+                  // Method 1: From METADATA messages parsed by JifelineParser
+                  const metadataVoltage = job.metadata?.vehicleVoltage
+                    ? job.metadata.vehicleVoltage.map((v: any) => ({
+                        time: v.timestamp,
+                        voltage: v.voltage.toFixed(2),
+                        ecu: 'System',
+                        source: 'METADATA'
+                      })).filter((d: any) => parseFloat(d.voltage) > 0 && parseFloat(d.voltage) < 30)
+                    : []
+
+                  // Method 2: From UDS Read Data By Identifier responses
+                  const udsVoltage = messages
+                    .filter(msg => {
+                      const decoded = decodeUDSMessage(msg.data || '', msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+                      // Check for Read Data By Identifier responses (0x62)
+                      if (decoded.service !== '62') return false
+                      const cleanData = msg.data && msg.data.startsWith('0x') ? msg.data.substring(2) : msg.data || ''
+                      const dataAfterService = cleanData.length > 2 ? cleanData.substring(2) : ''
+                      if (dataAfterService.length < 4) return false
+                      const did = dataAfterService.substring(0, 4).toUpperCase()
+                      // Common battery voltage DIDs
+                      return ['42B6', '4201', '012F', '0110', '2110'].includes(did)
+                    })
+                    .map(msg => {
+                      const cleanData = msg.data && msg.data.startsWith('0x') ? msg.data.substring(2) : msg.data || ''
+                      const dataAfterService = cleanData.substring(2)
+                      const did = dataAfterService.substring(0, 4)
+                      const voltageBytes = dataAfterService.substring(4)
+
+                      // Parse voltage value (typically in hex, scaled)
+                      let voltage = 0
+                      if (voltageBytes.length >= 2) {
+                        const rawValue = parseInt(voltageBytes.substring(0, 2), 16)
+                        // Common scaling factors for voltage
+                        if (did === '42B6' || did === '4201') {
+                          voltage = rawValue * 0.1 // Scale by 0.1V
+                        } else {
+                          voltage = rawValue * 0.05 // Scale by 0.05V
+                        }
+                      }
+
+                      return {
+                        time: msg.timestamp,
+                        voltage: voltage.toFixed(2),
+                        ecu: ecuNames[msg.sourceAddr]?.name || msg.sourceAddr,
+                        source: 'UDS'
+                      }
+                    })
+                    .filter(d => d.voltage > 0 && d.voltage < 30) // Filter reasonable voltage values
+
+                  // Combine both sources
+                  const voltageData = [...metadataVoltage, ...udsVoltage].sort((a, b) => {
+                    // Sort by timestamp
+                    const timeA = a.time.split(':').map(Number)
+                    const timeB = b.time.split(':').map(Number)
+                    return (timeA[0] * 3600 + timeA[1] * 60 + timeA[2]) -
+                           (timeB[0] * 3600 + timeB[1] * 60 + timeB[2])
+                  })
+
+                  if (voltageData.length === 0) {
+                    return (
+                      <div className="ds-empty-state" style={{ padding: spacing[6] }}>
+                        <Zap size={48} style={{ color: colors.text.secondary, marginBottom: spacing[3] }} />
+                        <p className="ds-heading-4">No Battery Voltage Data Found</p>
+                        <p className="ds-text-secondary" style={{ marginTop: spacing[2] }}>
+                          This trace does not contain battery voltage readings.
+                        </p>
+                        <p className="ds-text-secondary" style={{ fontSize: '12px', marginTop: spacing[2] }}>
+                          Common voltage DIDs: 0x42B6, 0x4201, 0x012F, 0x0110, 0x2110
+                        </p>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div>
+                      <div className="ds-flex-between" style={{ marginBottom: spacing[4] }}>
+                        <div>
+                          <p className="ds-label">Voltage Readings</p>
+                          <p className="ds-value">{voltageData.length} measurements</p>
+                        </div>
+                        <div>
+                          <p className="ds-label">Voltage Range</p>
+                          <p className="ds-value">
+                            {Math.min(...voltageData.map(d => parseFloat(d.voltage)))}V -
+                            {Math.max(...voltageData.map(d => parseFloat(d.voltage)))}V
+                          </p>
+                        </div>
+                        <div>
+                          <p className="ds-label">Average Voltage</p>
+                          <p className="ds-value">
+                            {(voltageData.reduce((sum, d) => sum + parseFloat(d.voltage), 0) / voltageData.length).toFixed(2)}V
+                          </p>
+                        </div>
+                      </div>
+
+                      <div style={{ width: '100%', height: '400px', marginTop: spacing[4] }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={voltageData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke={colors.border.light} />
+                            <XAxis
+                              dataKey="time"
+                              tick={{ fontSize: 12 }}
+                              angle={-45}
+                              textAnchor="end"
+                              height={80}
+                            />
+                            <YAxis
+                              tick={{ fontSize: 12 }}
+                              label={{ value: 'Voltage (V)', angle: -90, position: 'insideLeft' }}
+                            />
+                            <Tooltip />
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="voltage"
+                              stroke={colors.primary[600]}
+                              strokeWidth={2}
+                              dot={{ r: 3 }}
+                              name="Battery Voltage (V)"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      <div style={{ marginTop: spacing[4] }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: colors.background.secondary }}>
+                              <th style={{ padding: spacing[2], textAlign: 'left', fontSize: '12px', fontWeight: 600 }}>Time</th>
+                              <th style={{ padding: spacing[2], textAlign: 'left', fontSize: '12px', fontWeight: 600 }}>ECU</th>
+                              <th style={{ padding: spacing[2], textAlign: 'left', fontSize: '12px', fontWeight: 600 }}>Voltage</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {voltageData.map((data, idx) => (
+                              <tr key={idx} style={{ borderBottom: `1px solid ${colors.border.light}` }}>
+                                <td style={{ padding: spacing[2], fontSize: '12px' }}>{data.time}</td>
+                                <td style={{ padding: spacing[2], fontSize: '12px' }}>{data.ecu}</td>
+                                <td style={{ padding: spacing[2], fontSize: '12px' }}>
+                                  <Badge variant="info">{data.voltage}V</Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </Card>
+            </div>
+          )}
+
           {activeTab === 'ecus' && (
             <div className="ds-section">
               <h3 className="ds-heading-3">Discovered ECUs</h3>
@@ -2034,8 +2782,8 @@ export default function JobDetailsPage() {
 
           {activeTab === 'flow' && (
             <div className="ds-section">
-              <div className="ds-flex-between" style={{ marginBottom: spacing[5] }}>
-                <h3 className="ds-heading-3">UDS Communication Flow</h3>
+              <div className="ds-flex-between" style={{ marginBottom: spacing[4] }}>
+                <h3 className="ds-heading-3">Diagnostic Communication Flow</h3>
                 <select
                   className="ds-select"
                   style={{
@@ -2069,30 +2817,298 @@ export default function JobDetailsPage() {
                     })}
                 </select>
               </div>
+
+              {/* Filter Controls - Compact */}
               <div style={{
-                maxHeight: '700px',
-                overflowY: 'auto',
-                backgroundColor: colors.background.primary,
-                borderRadius: '8px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: spacing[3],
+                padding: spacing[2],
+                backgroundColor: colors.background.secondary,
+                borderRadius: '6px',
                 border: `1px solid ${colors.border.light}`
               }}>
-                {messages.length > 0 ? (
-                  <>
-                    <table className="ds-table">
-                      <thead className="ds-table-header">
-                        <tr>
-                          <th className="ds-table-header-cell">Time</th>
-                          <th className="ds-table-header-cell">Transport</th>
-                          <th className="ds-table-header-cell">Source</th>
-                          <th className="ds-table-header-cell" style={{ textAlign: 'center' }}>→</th>
-                          <th className="ds-table-header-cell">Target</th>
-                          <th className="ds-table-header-cell">Service ID</th>
-                          <th className="ds-table-header-cell">Service</th>
-                          <th className="ds-table-header-cell">DID/Routine</th>
-                          <th className="ds-table-header-cell">Description</th>
-                          <th className="ds-table-header-cell">Knowledge Base</th>
-                          <th className="ds-table-header-cell">Raw Message</th>
-                          <th className="ds-table-header-cell">Data</th>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: colors.text.secondary }}>
+                    Use column header dropdowns to filter results
+                  </div>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => setFlowFilters({ transport: '', source: '', target: '', service: '', serviceName: '', direction: '' })}
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+
+              <div
+                className="table-scroll-container"
+                style={{
+                  height: '700px',
+                  overflow: 'auto',
+                  border: `1px solid ${colors.border.light}`,
+                  borderRadius: '8px',
+                  backgroundColor: colors.background.primary,
+                  position: 'relative'
+                }}
+              >
+                  {messages.length > 0 ? (
+                    <>
+                      <style>
+                        {`
+                          /* Font families */
+                          :root {
+                            --font-family-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            --font-family-mono: ui-monospace, 'SF Mono', Monaco, Consolas, 'Courier New', monospace;
+                          }
+
+                          /* Override global ds-table styles for this specific table */
+                          .table-scroll-container .diagnostic-flow-table {
+                            min-width: 100%;
+                            border-collapse: separate !important;
+                            border-spacing: 0;
+                            background-color: transparent !important;
+                            box-shadow: none !important;
+                            border-radius: 0 !important;
+                            overflow: visible !important;
+                            font-family: var(--font-family-ui);
+                          }
+
+                          /* Make sure thead doesn't have conflicting background */
+                          .table-scroll-container .diagnostic-flow-table thead {
+                            background: none !important;
+                            border-bottom: none !important;
+                          }
+
+                          /* Sticky header styles with improved typography */
+                          .table-scroll-container .diagnostic-flow-table thead th {
+                            position: sticky !important;
+                            position: -webkit-sticky !important;
+                            top: 0 !important;
+                            z-index: 100 !important;
+                            background-color: ${colors.background.secondary} !important;
+                            padding: ${spacing[3]};
+                            text-align: left;
+                            border-bottom: 2px solid ${colors.border.light};
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+                            /* Typography for headers */
+                            font-size: 11px !important;
+                            font-weight: 700 !important;
+                            letter-spacing: 0.1em !important;
+                            text-transform: uppercase !important;
+                            color: ${colors.text.secondary} !important;
+                          }
+
+                          /* Ensure th pseudo-elements don't interfere */
+                          .table-scroll-container .diagnostic-flow-table th::after {
+                            display: none !important;
+                          }
+
+                          /* Table cell base styles */
+                          .table-scroll-container .diagnostic-flow-table td {
+                            background-color: transparent;
+                            position: static !important;
+                            padding: ${spacing[3]};
+                            border-bottom: 1px solid ${colors.border.light};
+                            vertical-align: middle;
+                            font-size: 14px;
+                            font-weight: 400;
+                          }
+
+                          /* Typography classes for data types */
+
+                          /* Technical/hex data - monospace */
+                          .ds-text-technical {
+                            font-family: var(--font-family-mono) !important;
+                            font-size: 13px !important;
+                            font-weight: 400 !important;
+                            letter-spacing: 0.025em !important;
+                            font-variant-numeric: tabular-nums;
+                          }
+
+                          /* Timestamps - monospace with gray color */
+                          .ds-text-timestamp {
+                            font-family: var(--font-family-mono) !important;
+                            font-size: 13px !important;
+                            font-weight: 400 !important;
+                            color: ${colors.text.secondary} !important;
+                          }
+
+                          /* Primary labels/names */
+                          .ds-text-label {
+                            font-family: var(--font-family-ui) !important;
+                            font-size: 14px !important;
+                            font-weight: 500 !important;
+                            color: ${colors.text.primary} !important;
+                          }
+
+                          /* Descriptions - regular text */
+                          .ds-text-description {
+                            font-family: var(--font-family-ui) !important;
+                            font-size: 14px !important;
+                            font-weight: 400 !important;
+                            line-height: 1.5 !important;
+                            color: ${colors.text.primary} !important;
+                          }
+
+                          /* Badge typography - consistent across all badges */
+                          .table-scroll-container .Badge {
+                            font-family: var(--font-family-ui) !important;
+                            font-size: 11px !important;
+                            font-weight: 600 !important;
+                            text-transform: uppercase !important;
+                            letter-spacing: 0.05em !important;
+                          }
+
+                          /* Maintain row hover effects */
+                          .table-scroll-container .diagnostic-flow-table tbody tr:hover {
+                            background-color: rgba(59, 130, 246, 0.05);
+                          }
+                        `}
+                      </style>
+                      <table className="diagnostic-flow-table ds-table">
+                        <thead>
+                          <tr>
+                            <th>Time</th>
+                            <th>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                              Transport
+                              <select
+                                value={flowFilters.transport}
+                                onChange={(e) => setFlowFilters(prev => ({ ...prev, transport: e.target.value }))}
+                                style={{
+                                  padding: '2px 4px',
+                                  border: `1px solid ${colors.border.light}`,
+                                  borderRadius: '3px',
+                                  fontSize: '11px',
+                                  backgroundColor: colors.background.primary,
+                                  minWidth: '60px'
+                                }}
+                              >
+                                <option value="">All</option>
+                                {tabCounts.filterOptions.transports.map(transport => (
+                                  <option key={transport} value={transport}>{transport}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </th>
+                          <th>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                              Source
+                              <select
+                                value={flowFilters.source}
+                                onChange={(e) => setFlowFilters(prev => ({ ...prev, source: e.target.value }))}
+                                style={{
+                                  padding: '2px 4px',
+                                  border: `1px solid ${colors.border.light}`,
+                                  borderRadius: '3px',
+                                  fontSize: '11px',
+                                  backgroundColor: colors.background.primary,
+                                  minWidth: '60px'
+                                }}
+                              >
+                                <option value="">All</option>
+                                {tabCounts.filterOptions.sources.map(source => (
+                                  <option key={source} value={source}>{source}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </th>
+                          <th style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[1], justifyContent: 'center' }}>
+                              Direction
+                              <select
+                                value={flowFilters.direction}
+                                onChange={(e) => setFlowFilters(prev => ({ ...prev, direction: e.target.value }))}
+                                style={{
+                                  fontSize: '10px',
+                                  padding: '1px 2px',
+                                  border: '1px solid #ccc',
+                                  borderRadius: '2px',
+                                  background: 'white',
+                                  minWidth: '60px'
+                                }}
+                              >
+                                <option value="">All</option>
+                                <option value="Request">Request</option>
+                                <option value="Response">Response</option>
+                              </select>
+                            </div>
+                          </th>
+                          <th>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                              Target
+                              <select
+                                value={flowFilters.target}
+                                onChange={(e) => setFlowFilters(prev => ({ ...prev, target: e.target.value }))}
+                                style={{
+                                  padding: '2px 4px',
+                                  border: `1px solid ${colors.border.light}`,
+                                  borderRadius: '3px',
+                                  fontSize: '11px',
+                                  backgroundColor: colors.background.primary,
+                                  minWidth: '60px'
+                                }}
+                              >
+                                <option value="">All</option>
+                                {tabCounts.filterOptions.targets.map(target => (
+                                  <option key={target} value={target}>{target}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </th>
+                          <th>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                              Service ID
+                              <select
+                                value={flowFilters.service}
+                                onChange={(e) => setFlowFilters(prev => ({ ...prev, service: e.target.value }))}
+                                style={{
+                                  padding: '2px 4px',
+                                  border: `1px solid ${colors.border.light}`,
+                                  borderRadius: '3px',
+                                  fontSize: '11px',
+                                  backgroundColor: colors.background.primary,
+                                  minWidth: '50px'
+                                }}
+                              >
+                                <option value="">All</option>
+                                {tabCounts.filterOptions.services.map(service => (
+                                  <option key={service} value={service}>{service}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </th>
+                          <th>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                              Service
+                              <select
+                                value={flowFilters.serviceName}
+                                onChange={(e) => setFlowFilters(prev => ({ ...prev, serviceName: e.target.value }))}
+                                style={{
+                                  padding: '2px 4px',
+                                  border: `1px solid ${colors.border.light}`,
+                                  borderRadius: '3px',
+                                  fontSize: '11px',
+                                  backgroundColor: colors.background.primary,
+                                  minWidth: '80px'
+                                }}
+                              >
+                                <option value="">All</option>
+                                {tabCounts.filterOptions.serviceNames.map(name => (
+                                  <option key={name} value={name}>{name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </th>
+                          <th>DID/Routine</th>
+                          <th>Description</th>
+                          <th>Knowledge Base</th>
+                          <th>Raw Message</th>
+                          <th>Data</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2102,6 +3118,44 @@ export default function JobDetailsPage() {
                         )
                         // Filter out messages with empty or invalid data
                         .filter(msg => msg.data && msg.data.trim().length >= 2)
+                        // Apply column filters
+                        .filter(msg => {
+                          // Direction filter
+                          if (flowFilters.direction && flowFilters.direction !== (msg.isRequest ? 'Request' : 'Response')) {
+                            return false
+                          }
+                          // Transport filter
+                          if (flowFilters.transport && flowFilters.transport !== msg.protocol) {
+                            return false
+                          }
+                          // Source filter
+                          if (flowFilters.source && flowFilters.source !== msg.sourceAddr) {
+                            return false
+                          }
+                          // Target filter
+                          if (flowFilters.target && flowFilters.target !== msg.targetAddr) {
+                            return false
+                          }
+                          // Service ID filter
+                          if (flowFilters.service) {
+                            const decoded = decodeUDSMessage(msg.data || '', msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+                            const serviceCode = msg.serviceCode || decoded.service
+                            if (flowFilters.service !== serviceCode) {
+                              return false
+                            }
+                          }
+                          // Service Name filter
+                          if (flowFilters.serviceName) {
+                            const decoded = decodeUDSMessage(msg.data || '', msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+                            // Use the corrected service code if available (same as rendering logic)
+                            const serviceCode = msg.serviceCode ? msg.serviceCode.toUpperCase() : decoded.service
+                            const serviceName = getServiceName(serviceCode, msg.diagnosticProtocol)
+                            if (flowFilters.serviceName !== serviceName) {
+                              return false
+                            }
+                          }
+                          return true
+                        })
                         .slice(0, messageDisplayLimit).map((msg, idx) => {
                           // Use the already-corrected service code from msg.serviceCode
                           const decoded = decodeUDSMessage(msg.data || '', msg.isRequest, msg.diagnosticProtocol, msg.protocol)
@@ -2156,6 +3210,67 @@ export default function JobDetailsPage() {
                               const dtcCode = dataAfterService.substring(2, 6).toUpperCase()
                               knowledgeBaseName = getKnowledgeBaseName('DTC', dtcCode, msg.targetAddr || msg.sourceAddr, knowledgeBaseData)
                             }
+                          } else if (decoded.service === '7F') {
+                            // Negative Response - try to find the rejected DID or Routine from the previous request
+                            // Look for the previous request to this ECU with the same rejected service
+                            const rejectedService = decoded.details?.rejectedService
+                            if (rejectedService) {
+                              // For Read/Write Data By Identifier services, we need to find the DID from the request
+                              if (rejectedService === '22' || rejectedService === '2E') {
+                                // Find the most recent request with this service to this ECU
+                                // Use the full messages array from the parent scope
+                                const allMessages = (selectedEcu
+                                  ? messages.filter(m => m.sourceAddr === selectedEcu || m.targetAddr === selectedEcu)
+                                  : messages
+                                )
+                                const currentIndex = allMessages.findIndex((m: any) => m === msg)
+
+                                // Look backwards from current message
+                                for (let i = currentIndex - 1; i >= 0; i--) {
+                                  const prevMsg = allMessages[i]
+                                  if (prevMsg.isRequest &&
+                                      prevMsg.targetAddr === msg.sourceAddr) {
+                                    // Check if this request has the matching service
+                                    const prevDecoded = decodeUDSMessage(prevMsg.data || '', true, prevMsg.diagnosticProtocol, prevMsg.protocol)
+                                    if (prevDecoded.service === rejectedService) {
+                                      const requestData = prevMsg.data && prevMsg.data.startsWith('0x') ? prevMsg.data.substring(2) : prevMsg.data || ''
+                                      if (requestData.length >= 6) {
+                                        identifier = requestData.substring(2, 6).toUpperCase()
+                                        knowledgeBaseName = getKnowledgeBaseName('DID', identifier, msg.sourceAddr, knowledgeBaseData)
+                                        break
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                              // For Routine Control, extract routine ID
+                              else if (rejectedService === '31') {
+                                const allMessages = (selectedEcu
+                                  ? messages.filter(m => m.sourceAddr === selectedEcu || m.targetAddr === selectedEcu)
+                                  : messages
+                                )
+                                const currentIndex = allMessages.findIndex((m: any) => m === msg)
+
+                                // Look backwards from current message
+                                for (let i = currentIndex - 1; i >= 0; i--) {
+                                  const prevMsg = allMessages[i]
+                                  if (prevMsg.isRequest &&
+                                      prevMsg.targetAddr === msg.sourceAddr) {
+                                    // Check if this request has the matching service
+                                    const prevDecoded = decodeUDSMessage(prevMsg.data || '', true, prevMsg.diagnosticProtocol, prevMsg.protocol)
+                                    if (prevDecoded.service === rejectedService) {
+                                      const requestData = prevMsg.data && prevMsg.data.startsWith('0x') ? prevMsg.data.substring(2) : prevMsg.data || ''
+                                      if (requestData.length >= 8) {
+                                        // Routine format: [service:1][subfunction:1][routineId:2]
+                                        identifier = requestData.substring(4, 8).toUpperCase()
+                                        knowledgeBaseName = getKnowledgeBaseName('ROUTINE', identifier, msg.sourceAddr, knowledgeBaseData)
+                                        break
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
                           }
 
                           return (
@@ -2170,7 +3285,7 @@ export default function JobDetailsPage() {
                                   : '#f0fdf4'  // Green for positive responses
                               }}
                             >
-                              <td className="ds-table-cell" style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                              <td className="ds-table-cell nowrap ds-text-timestamp">
                                 {msg.timestamp || 'N/A'}
                               </td>
                               <td className="ds-table-cell">
@@ -2202,7 +3317,14 @@ export default function JobDetailsPage() {
                                   </Badge>
                                 </div>
                               </td>
-                              <td className="ds-table-cell" style={{ textAlign: 'center' }}>→</td>
+                              <td className="ds-table-cell" style={{ textAlign: 'center' }}>
+                                <Badge
+                                  variant={msg.isRequest ? "default" : "secondary"}
+                                  size="small"
+                                >
+                                  {msg.isRequest ? 'Request' : 'Response'}
+                                </Badge>
+                              </td>
                               <td className="ds-table-cell">
                                 <Badge variant="secondary" size="small">
                                   {['0E80', 'F1', 'F0', 'FD', 'FE', 'FF', 'TESTER'].includes(msg.targetAddr?.toUpperCase()) ? 'Tester' :
@@ -2213,23 +3335,31 @@ export default function JobDetailsPage() {
                               </td>
                               <td className="ds-table-cell">
                                 {decoded.service ? (
-                                  <Badge variant="secondary" size="small" style={{ fontFamily: 'monospace' }}>
+                                  <Badge variant="secondary" size="small" className="ds-text-technical">
                                     {decoded.service}
                                   </Badge>
                                 ) : '-'}
                               </td>
-                              <td className="ds-table-cell">
-                                {getServiceName(decoded.service, msg.diagnosticProtocol)}
+                              <td className="ds-table-cell ds-text-label">
+                                {decoded.service === '7F' && decoded.details?.rejectedServiceName
+                                  ? decoded.details.rejectedServiceName
+                                  : getServiceName(decoded.service, msg.diagnosticProtocol)}
                               </td>
                               <td className="ds-table-cell">
                                 {identifier ? (
-                                  <Badge variant="info" size="small">
+                                  <Badge variant="info" size="small" className="ds-text-technical">
                                     {identifier}
                                   </Badge>
                                 ) : '-'}
                               </td>
-                              <td className="ds-table-cell">
-                                {decoded.description}
+                              <td className="ds-table-cell ds-text-description">
+                                {decoded.description && decoded.description.includes('\n') ? (
+                                  <div style={{ whiteSpace: 'pre-line' }}>
+                                    {decoded.description}
+                                  </div>
+                                ) : (
+                                  decoded.description
+                                )}
                               </td>
                               <td className="ds-table-cell">
                                 {knowledgeBaseName ? (
@@ -2242,10 +3372,10 @@ export default function JobDetailsPage() {
                                   </span>
                                 )}
                               </td>
-                              <td className="ds-table-cell" style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                              <td className="ds-table-cell nowrap ds-text-technical">
                                 {msg.data || '-'}
                               </td>
-                              <td className="ds-table-cell" style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                              <td className="ds-table-cell nowrap ds-text-technical">
                                 {dataAfterService || '-'}
                               </td>
                             </tr>
@@ -2253,9 +3383,10 @@ export default function JobDetailsPage() {
                         })}
                       </tbody>
                     </table>
+
                     {(selectedEcu
-                      ? messages.filter(m => m.sourceAddr === selectedEcu || m.targetAddr === selectedEcu)
-                      : messages
+                        ? messages.filter(m => m.sourceAddr === selectedEcu || m.targetAddr === selectedEcu)
+                        : messages
                     ).length > messageDisplayLimit && (
                       <div style={{
                         marginTop: spacing[4],

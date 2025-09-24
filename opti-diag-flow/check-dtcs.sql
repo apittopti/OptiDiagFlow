@@ -1,0 +1,2 @@
+SELECT COUNT(*) as dtc_count FROM "DTC";
+SELECT * FROM "DTC" LIMIT 5;

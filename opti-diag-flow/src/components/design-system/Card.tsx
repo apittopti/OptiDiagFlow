@@ -78,10 +78,12 @@ interface StatCardProps {
   icon?: ReactNode
   iconColor?: string
   iconBackground?: string
+  color?: 'primary' | 'success' | 'warning' | 'error' | 'danger' | 'info' | 'purple'
   trend?: {
     value: string
     positive: boolean
   }
+  helpText?: string
   loading?: boolean
   onClick?: () => void
 }
@@ -92,10 +94,36 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon,
   iconColor,
   iconBackground,
+  color,
   trend,
   loading = false,
+  helpText,
   onClick,
 }) => {
+  // Map color names to actual colors
+  const colorMap = {
+    primary: colors.primary[500],
+    success: colors.success[500],
+    warning: colors.warning[500],
+    error: colors.error[500],
+    danger: colors.error[500],
+    info: colors.primary[500],
+    purple: '#9333ea',
+  }
+
+  const bgColorMap = {
+    primary: colors.primary[50],
+    success: colors.success[50],
+    warning: colors.warning[50],
+    error: colors.error[50],
+    danger: colors.error[50],
+    info: colors.primary[50],
+    purple: '#f3e8ff',
+  }
+
+  const finalIconColor = iconColor || (color ? colorMap[color] : colors.gray[500])
+  const finalIconBg = iconBackground || (color ? bgColorMap[color] : colors.gray[100])
+
   return (
     <Card variant="stat" onClick={onClick}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -149,11 +177,11 @@ export const StatCard: React.FC<StatCardProps> = ({
               width: 'var(--stat-card-icon-size)',
               height: 'var(--stat-card-icon-size)',
               borderRadius: 'var(--radius-4)',
-              backgroundColor: iconBackground || `${iconColor}15`,
+              backgroundColor: finalIconBg,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: iconColor,
+              color: finalIconColor,
             }}
           >
             {icon}

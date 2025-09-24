@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import PageLayout from '@/components/layout/page-layout'
+import { PageLayout } from '@/components/layout/page-layout'
+import { Card, Button, Badge } from '@/components/design-system'
+import { colors, spacing } from '@/lib/design-system/tokens'
 import {
   Building,
   Car,
@@ -11,7 +13,10 @@ import {
   ChevronRight,
   ChevronDown,
   Edit,
-  Trash2
+  Trash2,
+  Package,
+  Layers,
+  FileText
 } from 'lucide-react'
 
 export default function VehicleManagementPage() {
@@ -228,508 +233,399 @@ export default function VehicleManagementPage() {
       title="Vehicle Management"
       description="Manage your vehicle hierarchy: OEMs, Models, and Model Years"
     >
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        padding: '32px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-      }}>
-        {/* Header with Add OEM button */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '32px'
-        }}>
-          <div>
-            <h2 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 8px 0' }}>
-              Vehicle Hierarchy
-            </h2>
-            <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
-              Organize your vehicles by OEM → Model → Model Year
-            </p>
-          </div>
-          <button
-            onClick={() => setShowOEMForm(!showOEMForm)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 20px',
-              backgroundColor: showOEMForm ? '#ef4444' : '#3b82f6',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer'
-            }}
-          >
-            {showOEMForm ? <X size={16} /> : <Plus size={16} />}
-            {showOEMForm ? 'Cancel' : 'Add OEM'}
-          </button>
-        </div>
-
-        {/* OEM Creation Form */}
-        {showOEMForm && (
-          <div style={{
-            backgroundColor: '#f9fafb',
-            borderRadius: '8px',
-            padding: '20px',
-            marginBottom: '24px',
-            border: '1px solid #e5e7eb'
-          }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>
-              Create New OEM
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-                  OEM Name *
-                </label>
-                <input
-                  type="text"
-                  value={oemForm.name}
-                  onChange={(e) => setOEMForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g., BMW Group"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-                  Short Name
-                </label>
-                <input
-                  type="text"
-                  value={oemForm.shortName}
-                  onChange={(e) => setOEMForm(prev => ({ ...prev, shortName: e.target.value }))}
-                  placeholder="e.g., BMW"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
+      <div className="ds-container">
+        <Card>
+          {/* Header with Add OEM button */}
+          <div className="ds-flex-between" style={{ marginBottom: spacing[8] }}>
+            <div>
+              <h2 className="ds-heading-2">Vehicle Hierarchy</h2>
+              <p className="ds-text-secondary">
+                Organize your vehicles by OEM → Model → Model Year
+              </p>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button
-                onClick={() => {
-                  setShowOEMForm(false)
-                  setOEMForm({ name: '', shortName: '' })
-                }}
-                style={{
-                  padding: '10px 16px',
-                  border: '1px solid #e5e7eb',
-                  backgroundColor: '#ffffff',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={createOEM}
-                disabled={!oemForm.name.trim()}
-                style={{
-                  padding: '10px 16px',
-                  border: 'none',
-                  backgroundColor: oemForm.name.trim() ? '#3b82f6' : '#9ca3af',
-                  color: '#ffffff',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  cursor: oemForm.name.trim() ? 'pointer' : 'not-allowed'
-                }}
-              >
-                Create OEM
-              </button>
-            </div>
+            <Button
+              variant={showOEMForm ? 'error' : 'primary'}
+              icon={showOEMForm ? <X size={16} /> : <Plus size={16} />}
+              onClick={() => setShowOEMForm(!showOEMForm)}
+            >
+              {showOEMForm ? 'Cancel' : 'Add OEM'}
+            </Button>
           </div>
-        )}
 
-        {/* Hierarchical Tree View */}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>
-        ) : hierarchy.length > 0 ? (
-          <div style={{
-            backgroundColor: '#fafafa',
-            borderRadius: '8px',
-            padding: '16px',
-            border: '1px solid #e5e7eb'
-          }}>
-            {hierarchy.map(oem => (
-              <div key={oem.id} style={{ marginBottom: '8px' }}>
-                {/* OEM Level */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '12px',
-                  backgroundColor: '#ffffff',
-                  borderRadius: '6px',
-                  border: '1px solid #e5e7eb',
-                  marginBottom: expandedOEMs.has(oem.id) ? '8px' : '0'
-                }}>
-                  <button
-                    onClick={() => toggleOEM(oem.id)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      marginRight: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: '#6b7280'
-                    }}
-                  >
-                    {expandedOEMs.has(oem.id) ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                  </button>
-                  <Building size={20} style={{ marginRight: '12px', color: '#3b82f6' }} />
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0 }}>
-                      {oem.name}
-                    </h3>
-                    <p style={{ fontSize: '13px', color: '#6b7280', margin: '2px 0 0 0' }}>
-                      {oem.shortName && `${oem.shortName} • `}{oem.models?.length || 0} models
-                    </p>
+          {/* OEM Creation Form */}
+          {showOEMForm && (
+            <Card variant="nested" style={{ marginBottom: spacing[6] }}>
+              <div style={{ padding: spacing[4] }}>
+                <h3 className="ds-heading-3">Create New OEM</h3>
+                <div className="ds-grid-2" style={{ marginBottom: spacing[4] }}>
+                  <div className="ds-form-group">
+                    <label className="ds-label">OEM Name *</label>
+                    <input
+                      type="text"
+                      value={oemForm.name}
+                      onChange={(e) => setOEMForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g., BMW Group"
+                      className="ds-input"
+                    />
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => setShowModelForm(showModelForm === oem.id ? null : oem.id)}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: showModelForm === oem.id ? '#ef4444' : '#10b981',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      {showModelForm === oem.id ? <X size={14} /> : <Plus size={14} />}
-                      {showModelForm === oem.id ? 'Cancel' : 'Add Model'}
-                    </button>
-                    <button
-                      onClick={() => deleteOEM(oem.id, oem.name)}
-                      disabled={oem.models?.length > 0}
-                      style={{
-                        padding: '6px',
-                        backgroundColor: oem.models?.length > 0 ? '#f3f4f6' : '#fef2f2',
-                        color: oem.models?.length > 0 ? '#9ca3af' : '#ef4444',
-                        border: '1px solid',
-                        borderColor: oem.models?.length > 0 ? '#e5e7eb' : '#fecaca',
-                        borderRadius: '4px',
-                        cursor: oem.models?.length > 0 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                      title={oem.models?.length > 0 ? 'Delete all models first' : 'Delete OEM'}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div className="ds-form-group">
+                    <label className="ds-label">Short Name</label>
+                    <input
+                      type="text"
+                      value={oemForm.shortName}
+                      onChange={(e) => setOEMForm(prev => ({ ...prev, shortName: e.target.value }))}
+                      placeholder="e.g., BMW"
+                      className="ds-input"
+                    />
                   </div>
                 </div>
+                <div className="ds-flex-row" style={{ justifyContent: 'flex-end', gap: spacing[3] }}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setShowOEMForm(false)
+                      setOEMForm({ name: '', shortName: '' })
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={createOEM}
+                    disabled={!oemForm.name.trim()}
+                  >
+                    Create OEM
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
 
-                {/* Model Creation Form */}
-                {showModelForm === oem.id && (
-                  <div style={{
-                    marginLeft: '32px',
-                    marginBottom: '8px',
-                    padding: '16px',
-                    backgroundColor: '#f3f4f6',
-                    borderRadius: '6px',
-                    border: '1px solid #d1d5db'
-                  }}>
-                    <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>
-                      Add Model to {oem.name}
-                    </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                      <input
-                        type="text"
-                        value={modelForm.name}
-                        onChange={(e) => setModelForm(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Model name (e.g., 3 Series)"
-                        style={{
-                          padding: '8px 12px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '4px',
-                          fontSize: '14px'
-                        }}
-                      />
-                      <input
-                        type="text"
-                        value={modelForm.platform}
-                        onChange={(e) => setModelForm(prev => ({ ...prev, platform: e.target.value }))}
-                        placeholder="Platform (optional)"
-                        style={{
-                          padding: '8px 12px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '4px',
-                          fontSize: '14px'
-                        }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                      <button
-                        onClick={() => {
-                          setShowModelForm(null)
-                          setModelForm({ name: '', platform: '' })
-                        }}
-                        style={{
-                          padding: '6px 12px',
-                          border: '1px solid #d1d5db',
-                          backgroundColor: '#ffffff',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => createModel(oem.id)}
-                        disabled={!modelForm.name.trim()}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: modelForm.name.trim() ? '#3b82f6' : '#9ca3af',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          cursor: modelForm.name.trim() ? 'pointer' : 'not-allowed'
-                        }}
-                      >
-                        Add Model
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Models */}
-                {expandedOEMs.has(oem.id) && oem.models?.map((model: any) => (
-                  <div key={model.id} style={{ marginLeft: '32px', marginBottom: '6px' }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '10px',
-                      backgroundColor: '#f9fafb',
-                      borderRadius: '6px',
-                      border: '1px solid #e5e7eb',
-                      marginBottom: expandedModels.has(model.id) ? '6px' : '0'
-                    }}>
-                      <button
-                        onClick={() => toggleModel(model.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          marginRight: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          color: '#6b7280'
-                        }}
-                      >
-                        {expandedModels.has(model.id) ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                      </button>
-                      <Car size={18} style={{ marginRight: '10px', color: '#10b981' }} />
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '15px', fontWeight: '600', margin: 0 }}>
-                          {model.name}
-                        </h4>
-                        <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0 0' }}>
-                          {model.platform && `Platform: ${model.platform} • `}{model.years?.length || 0} years
-                        </p>
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button
-                          onClick={() => setShowYearForm(showYearForm === model.id ? null : model.id)}
-                          style={{
-                            padding: '4px 10px',
-                            backgroundColor: showYearForm === model.id ? '#ef4444' : '#8b5cf6',
-                            color: '#ffffff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          {showYearForm === model.id ? <X size={12} /> : <Plus size={12} />}
-                          {showYearForm === model.id ? 'Cancel' : 'Add Year'}
-                        </button>
-                        <button
-                          onClick={() => deleteModel(model.id, model.name)}
-                          disabled={model.years?.length > 0}
-                          style={{
-                            padding: '4px 6px',
-                            backgroundColor: model.years?.length > 0 ? '#f3f4f6' : '#fef2f2',
-                            color: model.years?.length > 0 ? '#9ca3af' : '#ef4444',
-                            border: '1px solid',
-                            borderColor: model.years?.length > 0 ? '#e5e7eb' : '#fecaca',
-                            borderRadius: '4px',
-                            cursor: model.years?.length > 0 ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center'
-                          }}
-                          title={model.years?.length > 0 ? 'Delete all years first' : 'Delete Model'}
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Year Creation Form */}
-                    {showYearForm === model.id && (
+          {/* Hierarchical Tree View */}
+          {loading ? (
+            <div className="ds-loading-container">
+              <div className="ds-spinner-large" />
+              <p className="ds-text-secondary">Loading vehicle hierarchy...</p>
+            </div>
+          ) : hierarchy.length > 0 ? (
+            <Card variant="nested">
+              <div style={{ padding: spacing[3] }}>
+                {hierarchy.map(oem => (
+                  <div key={oem.id} style={{ marginBottom: spacing[4] }}>
+                    {/* OEM Level */}
+                    <Card
+                      variant="hover"
+                      style={{
+                        background: 'linear-gradient(135deg, white 0%, #f8fafc 100%)',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: `${spacing[3]} ${spacing[4]}`,
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        marginBottom: expandedOEMs.has(oem.id) ? spacing[2] : 0
+                      }}
+                      onMouseEnter={(e) => {
+                        const target = e.currentTarget as HTMLDivElement
+                        target.style.transform = 'translateY(-2px) scale(1.005)'
+                        target.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                      }}
+                      onMouseLeave={(e) => {
+                        const target = e.currentTarget as HTMLDivElement
+                        target.style.transform = 'translateY(0) scale(1)'
+                        target.style.boxShadow = 'none'
+                      }}
+                    >
+                      {/* Gradient accent bar */}
                       <div style={{
-                        marginLeft: '32px',
-                        marginBottom: '6px',
-                        padding: '12px',
-                        backgroundColor: '#f3f4f6',
-                        borderRadius: '6px',
-                        border: '1px solid #d1d5db'
-                      }}>
-                        <h5 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '10px' }}>
-                          Add Year to {model.name}
-                        </h5>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
-                          <input
-                            type="number"
-                            value={yearForm.year}
-                            onChange={(e) => setYearForm({ year: parseInt(e.target.value) || new Date().getFullYear() })}
-                            min="1900"
-                            max={new Date().getFullYear() + 2}
-                            style={{
-                              padding: '6px 10px',
-                              border: '1px solid #d1d5db',
-                              borderRadius: '4px',
-                              fontSize: '13px',
-                              width: '120px'
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '4px',
+                        background: 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)',
+                        borderRadius: '12px 12px 0 0'
+                      }} />
+
+                      <div className="ds-flex-between" style={{ alignItems: 'center' }}>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: spacing[4] }}>
+                          {/* OEM Header */}
+                          <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleOEM(oem.id)
+                              }}
+                              className="ds-button ds-button-ghost ds-button-sm"
+                              style={{ padding: spacing[1] }}
+                            >
+                              {expandedOEMs.has(oem.id) ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                            </button>
+                            <h3 style={{
+                              fontSize: '16px',
+                              fontWeight: 600,
+                              color: colors.text.primary,
+                              margin: 0
+                            }}>
+                              {oem.name}
+                            </h3>
+                            {oem.shortName && (
+                              <Badge variant="secondary" size="small" style={{
+                                fontWeight: 500,
+                                padding: '2px 8px'
+                              }}>
+                                {oem.shortName}
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Data Row */}
+                          <div style={{
+                            display: 'flex',
+                            gap: spacing[4],
+                            alignItems: 'center'
+                          }}>
+                            <div className="ds-flex-row" style={{ gap: spacing[1], alignItems: 'center' }}>
+                              <Car size={16} color={colors.primary[600]} />
+                              <span style={{ fontSize: '14px', color: colors.text.secondary }}>
+                                {oem.models?.length || 0} models
+                              </span>
+                            </div>
+
+                            <div className="ds-flex-row" style={{ gap: spacing[1], alignItems: 'center' }}>
+                              <Layers size={16} color={colors.warning[600]} />
+                              <span style={{ fontSize: '14px', color: colors.text.secondary }}>
+                                {oem.models?.reduce((total, model) => total + (model.years?.length || 0), 0) || 0} variants
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="ds-flex-row" style={{ gap: spacing[2] }}>
+                          <Button
+                            variant={showModelForm === oem.id ? 'error' : 'success'}
+                            icon={showModelForm === oem.id ? <X size={16} /> : <Plus size={16} />}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShowModelForm(showModelForm === oem.id ? null : oem.id)
                             }}
+                          >
+                            {showModelForm === oem.id ? 'Cancel' : 'Add Model'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            icon={<Trash2 size={18} />}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteOEM(oem.id, oem.name)
+                            }}
+                            disabled={oem.models?.length > 0}
+                            style={{
+                              color: oem.models?.length > 0 ? colors.gray[400] : colors.error[500],
+                              cursor: oem.models?.length > 0 ? 'not-allowed' : 'pointer'
+                            }}
+                            title={oem.models?.length > 0 ? 'Delete all models first' : 'Delete OEM'}
                           />
-                          <button
-                            onClick={() => {
-                              setShowYearForm(null)
-                              setYearForm({ year: new Date().getFullYear() })
-                            }}
-                            style={{
-                              padding: '6px 10px',
-                              border: '1px solid #d1d5db',
-                              backgroundColor: '#ffffff',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => createYear(model.id)}
-                            style={{
-                              padding: '6px 10px',
-                              backgroundColor: '#3b82f6',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Add Year
-                          </button>
                         </div>
                       </div>
+                    </Card>
+
+                    {/* Model Creation Form */}
+                    {showModelForm === oem.id && (
+                      <Card variant="nested" style={{ marginLeft: spacing[8], marginBottom: spacing[2] }}>
+                        <div style={{ padding: spacing[3] }}>
+                          <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>
+                            Add Model to {oem.name}
+                          </h4>
+                          <div className="ds-grid-2" style={{ marginBottom: spacing[3] }}>
+                            <input
+                              type="text"
+                              value={modelForm.name}
+                              onChange={(e) => setModelForm(prev => ({ ...prev, name: e.target.value }))}
+                              placeholder="Model name (e.g., 3 Series)"
+                              className="ds-input"
+                            />
+                            <input
+                              type="text"
+                              value={modelForm.platform}
+                              onChange={(e) => setModelForm(prev => ({ ...prev, platform: e.target.value }))}
+                              placeholder="Platform (optional)"
+                              className="ds-input"
+                            />
+                          </div>
+                          <div className="ds-flex-row" style={{ justifyContent: 'flex-end', gap: spacing[2] }}>
+                            <Button
+                              variant="secondary"
+                              size="small"
+                              onClick={() => {
+                                setShowModelForm(null)
+                                setModelForm({ name: '', platform: '' })
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="primary"
+                              size="small"
+                              onClick={() => createModel(oem.id)}
+                              disabled={!modelForm.name.trim()}
+                            >
+                              Add Model
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
                     )}
 
-                    {/* Model Years */}
-                    {expandedModels.has(model.id) && model.years?.map((year: any) => (
-                      <div key={year.id} style={{
-                        marginLeft: '64px',
-                        marginBottom: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '8px',
-                        backgroundColor: '#ffffff',
-                        borderRadius: '4px',
-                        border: '1px solid #e5e7eb'
-                      }}>
-                        <Calendar size={16} style={{ marginRight: '8px', color: '#8b5cf6' }} />
-                        <div style={{ flex: 1 }}>
-                          <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                            {year.year}
-                          </span>
-                          <span style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px' }}>
-                            {year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0} jobs
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => deleteModelYear(year.id, year.year, model.name)}
-                          disabled={(year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0}
-                          style={{
-                            padding: '4px 6px',
-                            backgroundColor: (year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0 ? '#f3f4f6' : '#fef2f2',
-                            color: (year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0 ? '#9ca3af' : '#ef4444',
-                            border: '1px solid',
-                            borderColor: (year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0 ? '#e5e7eb' : '#fecaca',
-                            borderRadius: '4px',
-                            cursor: (year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0 ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center'
-                          }}
-                          title={(year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0 ? 'Cannot delete: Has diagnostic jobs' : 'Delete Year'}
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                    {/* Models */}
+                    {expandedOEMs.has(oem.id) && oem.models?.map((model: any) => (
+                      <div key={model.id} style={{ marginLeft: spacing[8], marginBottom: spacing[2] }}>
+                        <Card style={{
+                          backgroundColor: colors.gray[50],
+                          marginBottom: expandedModels.has(model.id) ? spacing[2] : 0,
+                          padding: `${spacing[2]} ${spacing[3]}`
+                        }}>
+                          <div className="ds-flex-between" style={{ alignItems: 'center' }}>
+                            <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                              <button
+                                onClick={() => toggleModel(model.id)}
+                                className="ds-button ds-button-ghost ds-button-sm"
+                                style={{ padding: spacing[1] }}
+                              >
+                                {expandedModels.has(model.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                              </button>
+                              <Car size={16} style={{ color: colors.success[500] }} />
+                              <h4 style={{ fontSize: '14px', fontWeight: 600, margin: 0 }}>
+                                {model.name}
+                              </h4>
+                              {model.platform && (
+                                <Badge variant="secondary" size="small">
+                                  {model.platform}
+                                </Badge>
+                              )}
+                              <span style={{ fontSize: '13px', color: colors.text.secondary }}>
+                                {model.years?.length || 0} years
+                              </span>
+                            </div>
+                            <div className="ds-flex-row" style={{ gap: spacing[2] }}>
+                              <Button
+                                variant={showYearForm === model.id ? 'error' : 'purple'}
+                                icon={showYearForm === model.id ? <X size={16} /> : <Plus size={16} />}
+                                onClick={() => setShowYearForm(showYearForm === model.id ? null : model.id)}
+                              >
+                                {showYearForm === model.id ? 'Cancel' : 'Add Year'}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                icon={<Trash2 size={16} />}
+                                onClick={() => deleteModel(model.id, model.name)}
+                                disabled={model.years?.length > 0}
+                                style={{
+                                  color: model.years?.length > 0 ? colors.gray[400] : colors.error[500],
+                                  cursor: model.years?.length > 0 ? 'not-allowed' : 'pointer'
+                                }}
+                                title={model.years?.length > 0 ? 'Delete all years first' : 'Delete Model'}
+                              />
+                            </div>
+                          </div>
+                        </Card>
+
+                        {/* Year Creation Form */}
+                        {showYearForm === model.id && (
+                          <Card variant="nested" style={{ marginLeft: spacing[8], marginBottom: spacing[2] }}>
+                            <div style={{ padding: spacing[3] }}>
+                              <h5 style={{ fontSize: '13px', fontWeight: 600, marginBottom: spacing[2] }}>
+                                Add Year to {model.name}
+                              </h5>
+                              <div className="ds-flex-row" style={{ gap: spacing[2], marginBottom: spacing[2] }}>
+                                <input
+                                  type="number"
+                                  value={yearForm.year}
+                                  onChange={(e) => setYearForm({ year: parseInt(e.target.value) || new Date().getFullYear() })}
+                                  min="1900"
+                                  max={new Date().getFullYear() + 2}
+                                  className="ds-input"
+                                  style={{ width: '120px' }}
+                                />
+                                <Button
+                                  variant="secondary"
+                                  size="small"
+                                  onClick={() => {
+                                    setShowYearForm(null)
+                                    setYearForm({ year: new Date().getFullYear() })
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  variant="primary"
+                                  size="small"
+                                  onClick={() => createYear(model.id)}
+                                >
+                                  Add Year
+                                </Button>
+                              </div>
+                            </div>
+                          </Card>
+                        )}
+
+                        {/* Model Years */}
+                        {expandedModels.has(model.id) && model.years?.map((year: any) => (
+                          <div key={year.id} style={{ marginLeft: spacing[16] }}>
+                            <Card style={{
+                              backgroundColor: colors.background.primary,
+                              marginBottom: spacing[1],
+                              padding: `${spacing[2]} ${spacing[3]}`
+                            }}>
+                              <div className="ds-flex-between" style={{ alignItems: 'center' }}>
+                                <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                                  <Calendar size={14} style={{ color: colors.purple[500] }} />
+                                  <span style={{ fontSize: '13px', fontWeight: 500 }}>
+                                    {year.year}
+                                  </span>
+                                  <Badge variant="secondary" size="small">
+                                    {year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0} jobs
+                                  </Badge>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  icon={<Trash2 size={16} />}
+                                  onClick={() => deleteModelYear(year.id, year.year, model.name)}
+                                  disabled={(year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0}
+                                  style={{
+                                    color: (year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0 ? colors.gray[400] : colors.error[500],
+                                    cursor: (year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title={(year.Vehicle?.reduce((total, vehicle) => total + (vehicle._count?.DiagnosticJob || 0), 0) || 0) > 0 ? 'Cannot delete: Has diagnostic jobs' : 'Delete Year'}
+                                />
+                              </div>
+                            </Card>
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
                 ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '60px' }}>
-            <Building size={48} style={{ color: '#9ca3af', marginBottom: '16px' }} />
-            <h3 style={{ fontSize: '18px', fontWeight: '500', margin: '0 0 8px 0' }}>
-              No Vehicle Hierarchy Yet
-            </h3>
-            <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 16px 0' }}>
-              Start by creating your first OEM to build your vehicle hierarchy
-            </p>
-            <button
-              onClick={() => setShowOEMForm(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                backgroundColor: '#3b82f6',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                cursor: 'pointer'
-              }}
-            >
-              <Plus size={16} />
-              Create First OEM
-            </button>
-          </div>
-        )}
+            </Card>
+          ) : (
+            <div className="ds-empty-state">
+              <Building size={48} style={{ color: colors.gray[400] }} />
+              <h3 className="ds-heading-3">No Vehicle Hierarchy Yet</h3>
+              <p>Start by creating your first OEM to build your vehicle hierarchy</p>
+              <Button
+                variant="primary"
+                icon={<Plus size={16} />}
+                onClick={() => setShowOEMForm(true)}
+                style={{ marginTop: spacing[4] }}
+              >
+                Create First OEM
+              </Button>
+            </div>
+          )}
+        </Card>
       </div>
     </PageLayout>
   )

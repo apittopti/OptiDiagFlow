@@ -5,7 +5,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client'
-import type { DoipTraceMessage } from './doip-parser'
+import type { DoipTraceMessage } from './trace-parser/jifeline-parser'
 
 // Pattern types we can discover
 export enum DiscoveryType {

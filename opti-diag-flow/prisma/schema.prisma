@@ -200,6 +200,7 @@ model DTC {
   code        String
   status      String
   statusByte  String
+  rawHex      String?       // Original hex bytes before conversion to P/B/U code
   description String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

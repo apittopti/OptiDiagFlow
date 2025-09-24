@@ -9,8 +9,8 @@ import { colors, spacing } from '@/lib/design-system/tokens'
 
 interface ButtonProps {
   children: ReactNode
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
-  size?: 'sm' | 'md' | 'lg'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'error' | 'success' | 'warning' | 'info'
+  size?: 'sm' | 'md' | 'lg' | 'small' | 'medium' | 'large'
   icon?: ReactNode
   iconPosition?: 'left' | 'right'
   fullWidth?: boolean
@@ -37,7 +37,7 @@ export const Button: React.FC<ButtonProps> = ({
   type = 'button',
 }) => {
   // Combine base, variant, and size styles
-  const variantStyle = {
+  const variantStyles = {
     primary: {
       backgroundColor: colors.primary[500],
       color: colors.text.inverse,
@@ -58,9 +58,38 @@ export const Button: React.FC<ButtonProps> = ({
       color: colors.text.inverse,
       border: 'none',
     },
-  }[variant]
+    error: {
+      backgroundColor: colors.error[500],
+      color: colors.text.inverse,
+      border: 'none',
+    },
+    success: {
+      backgroundColor: colors.success[500],
+      color: colors.text.inverse,
+      border: 'none',
+    },
+    warning: {
+      backgroundColor: colors.warning[500],
+      color: colors.text.inverse,
+      border: 'none',
+    },
+    info: {
+      backgroundColor: colors.primary[500],
+      color: colors.text.inverse,
+      border: 'none',
+    },
+  }
 
-  const sizeStyle = buttonStyles.sizes[size]
+  const variantStyle = variantStyles[variant] || variantStyles.primary
+
+  // Map alternative size names
+  const sizeMap = {
+    'small': 'sm',
+    'medium': 'md',
+    'large': 'lg'
+  }
+  const normalizedSize = sizeMap[size] || size || 'md'
+  const sizeStyle = buttonStyles.sizes[normalizedSize]
 
   const buttonStyle: CSSProperties = combineStyles(
     buttonStyles.base,
@@ -81,6 +110,10 @@ export const Button: React.FC<ButtonProps> = ({
     secondary: colors.gray[50],
     ghost: colors.gray[100],
     danger: colors.error[600],
+    error: colors.error[600],
+    success: colors.success[600],
+    warning: colors.warning[600],
+    info: colors.primary[600],
   }
 
   const activeColors = {
@@ -88,6 +121,10 @@ export const Button: React.FC<ButtonProps> = ({
     secondary: colors.gray[100],
     ghost: colors.gray[200],
     danger: colors.error[700],
+    error: colors.error[700],
+    success: colors.success[700],
+    warning: colors.warning[700],
+    info: colors.primary[700],
   }
 
   return (

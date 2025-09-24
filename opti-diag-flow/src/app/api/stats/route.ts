@@ -3,24 +3,30 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    // Get simple counts for dashboard
+    // Get comprehensive counts for dashboard
     const [
       totalJobs,
       activeJobs,
-      totalVehicles
+      totalVehicles,
+      discoveredECUs,
+      totalDTCs,
+      totalDIDs
     ] = await Promise.all([
       prisma.diagnosticJob.count(),
       prisma.diagnosticJob.count({ where: { status: 'ACTIVE' } }),
-      prisma.vehicle.count()
+      prisma.vehicle.count(),
+      prisma.eCUConfiguration.count(), // Count discovered ECUs from jobs
+      prisma.dTC.count(), // Count total DTCs found
+      prisma.dataIdentifier.count() // Count discovered DIDs from jobs
     ])
 
     return NextResponse.json({
       totalJobs,
       activeJobs,
       totalVehicles,
-      ecuTypes: 0,
-      diagServices: 0,
-      standardDIDs: 0
+      discoveredECUs,
+      totalDTCs,
+      totalDIDs
     })
 
   } catch (error) {

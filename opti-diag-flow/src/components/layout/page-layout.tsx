@@ -11,7 +11,6 @@ import {
   Bell,
   User,
   Settings,
-  FileCode,
   Database
 } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -32,7 +31,6 @@ export function PageLayout({ children, title, description }: PageLayoutProps) {
     { icon: FileText, label: 'Jobs', path: '/jobs' },
     { icon: Car, label: 'Vehicle Management', path: '/vehicle-management' },
     { icon: Database, label: 'Knowledge Base', path: '/knowledge' },
-    { icon: FileCode, label: 'ODX Editor', path: '/odx-editor' },
     { icon: Settings, label: 'Settings', path: '/settings' }
   ]
 
@@ -176,27 +174,12 @@ export function PageLayout({ children, title, description }: PageLayoutProps) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              <Search size={20} style={{
-                position: 'absolute',
-                left: '12px',
-                color: '#9ca3af'
-              }} />
+            <div className="ds-search-wrapper" style={{ width: '240px' }}>
+              <Search size={20} className="ds-search-icon" />
               <input
                 type="text"
                 placeholder="Search..."
-                style={{
-                  padding: '8px 12px 8px 40px',
-                  borderRadius: '8px',
-                  border: '1px solid #e5e7eb',
-                  fontSize: '14px',
-                  width: '240px',
-                  outline: 'none'
-                }}
+                className="ds-search-input"
               />
             </div>
 
@@ -237,7 +220,7 @@ export function PageLayout({ children, title, description }: PageLayoutProps) {
         </div>
 
         {/* Content */}
-        <div style={{ padding: '24px' }}>
+        <div className="ds-container">
           {children}
         </div>
       </div>

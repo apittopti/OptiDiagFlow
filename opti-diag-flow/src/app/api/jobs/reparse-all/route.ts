@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { JifelineParser } from '@/lib/trace-parser/jifeline-parser'
-import { discoverKnowledgeFromJob } from '@/lib/knowledge-discovery'
+// import { discoverKnowledgeFromJob } from '@/lib/knowledge-discovery' // Function needs to be implemented
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 
@@ -218,13 +218,14 @@ export async function POST(request: NextRequest) {
         })
 
         // Run knowledge discovery for this job
-        console.log(`Running knowledge discovery for job ${job.id}`)
-        try {
-          await discoverKnowledgeFromJob(job.id)
-          console.log(`Knowledge discovery completed for job ${job.id}`)
-        } catch (knowledgeError) {
-          console.error(`Knowledge discovery failed for job ${job.id}:`, knowledgeError)
-        }
+        // TODO: Implement knowledge discovery
+        // console.log(`Running knowledge discovery for job ${job.id}`)
+        // try {
+        //   await discoverKnowledgeFromJob(job.id)
+        //   console.log(`Knowledge discovery completed for job ${job.id}`)
+        // } catch (knowledgeError) {
+        //   console.error(`Knowledge discovery failed for job ${job.id}:`, knowledgeError)
+        // }
 
         totalProcessed++
         console.log(`Completed processing job ${job.id} (${totalProcessed}/${jobs.length})`)

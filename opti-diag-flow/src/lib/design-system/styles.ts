@@ -4,7 +4,7 @@
  */
 
 import { CSSProperties } from 'react'
-import { colors, spacing, typography, borderRadius, shadows, transitions, components, semantic } from './tokens'
+import { colors, spacing, typography, borderRadius, shadows, transitions, components, semantic, zIndex } from './tokens'
 
 // ============================================
 // CARD STYLES
@@ -190,8 +190,8 @@ export const inputStyles = {
 
 export const layoutStyles = {
   container: {
-    maxWidth: '1280px',
-    margin: '0 auto',
+    maxWidth: '100%', // Full screen width
+    margin: '0',
     padding: `0 ${spacing[6]}`,
   } as CSSProperties,
 
@@ -233,6 +233,7 @@ export const tableStyles = {
     backgroundColor: colors.background.primary,
     borderRadius: borderRadius.lg,
     border: `1px solid ${colors.border.light}`,
+    boxShadow: shadows.sm,
   } as CSSProperties,
 
   table: {
@@ -241,32 +242,69 @@ export const tableStyles = {
   } as CSSProperties,
 
   header: {
-    backgroundColor: components.table.headerBackground,
-    borderBottom: `1px solid ${components.table.borderColor}`,
+    background: `linear-gradient(135deg, ${colors.gray[50]} 0%, ${colors.gray[100]} 100%)`,
+    borderBottom: `2px solid ${colors.primary[200]}`,
   } as CSSProperties,
 
   headerCell: {
-    padding: components.table.cellPadding,
+    padding: `${spacing[4]} ${spacing[5]}`,
     textAlign: 'left' as const,
-    fontWeight: typography.fontWeight.semibold,
+    fontWeight: typography.fontWeight.bold,
     fontSize: typography.fontSize.sm,
-    color: colors.text.secondary,
+    color: colors.gray[700],
     textTransform: 'uppercase' as const,
     letterSpacing: typography.letterSpacing.wider,
+    position: 'relative' as const,
+    '&:not(:last-child)::after': {
+      content: '""',
+      position: 'absolute',
+      right: 0,
+      top: '25%',
+      height: '50%',
+      width: '1px',
+      backgroundColor: colors.gray[300],
+    },
   } as CSSProperties,
 
   row: {
-    borderBottom: `1px solid ${components.table.borderColor}`,
-    transition: transitions.colors,
+    borderBottom: `1px solid ${colors.border.light}`,
+    transition: transitions.all,
     '&:hover': {
-      backgroundColor: components.table.rowHoverBackground,
+      backgroundColor: colors.primary[25] || '#f8faff',
+      transform: 'translateY(-1px)',
+      boxShadow: `0 2px 8px rgba(59, 130, 246, 0.1)`,
+    },
+    '&:nth-child(even)': {
+      backgroundColor: colors.gray[25] || '#fafafa',
     },
   } as CSSProperties,
 
   cell: {
-    padding: components.table.cellPadding,
+    padding: `${spacing[4]} ${spacing[5]}`,
     fontSize: typography.fontSize.sm,
     color: colors.text.primary,
+    verticalAlign: 'middle' as const,
+    position: 'relative' as const,
+  } as CSSProperties,
+
+  // Enhanced table variants
+  modernTable: {
+    background: 'white',
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    boxShadow: shadows.lg,
+    border: 'none',
+  } as CSSProperties,
+
+  compactRow: {
+    '& td': {
+      padding: `${spacing[3]} ${spacing[4]}`,
+    },
+  } as CSSProperties,
+
+  actionCell: {
+    width: '120px',
+    textAlign: 'center' as const,
   } as CSSProperties,
 } as const
 

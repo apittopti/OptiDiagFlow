@@ -1,5 +1,5 @@
 import { DiscoveredECU, DIDInfo, RoutineInfo } from '../trace-parser/jifeline-parser'
-import { DTCInfo } from '../doip-parser'
+import { DTCInfo } from '../trace-parser'
 import * as fs from 'fs'
 import * as path from 'path'
 import { v4 as uuidv4 } from 'uuid'

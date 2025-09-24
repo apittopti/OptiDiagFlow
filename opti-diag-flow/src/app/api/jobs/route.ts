@@ -303,7 +303,13 @@ async function processTraceFile(jobId: string, traceFile: { name: string, conten
         traceFileName: traceFile.name,
         startTime: parsedData.metadata?.startTime,
         endTime: parsedData.metadata?.endTime,
-        duration: parsedData.metadata?.duration
+        duration: parsedData.metadata?.duration,
+        // Include Jifeline metadata from parser
+        vehicleVoltage: parsedData.metadata?.vehicleVoltage,
+        connectionInfo: parsedData.metadata?.connectionInfo,
+        connectorMetrics: parsedData.metadata?.connectorMetrics,
+        ecuChannels: parsedData.metadata?.ecuChannels,
+        metadataMessages: parsedData.metadata?.metadataMessages
       }
     }
   })

@@ -1,0 +1,453 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - heading "OptiDiagFlow" [level=2] [ref=e7]
+      - navigation [ref=e8]:
+        - generic [ref=e9] [cursor=pointer]:
+          - img [ref=e10] [cursor=pointer]
+          - generic [ref=e12] [cursor=pointer]: Dashboard
+        - generic [ref=e13] [cursor=pointer]:
+          - img [ref=e14] [cursor=pointer]
+          - generic [ref=e17] [cursor=pointer]: Jobs
+        - generic [ref=e18] [cursor=pointer]:
+          - img [ref=e19] [cursor=pointer]
+          - generic [ref=e23] [cursor=pointer]: Vehicle Management
+        - generic [ref=e24] [cursor=pointer]:
+          - img [ref=e26] [cursor=pointer]
+          - generic [ref=e30] [cursor=pointer]: Knowledge Base
+        - generic [ref=e31] [cursor=pointer]:
+          - img [ref=e32] [cursor=pointer]
+          - generic [ref=e37] [cursor=pointer]: ODX Editor
+        - generic [ref=e38] [cursor=pointer]:
+          - img [ref=e39] [cursor=pointer]
+          - generic [ref=e42] [cursor=pointer]: Settings
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - button [ref=e46] [cursor=pointer]:
+            - img [ref=e47] [cursor=pointer]
+          - generic [ref=e50]:
+            - heading "Knowledge Repository" [level=1] [ref=e51]
+            - paragraph [ref=e52]: Manage ECU, DID, DTC, and Routine definitions across different vehicle hierarchies
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - img [ref=e55]
+            - textbox "Search..." [ref=e58]
+          - button [ref=e59] [cursor=pointer]:
+            - img [ref=e60] [cursor=pointer]
+          - generic [ref=e64] [cursor=pointer]:
+            - img [ref=e65] [cursor=pointer]
+            - generic [ref=e68] [cursor=pointer]: Admin
+      - generic [ref=e70]:
+        - generic [ref=e71]:
+          - generic [ref=e73] [cursor=pointer]:
+            - generic [ref=e74] [cursor=pointer]:
+              - paragraph [ref=e75] [cursor=pointer]: ECU Definitions
+              - heading "34" [level=3] [ref=e76] [cursor=pointer]
+            - img [ref=e78] [cursor=pointer]
+          - generic [ref=e83] [cursor=pointer]:
+            - generic [ref=e84] [cursor=pointer]:
+              - paragraph [ref=e85] [cursor=pointer]: DID Definitions
+              - heading "15" [level=3] [ref=e86] [cursor=pointer]
+            - img [ref=e88] [cursor=pointer]
+          - generic [ref=e91] [cursor=pointer]:
+            - generic [ref=e92] [cursor=pointer]:
+              - paragraph [ref=e93] [cursor=pointer]: DTC Definitions
+              - heading "14" [level=3] [ref=e94] [cursor=pointer]
+            - img [ref=e96] [cursor=pointer]
+          - generic [ref=e99] [cursor=pointer]:
+            - generic [ref=e100] [cursor=pointer]:
+              - paragraph [ref=e101] [cursor=pointer]: Routine Definitions
+              - heading "0" [level=3] [ref=e102] [cursor=pointer]
+            - img [ref=e104] [cursor=pointer]
+        - button "Reparse All Jobs" [ref=e107] [cursor=pointer]:
+          - img [ref=e108] [cursor=pointer]
+          - text: Reparse All Jobs
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - button "ECUs" [ref=e113] [cursor=pointer]
+              - button "DIDs" [ref=e114] [cursor=pointer]
+              - button "DTCs" [ref=e115] [cursor=pointer]
+              - button "Routines" [ref=e116] [cursor=pointer]
+            - generic [ref=e117]:
+              - button "Export" [ref=e118] [cursor=pointer]:
+                - img [ref=e119] [cursor=pointer]
+                - text: Export
+              - generic [ref=e122]:
+                - img [ref=e123]
+                - text: Import
+          - generic [ref=e126]:
+            - generic [ref=e127]:
+              - generic [ref=e128]: OEM
+              - combobox [ref=e129] [cursor=pointer]:
+                - option "All OEMs" [selected]
+                - option "Honda"
+                - option "Hyundai"
+                - option "Land Rover"
+                - option "MG"
+                - option "Nissan"
+                - option "Polestar"
+            - generic [ref=e130]:
+              - generic [ref=e131]: Search
+              - generic [ref=e132]:
+                - img [ref=e133]
+                - textbox "Search definitions..." [ref=e136]
+          - table [ref=e138]:
+            - rowgroup [ref=e139]:
+              - row "Address Name Description Job Name OEM Model Model Year" [ref=e140]:
+                - cell "Address" [ref=e141]
+                - cell "Name" [ref=e142]
+                - cell "Description" [ref=e143]
+                - cell "Job Name" [ref=e144]
+                - cell "OEM" [ref=e145]
+                - cell "Model" [ref=e146]
+                - cell "Model Year" [ref=e147]
+            - rowgroup [ref=e148]:
+              - row "1416 ACM Click to add description - Land Rover Defender 2023" [ref=e149]:
+                - cell "1416" [ref=e150]
+                - cell "ACM" [ref=e151]:
+                  - generic [ref=e152]: ACM
+                - cell "Click to add description" [ref=e153]:
+                  - generic [ref=e154]: Click to add description
+                - cell "-" [ref=e155]
+                - cell "Land Rover" [ref=e156]
+                - cell "Defender" [ref=e157]
+                - cell "2023" [ref=e158]
+              - row "1434 ECU_1434 Click to add description - Land Rover Defender 2023" [ref=e159]:
+                - cell "1434" [ref=e160]
+                - cell "ECU_1434" [ref=e161]:
+                  - generic [ref=e162]: ECU_1434
+                - cell "Click to add description" [ref=e163]:
+                  - generic [ref=e164]: Click to add description
+                - cell "-" [ref=e165]
+                - cell "Land Rover" [ref=e166]
+                - cell "Defender" [ref=e167]
+                - cell "2023" [ref=e168]
+              - row "1437 ECU_1437 Click to add description - Land Rover Defender 2023" [ref=e169]:
+                - cell "1437" [ref=e170]
+                - cell "ECU_1437" [ref=e171]:
+                  - generic [ref=e172]: ECU_1437
+                - cell "Click to add description" [ref=e173]:
+                  - generic [ref=e174]: Click to add description
+                - cell "-" [ref=e175]
+                - cell "Land Rover" [ref=e176]
+                - cell "Defender" [ref=e177]
+                - cell "2023" [ref=e178]
+              - row "1464 ECU_1464 Click to add description - Land Rover Defender 2023" [ref=e179]:
+                - cell "1464" [ref=e180]
+                - cell "ECU_1464" [ref=e181]:
+                  - generic [ref=e182]: ECU_1464
+                - cell "Click to add description" [ref=e183]:
+                  - generic [ref=e184]: Click to add description
+                - cell "-" [ref=e185]
+                - cell "Land Rover" [ref=e186]
+                - cell "Defender" [ref=e187]
+                - cell "2023" [ref=e188]
+              - row "14B2 ECU_14B2 Click to add description - Land Rover Defender 2023" [ref=e189]:
+                - cell "14B2" [ref=e190]
+                - cell "ECU_14B2" [ref=e191]:
+                  - generic [ref=e192]: ECU_14B2
+                - cell "Click to add description" [ref=e193]:
+                  - generic [ref=e194]: Click to add description
+                - cell "-" [ref=e195]
+                - cell "Land Rover" [ref=e196]
+                - cell "Defender" [ref=e197]
+                - cell "2023" [ref=e198]
+              - row "14B3 ECU_14B3 Click to add description - Land Rover Defender 2023" [ref=e199]:
+                - cell "14B3" [ref=e200]
+                - cell "ECU_14B3" [ref=e201]:
+                  - generic [ref=e202]: ECU_14B3
+                - cell "Click to add description" [ref=e203]:
+                  - generic [ref=e204]: Click to add description
+                - cell "-" [ref=e205]
+                - cell "Land Rover" [ref=e206]
+                - cell "Defender" [ref=e207]
+                - cell "2023" [ref=e208]
+              - row "14B4 ECU_14B4 Click to add description - Land Rover Defender 2023" [ref=e209]:
+                - cell "14B4" [ref=e210]
+                - cell "ECU_14B4" [ref=e211]:
+                  - generic [ref=e212]: ECU_14B4
+                - cell "Click to add description" [ref=e213]:
+                  - generic [ref=e214]: Click to add description
+                - cell "-" [ref=e215]
+                - cell "Land Rover" [ref=e216]
+                - cell "Defender" [ref=e217]
+                - cell "2023" [ref=e218]
+              - row "1706 ECU_1706 Click to add description - Land Rover Defender 2023" [ref=e219]:
+                - cell "1706" [ref=e220]
+                - cell "ECU_1706" [ref=e221]:
+                  - generic [ref=e222]: ECU_1706
+                - cell "Click to add description" [ref=e223]:
+                  - generic [ref=e224]: Click to add description
+                - cell "-" [ref=e225]
+                - cell "Land Rover" [ref=e226]
+                - cell "Defender" [ref=e227]
+                - cell "2023" [ref=e228]
+              - row "1716 ECU_1716 Click to add description - Land Rover Defender 2023" [ref=e229]:
+                - cell "1716" [ref=e230]
+                - cell "ECU_1716" [ref=e231]:
+                  - generic [ref=e232]: ECU_1716
+                - cell "Click to add description" [ref=e233]:
+                  - generic [ref=e234]: Click to add description
+                - cell "-" [ref=e235]
+                - cell "Land Rover" [ref=e236]
+                - cell "Defender" [ref=e237]
+                - cell "2023" [ref=e238]
+              - row "1726 ADAS_ECU Click to add description - Land Rover Defender 2023" [ref=e239]:
+                - cell "1726" [ref=e240]
+                - cell "ADAS_ECU" [ref=e241]:
+                  - generic [ref=e242]: ADAS_ECU
+                - cell "Click to add description" [ref=e243]:
+                  - generic [ref=e244]: Click to add description
+                - cell "-" [ref=e245]
+                - cell "Land Rover" [ref=e246]
+                - cell "Defender" [ref=e247]
+                - cell "2023" [ref=e248]
+              - row "1730 ECU_1730 Click to add description - Land Rover Defender 2023" [ref=e249]:
+                - cell "1730" [ref=e250]
+                - cell "ECU_1730" [ref=e251]:
+                  - generic [ref=e252]: ECU_1730
+                - cell "Click to add description" [ref=e253]:
+                  - generic [ref=e254]: Click to add description
+                - cell "-" [ref=e255]
+                - cell "Land Rover" [ref=e256]
+                - cell "Defender" [ref=e257]
+                - cell "2023" [ref=e258]
+              - row "1731 ECU_1731 Click to add description - Land Rover Defender 2023" [ref=e259]:
+                - cell "1731" [ref=e260]
+                - cell "ECU_1731" [ref=e261]:
+                  - generic [ref=e262]: ECU_1731
+                - cell "Click to add description" [ref=e263]:
+                  - generic [ref=e264]: Click to add description
+                - cell "-" [ref=e265]
+                - cell "Land Rover" [ref=e266]
+                - cell "Defender" [ref=e267]
+                - cell "2023" [ref=e268]
+              - row "1732 ECU_1732 Click to add description - Land Rover Defender 2023" [ref=e269]:
+                - cell "1732" [ref=e270]
+                - cell "ECU_1732" [ref=e271]:
+                  - generic [ref=e272]: ECU_1732
+                - cell "Click to add description" [ref=e273]:
+                  - generic [ref=e274]: Click to add description
+                - cell "-" [ref=e275]
+                - cell "Land Rover" [ref=e276]
+                - cell "Defender" [ref=e277]
+                - cell "2023" [ref=e278]
+              - row "1733 ECU_1733 Click to add description - Land Rover Defender 2023" [ref=e279]:
+                - cell "1733" [ref=e280]
+                - cell "ECU_1733" [ref=e281]:
+                  - generic [ref=e282]: ECU_1733
+                - cell "Click to add description" [ref=e283]:
+                  - generic [ref=e284]: Click to add description
+                - cell "-" [ref=e285]
+                - cell "Land Rover" [ref=e286]
+                - cell "Defender" [ref=e287]
+                - cell "2023" [ref=e288]
+              - row "1734 ECU_1734 Click to add description - Land Rover Defender 2023" [ref=e289]:
+                - cell "1734" [ref=e290]
+                - cell "ECU_1734" [ref=e291]:
+                  - generic [ref=e292]: ECU_1734
+                - cell "Click to add description" [ref=e293]:
+                  - generic [ref=e294]: Click to add description
+                - cell "-" [ref=e295]
+                - cell "Land Rover" [ref=e296]
+                - cell "Defender" [ref=e297]
+                - cell "2023" [ref=e298]
+              - row "1737 ECU_1737 Click to add description - Land Rover Defender 2023" [ref=e299]:
+                - cell "1737" [ref=e300]
+                - cell "ECU_1737" [ref=e301]:
+                  - generic [ref=e302]: ECU_1737
+                - cell "Click to add description" [ref=e303]:
+                  - generic [ref=e304]: Click to add description
+                - cell "-" [ref=e305]
+                - cell "Land Rover" [ref=e306]
+                - cell "Defender" [ref=e307]
+                - cell "2023" [ref=e308]
+              - row "1740 ECU_1740 Click to add description - Land Rover Defender 2023" [ref=e309]:
+                - cell "1740" [ref=e310]
+                - cell "ECU_1740" [ref=e311]:
+                  - generic [ref=e312]: ECU_1740
+                - cell "Click to add description" [ref=e313]:
+                  - generic [ref=e314]: Click to add description
+                - cell "-" [ref=e315]
+                - cell "Land Rover" [ref=e316]
+                - cell "Defender" [ref=e317]
+                - cell "2023" [ref=e318]
+              - row "1741 ECU_1741 Click to add description - Land Rover Defender 2023" [ref=e319]:
+                - cell "1741" [ref=e320]
+                - cell "ECU_1741" [ref=e321]:
+                  - generic [ref=e322]: ECU_1741
+                - cell "Click to add description" [ref=e323]:
+                  - generic [ref=e324]: Click to add description
+                - cell "-" [ref=e325]
+                - cell "Land Rover" [ref=e326]
+                - cell "Defender" [ref=e327]
+                - cell "2023" [ref=e328]
+              - row "1751 ECU_1751 Click to add description - Land Rover Defender 2023" [ref=e329]:
+                - cell "1751" [ref=e330]
+                - cell "ECU_1751" [ref=e331]:
+                  - generic [ref=e332]: ECU_1751
+                - cell "Click to add description" [ref=e333]:
+                  - generic [ref=e334]: Click to add description
+                - cell "-" [ref=e335]
+                - cell "Land Rover" [ref=e336]
+                - cell "Defender" [ref=e337]
+                - cell "2023" [ref=e338]
+              - row "1753 ECU_1753 Click to add description - Land Rover Defender 2023" [ref=e339]:
+                - cell "1753" [ref=e340]
+                - cell "ECU_1753" [ref=e341]:
+                  - generic [ref=e342]: ECU_1753
+                - cell "Click to add description" [ref=e343]:
+                  - generic [ref=e344]: Click to add description
+                - cell "-" [ref=e345]
+                - cell "Land Rover" [ref=e346]
+                - cell "Defender" [ref=e347]
+                - cell "2023" [ref=e348]
+              - row "1754 ECU_1754 Click to add description - Land Rover Defender 2023" [ref=e349]:
+                - cell "1754" [ref=e350]
+                - cell "ECU_1754" [ref=e351]:
+                  - generic [ref=e352]: ECU_1754
+                - cell "Click to add description" [ref=e353]:
+                  - generic [ref=e354]: Click to add description
+                - cell "-" [ref=e355]
+                - cell "Land Rover" [ref=e356]
+                - cell "Defender" [ref=e357]
+                - cell "2023" [ref=e358]
+              - row "1757 ECU_1757 Click to add description - Land Rover Defender 2023" [ref=e359]:
+                - cell "1757" [ref=e360]
+                - cell "ECU_1757" [ref=e361]:
+                  - generic [ref=e362]: ECU_1757
+                - cell "Click to add description" [ref=e363]:
+                  - generic [ref=e364]: Click to add description
+                - cell "-" [ref=e365]
+                - cell "Land Rover" [ref=e366]
+                - cell "Defender" [ref=e367]
+                - cell "2023" [ref=e368]
+              - row "1761 ECU_1761 Click to add description - Land Rover Defender 2023" [ref=e369]:
+                - cell "1761" [ref=e370]
+                - cell "ECU_1761" [ref=e371]:
+                  - generic [ref=e372]: ECU_1761
+                - cell "Click to add description" [ref=e373]:
+                  - generic [ref=e374]: Click to add description
+                - cell "-" [ref=e375]
+                - cell "Land Rover" [ref=e376]
+                - cell "Defender" [ref=e377]
+                - cell "2023" [ref=e378]
+              - row "1764 ECU_1764 Click to add description - Land Rover Defender 2023" [ref=e379]:
+                - cell "1764" [ref=e380]
+                - cell "ECU_1764" [ref=e381]:
+                  - generic [ref=e382]: ECU_1764
+                - cell "Click to add description" [ref=e383]:
+                  - generic [ref=e384]: Click to add description
+                - cell "-" [ref=e385]
+                - cell "Land Rover" [ref=e386]
+                - cell "Defender" [ref=e387]
+                - cell "2023" [ref=e388]
+              - row "1780 ECU_1780 Click to add description - Land Rover Defender 2023" [ref=e389]:
+                - cell "1780" [ref=e390]
+                - cell "ECU_1780" [ref=e391]:
+                  - generic [ref=e392]: ECU_1780
+                - cell "Click to add description" [ref=e393]:
+                  - generic [ref=e394]: Click to add description
+                - cell "-" [ref=e395]
+                - cell "Land Rover" [ref=e396]
+                - cell "Defender" [ref=e397]
+                - cell "2023" [ref=e398]
+              - row "1797 ECU_1797 Click to add description - Land Rover Defender 2023" [ref=e399]:
+                - cell "1797" [ref=e400]
+                - cell "ECU_1797" [ref=e401]:
+                  - generic [ref=e402]: ECU_1797
+                - cell "Click to add description" [ref=e403]:
+                  - generic [ref=e404]: Click to add description
+                - cell "-" [ref=e405]
+                - cell "Land Rover" [ref=e406]
+                - cell "Defender" [ref=e407]
+                - cell "2023" [ref=e408]
+              - row "17A2 ECU_17A2 Click to add description - Land Rover Defender 2023" [ref=e409]:
+                - cell "17A2" [ref=e410]
+                - cell "ECU_17A2" [ref=e411]:
+                  - generic [ref=e412]: ECU_17A2
+                - cell "Click to add description" [ref=e413]:
+                  - generic [ref=e414]: Click to add description
+                - cell "-" [ref=e415]
+                - cell "Land Rover" [ref=e416]
+                - cell "Defender" [ref=e417]
+                - cell "2023" [ref=e418]
+              - row "17A4 ECU_17A4 Click to add description - Land Rover Defender 2023" [ref=e419]:
+                - cell "17A4" [ref=e420]
+                - cell "ECU_17A4" [ref=e421]:
+                  - generic [ref=e422]: ECU_17A4
+                - cell "Click to add description" [ref=e423]:
+                  - generic [ref=e424]: Click to add description
+                - cell "-" [ref=e425]
+                - cell "Land Rover" [ref=e426]
+                - cell "Defender" [ref=e427]
+                - cell "2023" [ref=e428]
+              - row "17C3 ECU_17C3 Click to add description - Land Rover Defender 2023" [ref=e429]:
+                - cell "17C3" [ref=e430]
+                - cell "ECU_17C3" [ref=e431]:
+                  - generic [ref=e432]: ECU_17C3
+                - cell "Click to add description" [ref=e433]:
+                  - generic [ref=e434]: Click to add description
+                - cell "-" [ref=e435]
+                - cell "Land Rover" [ref=e436]
+                - cell "Defender" [ref=e437]
+                - cell "2023" [ref=e438]
+              - row "17E0 ECU_17E0 Click to add description - Land Rover Defender 2023" [ref=e439]:
+                - cell "17E0" [ref=e440]
+                - cell "ECU_17E0" [ref=e441]:
+                  - generic [ref=e442]: ECU_17E0
+                - cell "Click to add description" [ref=e443]:
+                  - generic [ref=e444]: Click to add description
+                - cell "-" [ref=e445]
+                - cell "Land Rover" [ref=e446]
+                - cell "Defender" [ref=e447]
+                - cell "2023" [ref=e448]
+              - row "17E1 ECU_17E1 Click to add description - Land Rover Defender 2023" [ref=e449]:
+                - cell "17E1" [ref=e450]
+                - cell "ECU_17E1" [ref=e451]:
+                  - generic [ref=e452]: ECU_17E1
+                - cell "Click to add description" [ref=e453]:
+                  - generic [ref=e454]: Click to add description
+                - cell "-" [ref=e455]
+                - cell "Land Rover" [ref=e456]
+                - cell "Defender" [ref=e457]
+                - cell "2023" [ref=e458]
+              - row "17E4 ECU_17E4 Click to add description - Land Rover Defender 2023" [ref=e459]:
+                - cell "17E4" [ref=e460]
+                - cell "ECU_17E4" [ref=e461]:
+                  - generic [ref=e462]: ECU_17E4
+                - cell "Click to add description" [ref=e463]:
+                  - generic [ref=e464]: Click to add description
+                - cell "-" [ref=e465]
+                - cell "Land Rover" [ref=e466]
+                - cell "Defender" [ref=e467]
+                - cell "2023" [ref=e468]
+              - row "17E6 ECU_17E6 Click to add description - Land Rover Defender 2023" [ref=e469]:
+                - cell "17E6" [ref=e470]
+                - cell "ECU_17E6" [ref=e471]:
+                  - generic [ref=e472]: ECU_17E6
+                - cell "Click to add description" [ref=e473]:
+                  - generic [ref=e474]: Click to add description
+                - cell "-" [ref=e475]
+                - cell "Land Rover" [ref=e476]
+                - cell "Defender" [ref=e477]
+                - cell "2023" [ref=e478]
+              - row "FFFFE400 ECU_FFFFE400 Click to add description - Land Rover Defender 2023" [ref=e479]:
+                - cell "FFFFE400" [ref=e480]
+                - cell "ECU_FFFFE400" [ref=e481]:
+                  - generic [ref=e482]: ECU_FFFFE400
+                - cell "Click to add description" [ref=e483]:
+                  - generic [ref=e484]: Click to add description
+                - cell "-" [ref=e485]
+                - cell "Land Rover" [ref=e486]
+                - cell "Defender" [ref=e487]
+                - cell "2023" [ref=e488]
+  - button "Open Next.js Dev Tools" [ref=e494] [cursor=pointer]:
+    - img [ref=e495] [cursor=pointer]
+  - alert [ref=e498]
+```

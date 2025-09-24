@@ -206,6 +206,12 @@ export async function POST(
       startTime: parsedData.metadata?.startTime,
       endTime: parsedData.metadata?.endTime,
       duration: parsedData.metadata?.duration,
+      // Include Jifeline metadata from parser
+      vehicleVoltage: parsedData.metadata?.vehicleVoltage,
+      connectionInfo: parsedData.metadata?.connectionInfo,
+      connectorMetrics: parsedData.metadata?.connectorMetrics,
+      ecuChannels: parsedData.metadata?.ecuChannels,
+      metadataMessages: parsedData.metadata?.metadataMessages,
       // Add flag to indicate if messages were truncated (for future use)
       messagesComplete: true
     }

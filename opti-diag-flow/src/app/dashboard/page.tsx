@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { PageLayout } from '@/components/layout/page-layout'
+import { Card, Button, Badge, StatCard } from '@/components/design-system'
+import { colors, spacing } from '@/lib/design-system/tokens'
+import { containerStyles } from '@/lib/design-system/styles'
 import {
   Activity,
   Car,
@@ -14,7 +17,9 @@ import {
   ChevronRight,
   Package,
   FileCode,
-  Plus
+  Plus,
+  Calendar,
+  Settings
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -24,7 +29,7 @@ interface DashboardStats {
   totalVehicles: number
   discoveredECUs: number
   totalDTCs: number
-  odxPatterns: number
+  totalDIDs: number
 }
 
 export default function DashboardPage() {
@@ -34,7 +39,7 @@ export default function DashboardPage() {
     totalVehicles: 0,
     discoveredECUs: 0,
     totalDTCs: 0,
-    odxPatterns: 0
+    totalDIDs: 0
   })
 
   const [recentJobs, setRecentJobs] = useState<any[]>([])
@@ -67,390 +72,319 @@ export default function DashboardPage() {
     }
   }
 
-  const statCards = [
-    {
-      title: 'Total Jobs',
-      value: stats.totalJobs,
-      icon: FileText,
-      color: '#3b82f6',
-      bgColor: 'rgba(59, 130, 246, 0.1)'
-    },
-    {
-      title: 'Active Jobs',
-      value: stats.activeJobs,
-      icon: Activity,
-      color: '#10b981',
-      bgColor: 'rgba(16, 185, 129, 0.1)'
-    },
-    {
-      title: 'Total Vehicles',
-      value: stats.totalVehicles,
-      icon: Car,
-      color: '#8b5cf6',
-      bgColor: 'rgba(139, 92, 246, 0.1)'
-    },
-    {
-      title: 'Discovered ECUs',
-      value: stats.discoveredECUs,
-      icon: Database,
-      color: '#f59e0b',
-      bgColor: 'rgba(245, 158, 11, 0.1)'
-    },
-    {
-      title: 'Total DTCs',
-      value: stats.totalDTCs,
-      icon: AlertCircle,
-      color: '#ef4444',
-      bgColor: 'rgba(239, 68, 68, 0.1)'
-    },
-    {
-      title: 'ODX Patterns',
-      value: stats.odxPatterns,
-      icon: FileCode,
-      color: '#06b6d4',
-      bgColor: 'rgba(6, 182, 212, 0.1)'
-    }
-  ]
-
-  const getStatusColor = (status: string) => {
-    switch(status?.toLowerCase()) {
-      case 'completed':
-        return '#10b981'
-      case 'processing':
-      case 'active':
-        return '#3b82f6'
-      case 'failed':
-        return '#ef4444'
-      default:
-        return '#6b7280'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch(status?.toLowerCase()) {
-      case 'completed':
-        return <CheckCircle size={16} />
-      case 'processing':
-      case 'active':
-        return <Clock size={16} />
-      case 'failed':
-        return <AlertCircle size={16} />
-      default:
-        return <Clock size={16} />
-    }
-  }
-
   return (
     <PageLayout
       title="Dashboard"
       description="Overview of your diagnostic activities">
 
-      <div style={{ marginBottom: '32px' }}>
+      <div className="ds-container">
         {/* Quick Actions */}
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          marginBottom: '24px',
-          flexWrap: 'wrap'
-        }}>
-          <button
+        <div className="ds-flex-row" style={{ gap: spacing[3], marginBottom: spacing[6], flexWrap: 'wrap' }}>
+          <Button
+            variant="primary"
+            icon={<Plus size={16} />}
             onClick={() => router.push('/jobs')}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#2563eb'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#3b82f6'
-            }}
           >
-            <Plus size={16} />
             New Job
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<Car size={16} />}
             onClick={() => router.push('/vehicle-management')}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '8px',
-              border: '1px solid #e5e7eb',
-              backgroundColor: 'white',
-              color: '#374151',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f9fafb'
-              e.currentTarget.style.borderColor = '#d1d5db'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'white'
-              e.currentTarget.style.borderColor = '#e5e7eb'
-            }}
           >
-            <Car size={16} />
             Manage Vehicles
-          </button>
-          <button
-            onClick={() => router.push('/odx-editor')}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '8px',
-              border: '1px solid #e5e7eb',
-              backgroundColor: 'white',
-              color: '#374151',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f9fafb'
-              e.currentTarget.style.borderColor = '#d1d5db'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'white'
-              e.currentTarget.style.borderColor = '#e5e7eb'
-            }}
-          >
-            <FileCode size={16} />
-            ODX Editor
-          </button>
+          </Button>
         </div>
 
         {/* Stats Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '20px',
-          marginBottom: '32px'
-        }}>
-          {statCards.map((card, index) => (
-            <div
-              key={index}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '20px',
-                border: '1px solid #e5e7eb',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.1)'
-                e.currentTarget.style.transform = 'translateY(-2px)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = 'none'
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px', margin: 0 }}>
-                    {card.title}
-                  </p>
-                  <h3 style={{ fontSize: '32px', fontWeight: '700', color: '#111827', margin: 0 }}>
-                    {loading ? '-' : card.value}
-                  </h3>
-                </div>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '10px',
-                  backgroundColor: card.bgColor,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <card.icon size={24} style={{ color: card.color }} />
-                </div>
-              </div>
-              <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center' }}>
-                <TrendingUp size={16} style={{ color: '#10b981', marginRight: '4px' }} />
-                <span style={{ fontSize: '12px', color: '#10b981', fontWeight: '500' }}>
-                  +12%
-                </span>
-                <span style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px' }}>
-                  from last week
-                </span>
-              </div>
-            </div>
-          ))}
+        <div className="ds-grid-3" style={{ marginBottom: spacing[8] }}>
+          <StatCard
+            label="Total Jobs"
+            value={stats.totalJobs}
+            icon={<FileText size={24} />}
+            color="primary"
+            trend={{ value: '12%', positive: true }}
+            loading={loading}
+          />
+          <StatCard
+            label="Active Jobs"
+            value={stats.activeJobs}
+            icon={<Activity size={24} />}
+            color="success"
+            trend={{ value: '8%', positive: true }}
+            loading={loading}
+          />
+          <StatCard
+            label="Total Vehicles"
+            value={stats.totalVehicles}
+            icon={<Car size={24} />}
+            color="purple"
+            trend={{ value: '5%', positive: true }}
+            loading={loading}
+          />
+          <StatCard
+            label="Discovered ECUs"
+            value={stats.discoveredECUs}
+            icon={<Database size={24} />}
+            color="warning"
+            loading={loading}
+          />
+          <StatCard
+            label="Total DTCs"
+            value={stats.totalDTCs}
+            icon={<AlertCircle size={24} />}
+            color="error"
+            loading={loading}
+          />
+          <StatCard
+            label="Discovered DIDs"
+            value={stats.totalDIDs}
+            icon={<FileCode size={24} />}
+            color="info"
+            loading={loading}
+          />
         </div>
 
-        {/* Recent Jobs */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '12px',
-          padding: '24px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px'
-          }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', margin: 0 }}>
-              Recent Jobs
-            </h2>
-            <button
-              onClick={() => router.push('/jobs')}
-              style={{
-                fontSize: '14px',
-                color: '#3b82f6',
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              View all
-              <ChevronRight size={16} />
-            </button>
-          </div>
+        {/* Recent Jobs Section */}
+        <Card>
+          <h3 className="ds-heading-3">Recent Jobs</h3>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                border: '4px solid #f3f4f6',
-                borderTop: '4px solid #3b82f6',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                margin: '0 auto'
-              }} />
+            <div className="ds-loading">Loading jobs...</div>
+          ) : recentJobs.length === 0 ? (
+            <div className="ds-empty-state">
+              <p>No recent jobs found</p>
+              <Button
+                variant="primary"
+                size="small"
+                onClick={() => router.push('/jobs')}
+                style={{ marginTop: spacing[4] }}
+              >
+                Create First Job
+              </Button>
             </div>
-          ) : recentJobs.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {recentJobs.map((job: any) => (
-                <div
+          ) : (
+            <div className="ds-stack" style={{ gap: spacing[4] }}>
+              {recentJobs.map((job) => (
+                <Card
                   key={job.id}
-                  onClick={() => router.push(`/jobs/${job.id}`)}
+                  variant="hover"
                   style={{
-                    padding: '16px',
-                    borderRadius: '8px',
-                    border: '1px solid #e5e7eb',
+                    background: 'linear-gradient(135deg, white 0%, #f8fafc 100%)',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: spacing[6],
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease'
+                    position: 'relative',
+                    overflow: 'hidden'
                   }}
+                  onClick={() => router.push(`/jobs/${job.id}`)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f9fafb'
-                    e.currentTarget.style.borderColor = '#d1d5db'
+                    const target = e.currentTarget as HTMLDivElement
+                    target.style.transform = 'translateY(-4px) scale(1.01)'
+                    target.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.borderColor = '#e5e7eb'
+                    const target = e.currentTarget as HTMLDivElement
+                    target.style.transform = 'translateY(0) scale(1)'
+                    target.style.boxShadow = 'none'
                   }}
                 >
+                  {/* Gradient accent bar */}
                   <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '4px',
+                    background: job.status === 'completed' ?
+                      'linear-gradient(90deg, #10b981 0%, #34d399 100%)' :
+                      job.status === 'failed' ?
+                      'linear-gradient(90deg, #ef4444 0%, #f87171 100%)' :
+                      'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)',
+                    borderRadius: '12px 12px 0 0'
+                  }} />
+
+                  {/* Job Header */}
+                  <div style={{ marginBottom: spacing[4] }}>
+                    <div className="ds-flex-row" style={{
+                      gap: spacing[3],
+                      marginBottom: spacing[2],
+                      alignItems: 'center'
+                    }}>
+                      <h4 style={{
+                        fontSize: '18px',
+                        fontWeight: 600,
+                        color: colors.text.primary,
+                        margin: 0,
+                        flex: 1
+                      }}>
+                        {job.name || job.procedureType || `Job #${job.id.slice(0, 8)}`}
+                      </h4>
+                      <Badge
+                        variant={
+                          job.status === 'completed' ? 'success' :
+                          job.status === 'failed' ? 'error' :
+                          job.status === 'processing' ? 'info' : 'secondary'
+                        }
+                        size="small"
+                        style={{
+                          fontWeight: 500,
+                          padding: '4px 8px'
+                        }}
+                      >
+                        {job.status === 'completed' ? 'Completed' :
+                         job.status === 'failed' ? 'Failed' :
+                         job.status === 'processing' ? 'Processing' :
+                         'Pending'}
+                      </Badge>
+                    </div>
+
+                    {job.procedureType && job.procedureType !== job.name && (
+                      <p style={{
+                        fontSize: '14px',
+                        color: colors.text.secondary,
+                        margin: 0
+                      }}>
+                        {job.procedureType}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Data Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                    gap: spacing[4],
+                    marginBottom: spacing[4]
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
                       <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '8px',
-                        backgroundColor: '#f3f4f6',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '6px',
+                        backgroundColor: colors.primary[100],
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}>
-                        <FileText size={20} style={{ color: '#6b7280' }} />
+                        <Car size={16} color={colors.primary[600]} />
                       </div>
                       <div>
-                        <p style={{
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          color: '#111827',
-                          margin: 0,
-                          marginBottom: '4px'
-                        }}>
-                          {job.name}
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            color: getStatusColor(job.status)
-                          }}>
-                            {getStatusIcon(job.status)}
-                            <span style={{ fontSize: '12px', fontWeight: '500' }}>
-                              {job.status}
-                            </span>
-                          </div>
-                          <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                            • {new Date(job.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
+                        <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>Vehicle</span>
+                        <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
+                          {job.Vehicle?.modelName || 'Unknown'}
+                        </span>
                       </div>
                     </div>
-                    <ChevronRight size={20} style={{ color: '#9ca3af' }} />
+
+                    <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '6px',
+                        backgroundColor: colors.success[100],
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Calendar size={16} color={colors.success[600]} />
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>Year</span>
+                        <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
+                          {job.Vehicle?.year || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '6px',
+                        backgroundColor: colors.warning[100],
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Activity size={16} color={colors.warning[600]} />
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>Messages</span>
+                        <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
+                          {job.messageCount || 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '6px',
+                        backgroundColor: colors.error[100],
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Settings size={16} color={colors.error[600]} />
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>ECUs</span>
+                        <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
+                          {job.ECUConfiguration?.length || job._count?.ECUConfiguration || 0}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+
+                  {/* Footer */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: spacing[3],
+                    borderTop: `1px solid ${colors.border.light}`
+                  }}>
+                    <div className="ds-flex-row" style={{ gap: spacing[4], fontSize: '13px' }}>
+                      {job.Vehicle?.vin && (
+                        <div style={{
+                          padding: `${spacing[1]} ${spacing[2]}`,
+                          backgroundColor: '#e0e7ff',
+                          borderRadius: '4px',
+                          color: '#4c1d95',
+                          fontWeight: 500
+                        }}>
+                          {job.Vehicle.vin}
+                        </div>
+                      )}
+                      <span style={{ color: colors.text.muted, display: 'flex', alignItems: 'center', gap: spacing[1] }}>
+                        <Clock size={14} />
+                        {new Date(job.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <ChevronRight size={20} color={colors.gray[400]} />
+                  </div>
+                </Card>
               ))}
             </div>
-          ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px',
-              color: '#6b7280'
-            }}>
-              <Package size={48} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-              <p style={{ margin: 0 }}>No recent jobs</p>
-              <button
-                onClick={() => router.push('/jobs')}
-                style={{
-                  marginTop: '12px',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Create your first job
-              </button>
-            </div>
           )}
-        </div>
-      </div>
 
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+          <div style={{ marginTop: spacing[4], paddingTop: spacing[4], borderTop: `1px solid ${colors.border.light}` }}>
+            <Button
+              variant="ghost"
+              onClick={() => router.push('/jobs')}
+              icon={<ChevronRight size={16} />}
+              iconPosition="right"
+              style={{ width: '100%' }}
+            >
+              View All Jobs
+            </Button>
+          </div>
+        </Card>
+      </div>
     </PageLayout>
   )
 }

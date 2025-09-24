@@ -1,0 +1,45 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e6]
+      - heading "OptiDiagFlow" [level=1] [ref=e10]
+      - paragraph [ref=e11]: Automotive Diagnostic Management System
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - heading "Welcome back" [level=2] [ref=e14]
+        - paragraph [ref=e15]: Sign in to your account to continue
+      - generic [ref=e17]:
+        - paragraph [ref=e18]: Demo Credentials
+        - paragraph [ref=e19]: "Email: demo@optiflow.com"
+        - paragraph [ref=e20]: "Password: demo123"
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - generic [ref=e23]: Email Address
+          - generic [ref=e24]:
+            - img [ref=e25]
+            - textbox "name@example.com" [ref=e28]
+        - generic [ref=e29]:
+          - generic [ref=e30]: Password
+          - generic [ref=e31]:
+            - img [ref=e32]
+            - textbox "Enter your password" [ref=e35]
+        - generic [ref=e36]:
+          - generic [ref=e37] [cursor=pointer]:
+            - checkbox "Remember me" [ref=e38] [cursor=pointer]
+            - generic [ref=e39] [cursor=pointer]: Remember me
+          - link "Forgot password?" [ref=e40] [cursor=pointer]:
+            - /url: "#"
+        - button "Sign In" [ref=e41] [cursor=pointer]
+      - generic [ref=e43]: OR
+      - paragraph [ref=e44]:
+        - text: Don't have an account?
+        - link "Sign up" [ref=e45] [cursor=pointer]:
+          - /url: /auth/signup
+    - paragraph [ref=e46]: © 2024 OptiDiagFlow. All rights reserved.
+  - button "Open Next.js Dev Tools" [ref=e52] [cursor=pointer]:
+    - img [ref=e53] [cursor=pointer]
+  - alert [ref=e56]
+```
