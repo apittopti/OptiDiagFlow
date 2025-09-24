@@ -188,6 +188,10 @@ export async function POST(
     // Update job metadata - store ALL messages for complete UDS Flow display
     // Store messages in chunks if needed for very large traces
     const allMessages = parsedData.messages
+
+    // Extract the trace filename from the path
+    const traceFileName = path.basename(traceFilePath)
+
     const metadata = {
       messageCount: allMessages.length,
       ecuCount: discoveredECUs.size,
@@ -203,6 +207,7 @@ export async function POST(
         didCount: ecu.discoveredDIDs.size,
         routineCount: ecu.discoveredRoutines.size
       })),
+      traceFileName: traceFileName,
       startTime: parsedData.metadata?.startTime,
       endTime: parsedData.metadata?.endTime,
       duration: parsedData.metadata?.duration,
