@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Playwright scraper for dtcdecode.com — STREAMING writes + lazy-load discovery
+Playwright scraper for dtcdecode.com — streaming version.
 
-Features
-- Auto-accepts common cookie consent banners.
-- Robust discovery: auto-scrolls to trigger lazy loading and collects links; also falls
-  back to scanning visible text for DTC-shaped tokens if anchors are missing.
-- Writes per DTC page immediately:
-    * <OEM>_dtcs.ndjson            (one JSON object per line)
-    * <OEM>_dtcs_with_hex.csv      (summary, appended & flushed)
-    * <OEM>_dtcs_sections_long.csv (all text/list/table markers, appended & flushed)
-    * tables/<OEM>/<DTC>/table_#.csv  (any tables)
-- Debug option saves a few raw HTML pages.
+- Writes per-record immediately to <OEM>_dtcs.ndjson
+- Appends/flushed CSVs every --flush-every records
+- --output-dir support
+- Debug: saves first few HTML pages to debug_html/ when --verbose
+
+Install:
+  python -m pip install playwright beautifulsoup4 pandas tqdm
+  python -m playwright install chromium
 """
 
 import argparse, csv, json, os, random, re, time
@@ -24,45 +22,23 @@ import pandas as pd
 
 BASE = "https://www.dtcdecode.com"
 
-# ----------------------------- small logger -----------------------------------
 def vlog(enabled: bool, *args):
     if enabled:
         print("[debug]", *args)
 
-# ------------------- FMI (suffix) meanings (Ford/JLR style) -------------------
 FMI_MEANINGS = {
-    "00": "General failure / no sub-type",
-    "11": "Circuit short to ground",
-    "12": "Circuit short to battery/positive",
-    "13": "Circuit open",
-    "14": "Circuit short to ground or open",
-    "15": "Circuit short to battery or open",
-    "16": "Circuit voltage below threshold",
-    "17": "Circuit voltage above threshold",
-    "18": "Circuit current below threshold",
-    "19": "Circuit current above threshold",
-    "21": "Signal stuck low",
-    "22": "Signal stuck high",
-    "23": "Signal intermittent/erratic",
-    "28": "Signal implausible",
-    "29": "Signal invalid",
-    "62": "Actuator stuck",
-    "63": "Actuator stuck open",
-    "64": "Actuator stuck closed",
-    "71": "Mechanical failure",
-    "72": "Calibration/parameter not learned",
-    "73": "Performance/range issue",
-    "7A": "Module not configured / software incompatible",
-    "7F": "Security/component protection fault",
+    "00": "General failure / no sub-type","11": "Circuit short to ground","12": "Circuit short to battery/positive",
+    "13": "Circuit open","14": "Circuit short to ground or open","15": "Circuit short to battery or open",
+    "16": "Circuit voltage below threshold","17": "Circuit voltage above threshold","18": "Circuit current below threshold",
+    "19": "Circuit current above threshold","21": "Signal stuck low","22": "Signal stuck high","23": "Signal intermittent/erratic",
+    "28": "Signal implausible","29": "Signal invalid","62": "Actuator stuck","63": "Actuator stuck open","64": "Actuator stuck closed",
+    "71": "Mechanical failure","72": "Calibration/parameter not learned","73": "Performance/range issue",
+    "7A": "Module not configured / software incompatible","7F": "Security/component protection fault",
 }
-def fmi_meaning(fmi_hex: str) -> str:
-    return FMI_MEANINGS.get(fmi_hex.upper(), "")
+def fmi_meaning(fmi_hex: str) -> str: return FMI_MEANINGS.get(fmi_hex.upper(), "")
 
-# ------------------------------ helpers ---------------------------------------
-FALLBACK_UA = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-)
+FALLBACK_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+               "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
 
 def gentle_sleep(base_delay: float):
     time.sleep(max(0.05, base_delay * random.uniform(1.2, 1.6)))
@@ -87,15 +63,10 @@ class PlaywrightFetcher:
                              "  python -m playwright install chromium") from e
         self._pw = sync_playwright().start()
         launch_args = {"headless": headless}
-        if proxy:
-            launch_args["proxy"] = {"server": proxy}
+        if proxy: launch_args["proxy"] = {"server": proxy}
         self.browser = self._pw.chromium.launch(**launch_args)
-        self.context = self.browser.new_context(
-            locale="en-GB",
-            user_agent=FALLBACK_UA,
-        )
-        if cookie_header:
-            self._apply_cookie_header(cookie_header)
+        self.context = self.browser.new_context(locale="en-GB", user_agent=FALLBACK_UA)
+        if cookie_header: self._apply_cookie_header(cookie_header)
         self.page = self.context.new_page()
         self.base_delay = base_delay
         self.verbose = verbose
@@ -105,51 +76,34 @@ class PlaywrightFetcher:
         cookies = []
         for p in pairs:
             k, v = p.split("=", 1)
-            cookies.append({
-                "name": k.strip(), "value": v.strip(),
-                "domain": "www.dtcdecode.com", "path": "/",
-                "httpOnly": False, "secure": True,
-            })
-        if cookies:
-            self.context.add_cookies(cookies)
+            cookies.append({"name": k.strip(), "value": v.strip(),
+                            "domain": "www.dtcdecode.com", "path": "/", "httpOnly": False, "secure": True})
+        if cookies: self.context.add_cookies(cookies)
 
     def _log(self, *a):
-        if self.verbose:
-            print("[playwright]", *a)
+        if self.verbose: print("[playwright]", *a)
 
     # cookie consent
     def _accept_consent(self):
-        sel_candidates = [
-            "#onetrust-accept-btn-handler",
-            "button#onetrust-accept-btn-handler",
-            ".qc-cmp2-summary-buttons .qc-cmp2-accept-all",
-            ".qc-cmp2-footer .qc-cmp2-accept-all",
-            "button[aria-label*='Accept' i]",
-            "button[aria-label*='Agree' i]",
-            "button[data-action='accept-all']",
+        sels = [
+            "#onetrust-accept-btn-handler","button#onetrust-accept-btn-handler",
+            ".qc-cmp2-summary-buttons .qc-cmp2-accept-all",".qc-cmp2-footer .qc-cmp2-accept-all",
+            "button[aria-label*='Accept' i]","button[aria-label*='Agree' i]","button[data-action='accept-all']",
             "text=/^(Accept all|I agree|Agree|Allow all)$/i",
         ]
-        # main page
-        for sel in sel_candidates:
+        for sel in sels:
             try:
                 el = self.page.locator(sel)
                 if el.first.is_visible():
-                    el.first.click(timeout=1000)
-                    self._log("consent accepted:", sel)
-                    return
-            except Exception:
-                pass
-        # iframes
+                    el.first.click(timeout=1000); self._log("consent accepted:", sel); return
+            except Exception: pass
         for frame in self.page.frames:
-            for sel in sel_candidates:
+            for sel in sels:
                 try:
                     el = frame.locator(sel)
                     if el.first.is_visible():
-                        el.first.click(timeout=1000)
-                        self._log("consent accepted in iframe:", sel)
-                        return
-                except Exception:
-                    pass
+                        el.first.click(timeout=1000); self._log("consent accepted in iframe:", sel); return
+                except Exception: pass
 
     def warmup(self, oem_slug: str):
         self.get(f"{BASE}/"); self.get(f"{BASE}/{oem_slug}")
@@ -157,27 +111,80 @@ class PlaywrightFetcher:
     def get(self, url: str, referer: Optional[str] = None) -> str:
         self._log("GET", url)
         kwargs = {"wait_until": "domcontentloaded", "timeout": 45000}
-        if referer:
-            kwargs["referer"] = referer
+        if referer: kwargs["referer"] = referer
         self.page.goto(url, **kwargs)
-        try:
-            self._accept_consent()
-        except Exception:
-            pass
-        gentle_sleep(self.base_delay)  # polite
+        try: self._accept_consent()
+        except Exception: pass
+        gentle_sleep(self.base_delay)
         return self.page.content()
 
-    def get_dtc_links(self, oem_slug: str, max_scrolls: int = 8, scroll_wait_ms: int = 500) -> List[str]:
+    # ---------- PATCHED: robust collector (scroll + text fallback) -------------
+    def get_dtc_links(self, oem_slug: str) -> List[str]:
         """
-        Scrolls the page to trigger lazy loading, then collects anchors that look
-        like DTC detail links. Falls back to scanning visible text for DTC tokens.
+        Robust collector:
+        1) kill consent overlays (many vendors)
+        2) click 'load more' buttons until exhausted
+        3) auto-scroll several passes
+        4) collect anchors
+        5) fallback: regex from full HTML (not just visible text)
         """
-        # 1) Trigger lazy loading by scrolling
+        # --- 1) consent ---
+        try:
+            sels = [
+                "#onetrust-accept-btn-handler", "button#onetrust-accept-btn-handler",
+                "[id^='onetrust-accept']",
+                "button[aria-label*='Accept' i]", "button[aria-label*='Agree' i]",
+                "button:has-text('Accept all')", "button:has-text('I agree')", "button:has-text('Allow all')",
+                # Cookiebot / CookieYes / Quantcast / TrustArc / Didomi
+                "#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll",
+                "button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll",
+                "button:has-text('Accept All Cookies')",
+                ".qc-cmp2-summary-buttons .qc-cmp2-accept-all",
+                ".qc-cmp2-footer .qc-cmp2-accept-all",
+                "button[mode='primary']:has-text('Accept')",
+                "button[mode='primary']:has-text('Agree')",
+            ]
+            # try main page
+            for sel in sels:
+                try:
+                    el = self.page.locator(sel)
+                    if el.first.is_visible():
+                        el.first.click(timeout=1000)
+                        self._log("consent accepted:", sel); break
+                except Exception:
+                    pass
+            # try iframes
+            for frame in self.page.frames:
+                for sel in sels:
+                    try:
+                        el = frame.locator(sel)
+                        if el.first.is_visible():
+                            el.first.click(timeout=1000)
+                            self._log("consent accepted in iframe:", sel); raise StopIteration
+                    except Exception:
+                        pass
+        except StopIteration:
+            pass
+        except Exception:
+            pass
+
+        # --- 2) click "Load more" / "Show more" repeatedly (if present) ---
+        try:
+            for _ in range(20):
+                btn = self.page.locator("button:has-text('Load more'), button:has-text('Show more'), a:has-text('Load more'), a:has-text('Show more')")
+                if btn.count() == 0 or not btn.first.is_enabled() or not btn.first.is_visible():
+                    break
+                btn.first.click(timeout=2000)
+                self.page.wait_for_timeout(800)
+        except Exception:
+            pass
+
+        # --- 3) auto-scroll (trigger lazy render) ---
         try:
             last_h = 0
-            for _ in range(max_scrolls):
+            for _ in range(16):
                 self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                self.page.wait_for_timeout(scroll_wait_ms)
+                self.page.wait_for_timeout(700)
                 h = self.page.evaluate("document.body.scrollHeight")
                 if h == last_h:
                     break
@@ -185,22 +192,43 @@ class PlaywrightFetcher:
         except Exception:
             pass
 
-        hrefs = []
-        # 2) Collect anchors
+        # --- 4) collect anchors ---
+        hrefs: List[str] = []
         try:
             anchors = self.page.locator("a[href]").all()
             for a in anchors:
                 href = a.get_attribute("href") or ""
-                if not href:
-                    continue
-                if href.startswith(("http://", "https://")):
-                    hrefs.append(href)
-                else:
-                    hrefs.append(urljoin(BASE, href))
+                if not href: continue
+                hrefs.append(href if href.startswith(("http://","https://")) else urljoin(BASE, href))
         except Exception:
             pass
 
-        # 3) Fallback: scan page text for DTC-shaped tokens
+        # --- 5) fallback: regex over full HTML (not just visible text) ---
+        try:
+            html = self.page.content()
+            # codes like B0001-11, P0A3B-00, U1ABC-7F, etc.
+            codes = set(re.findall(r"\b[PCBU][0-9A-F]{4}-[0-9A-F]{2}\b", html, flags=re.IGNORECASE))
+            for code in codes:
+                hrefs.append(f"{BASE}/{oem_slug}/{code.upper()}")
+        except Exception:
+            pass
+
+        # --- normalize + keep only OEM + code shape ---
+        dtc_pat = re.compile(rf"/{re.escape(oem_slug)}/[PCBU][0-9A-F]{{4}}-[0-9A-F]{{2}}/?$", re.IGNORECASE)
+        cleaned = []
+        for u in hrefs:
+            try:
+                nu = normalize_url(u)
+                if dtc_pat.search(urlparse(nu).path):
+                    cleaned.append(nu)
+            except Exception:
+                continue
+        uniq = sorted(set(cleaned))
+        self._log(f"collected {len(uniq)} candidate dtc links")
+        return uniq
+
+
+        # 3) Fallback: scan visible text for codes and construct URLs
         try:
             body_text = self.page.locator("body").inner_text(timeout=2000)
             codes = set(re.findall(r"\b[PCBU][0-9A-F]{4}-[0-9A-F]{2}\b", body_text, flags=re.IGNORECASE))
@@ -209,23 +237,24 @@ class PlaywrightFetcher:
         except Exception:
             pass
 
-        # 4) Keep only this OEM + DTC detail shape
-        dtc_pat = re.compile(rf"/{re.escape(oem_slug)}/[PCBU][0-9A-F]{{4}}-[0-9A-F]{{2}}$", re.IGNORECASE)
+        # 4) Normalize + filter to this OEM + DTC detail shape
+        dtc_pat = re.compile(rf"/{re.escape(oem_slug)}/[PCBU][0-9A-F]{{4}}-[0-9A-F]{{2}}/?$", re.IGNORECASE)
         cleaned = []
         for u in hrefs:
             try:
-                u = normalize_url(u)
-                if dtc_pat.search(urlparse(u).path):
-                    cleaned.append(u)
+                nu = normalize_url(u)
+                path = urlparse(nu).path
+                if dtc_pat.search(path):
+                    cleaned.append(nu)
             except Exception:
                 continue
         return sorted(set(cleaned))
+    # ---------------------------------------------------------------------------
 
     def close(self):
         try:
             self.context.close(); self.browser.close(); self._pw.stop()
-        except Exception:
-            pass
+        except Exception: pass
 
 # ---------------------------------- parsing -----------------------------------
 def parse_title_and_definition(soup: BeautifulSoup) -> Tuple[Optional[str], Optional[str]]:
@@ -341,11 +370,11 @@ def discover_listing_pages(oem_slug: str, fetcher: PlaywrightFetcher, delay: flo
     return sorted(set(pages))
 
 def extract_dtc_links_playwright(oem_slug: str, fetcher: PlaywrightFetcher,
-                                 listing_url: str, verbose: bool=False,
-                                 max_scrolls: int = 8, scroll_wait_ms: int = 500) -> List[str]:
+                                 listing_url: str, verbose: bool=False) -> List[str]:
     fetcher.get(listing_url, referer=f"{BASE}/")
-    links = fetcher.get_dtc_links(oem_slug, max_scrolls=max_scrolls, scroll_wait_ms=scroll_wait_ms)
-    pat = re.compile(rf"/{re.escape(oem_slug)}/[PCBU][0-9A-F]{{4}}-[0-9A-F]{{2}}$", re.IGNORECASE)
+    links = fetcher.get_dtc_links(oem_slug)
+    # Allow optional trailing slash; query already stripped by normalize_url
+    pat = re.compile(rf"/{re.escape(oem_slug)}/[PCBU][0-9A-F]{{4}}-[0-9A-F]{{2}}/?$", re.IGNORECASE)
     cleaned = []
     for u in links:
         path = urlparse(u).path
@@ -356,22 +385,18 @@ def extract_dtc_links_playwright(oem_slug: str, fetcher: PlaywrightFetcher,
     return cleaned
 
 def discover_listing_and_links(oem_slug: str, fetcher: PlaywrightFetcher, delay: float,
-                               max_pages: Optional[int], verbose: bool=False,
-                               max_scrolls: int = 8, scroll_wait_ms: int = 500) -> List[str]:
+                               max_pages: Optional[int], verbose: bool=False) -> List[str]:
     pages = discover_listing_pages(oem_slug, fetcher, delay, max_pages, verbose)
     all_links: List[str] = []
     for p in pages:
-        all_links.extend(extract_dtc_links_playwright(
-            oem_slug, fetcher, p, verbose, max_scrolls=max_scrolls, scroll_wait_ms=scroll_wait_ms
-        ))
+        all_links.extend(extract_dtc_links_playwright(oem_slug, fetcher, p, verbose))
         gentle_sleep(delay)
     return sorted(set(all_links), key=str.lower)
 
 def ensure_dir(p): os.makedirs(p, exist_ok=True)
 
 def scrape_oem(oem_slug: str, fetcher: PlaywrightFetcher, delay: float, max_pages: Optional[int],
-               no_warmup: bool, verbose: bool, output_dir: str, flush_every: int, debug_html_max: int,
-               max_scrolls: int, scroll_wait_ms: int):
+               no_warmup: bool, verbose: bool, output_dir: str, flush_every: int, debug_html_max: int):
     print(f"\n=== {oem_slug} ===")
     ensure_dir(output_dir)
     dbg_dir = os.path.join(output_dir, "debug_html"); ensure_dir(dbg_dir)
@@ -382,9 +407,9 @@ def scrape_oem(oem_slug: str, fetcher: PlaywrightFetcher, delay: float, max_page
     wide_csv = f"{base_name}_dtcs_with_hex.csv"
     long_csv = f"{base_name}_dtcs_sections_long.csv"
     jsonl_path = f"{base_name}_dtcs.ndjson"     # streaming
-    json_path = f"{base_name}_dtcs.json"        # final aggregate (at end)
+    json_path = f"{base_name}_dtcs.json"        # final aggregate (optional)
 
-    # Prepare CSV writers (header written once)
+    # Prepare CSV writers
     wide_fields = ["dtc","base_code","fmi_hex","fmi_meaning","hex_triplet","definition","url"]
     long_fields = ["dtc","section_title","order_index","kind","text"]
     wide_f = open(wide_csv, "w", newline="", encoding="utf-8"); wide_w = csv.DictWriter(wide_f, fieldnames=wide_fields); wide_w.writeheader()
@@ -397,8 +422,7 @@ def scrape_oem(oem_slug: str, fetcher: PlaywrightFetcher, delay: float, max_page
         except Exception as e: print("Warmup failed (continuing):", e)
 
     print("Discovering listing pages & DTC links…")
-    links = discover_listing_and_links(oem_slug, fetcher, delay, max_pages, verbose,
-                                       max_scrolls=max_scrolls, scroll_wait_ms=scroll_wait_ms)
+    links = discover_listing_and_links(oem_slug, fetcher, delay, max_pages, verbose)
     print(f"Found {len(links)} DTC detail pages.")
 
     records: List[Dict[str, Any]] = []
@@ -407,11 +431,12 @@ def scrape_oem(oem_slug: str, fetcher: PlaywrightFetcher, delay: float, max_page
 
     def write_record(rec: Dict[str, Any]):
         nonlocal wrote
-        # JSONL per record
+        # stream JSONL
         jsonl_f.write(json.dumps(rec, ensure_ascii=False) + "\n")
         wrote += 1
-        # summary CSV row
-        wide_w.writerow({k: rec.get(k) for k in wide_fields})
+        # wide CSV row
+        row = {k: rec.get(k) for k in wide_fields}
+        wide_w.writerow(row)
         # long CSV rows
         for sec in rec.get("sections", []) or []:
             title = sec["title"]; idx = sec["order_index"]
@@ -423,55 +448,48 @@ def scrape_oem(oem_slug: str, fetcher: PlaywrightFetcher, delay: float, max_page
                         long_w.writerow({"dtc": rec.get("dtc"), "section_title": title, "order_index": idx, "kind": "list_item", "text": item})
                 elif chunk["kind"] == "table":
                     long_w.writerow({"dtc": rec.get("dtc"), "section_title": title, "order_index": idx, "kind": "table", "text": "(see tables folder)"})
-        # flush regularly so Ctrl-C preserves recent work
         if wrote % flush_every == 0:
             wide_f.flush(); long_f.flush(); jsonl_f.flush()
 
     print("Scraping detail pages (streaming writes)…")
-    try:
-        for url in tqdm(links, desc=f"{oem_slug} DTC pages"):
-            try:
-                html = fetcher.get(url, referer=f"{BASE}/{oem_slug}")
-                # Save a few HTMLs for debugging if needed
-                if verbose and debug_saved < debug_html_max:
-                    fn = os.path.join(output_dir, "debug_html", urlparse(url).path.replace("/", "_").lstrip("_") + ".html")
-                    with open(fn, "w", encoding="utf-8") as hf: hf.write(html)
-                    debug_saved += 1
+    for url in tqdm(links, desc=f"{oem_slug} DTC pages"):
+        try:
+            html = fetcher.get(url, referer=f"{BASE}/{oem_slug}")
+            # Save a few HTMLs for debugging if needed
+            if verbose and debug_saved < debug_html_max:
+                fn = os.path.join(dbg_dir, urlparse(url).path.replace("/", "_").lstrip("_") + ".html")
+                with open(fn, "w", encoding="utf-8") as hf: hf.write(html)
+                debug_saved += 1
+            rec = parse_detail_page(html, url, verbose=verbose)
+            # Save any tables
+            if rec.get("sections"):
+                for sec in rec["sections"]:
+                    for chunk in sec["content"]:
+                        if chunk["kind"] == "table":
+                            headers = chunk["table"]["headers"]; rows = chunk["table"]["rows"]
+                            dtc_fs = (rec.get("dtc", "UNKNOWN") or "UNKNOWN").replace("/", "_")
+                            out_dir = os.path.join(tables_root, dtc_fs)
+                            ensure_dir(out_dir)
+                            idx = len([n for n in os.listdir(out_dir) if n.startswith("table_") and n.endswith(".csv")]) + 1
+                            df = pd.DataFrame(rows, columns=headers if headers else None)
+                            df.to_csv(os.path.join(out_dir, f"table_{idx}.csv"), index=False, encoding="utf-8")
+            write_record(rec)
+            records.append(rec)
+        except Exception as e:
+            err = {"dtc": None, "url": url, "error": str(e)}
+            jsonl_f.write(json.dumps(err, ensure_ascii=False) + "\n")
+        gentle_sleep(delay)
 
-                rec = parse_detail_page(html, url, verbose=verbose)
-
-                # Save any tables
-                if rec.get("sections"):
-                    for sec in rec["sections"]:
-                        for chunk in sec["content"]:
-                            if chunk["kind"] == "table":
-                                headers = chunk["table"]["headers"]; rows = chunk["table"]["rows"]
-                                dtc_fs = (rec.get("dtc", "UNKNOWN") or "UNKNOWN").replace("/", "_")
-                                out_dir = os.path.join(tables_root, dtc_fs)
-                                os.makedirs(out_dir, exist_ok=True)
-                                idx = len([n for n in os.listdir(out_dir) if n.startswith("table_") and n.endswith(".csv")]) + 1
-                                df = pd.DataFrame(rows, columns=headers if headers else None)
-                                df.to_csv(os.path.join(out_dir, f"table_{idx}.csv"), index=False, encoding="utf-8")
-
-                write_record(rec)      # <-- write immediately
-                records.append(rec)
-            except Exception as e:
-                # write the error line to JSONL so you can resume later
-                jsonl_f.write(json.dumps({"dtc": None, "url": url, "error": str(e)}, ensure_ascii=False) + "\n")
-            gentle_sleep(delay)
-    finally:
-        # Always flush/close (even on Ctrl-C)
-        wide_f.flush(); long_f.flush(); jsonl_f.flush()
-        wide_f.close(); long_f.close(); jsonl_f.close()
-
-    # Optional aggregate JSON at the end (safe if you let it finish)
+    # Final flush + full JSON (optional aggregate)
+    wide_f.flush(); long_f.flush(); jsonl_f.flush()
+    wide_f.close(); long_f.close(); jsonl_f.close()
     with open(json_path, "w", encoding="utf-8") as jf:
         json.dump(records, jf, ensure_ascii=False, indent=2)
 
     print("Done for", oem_slug)
     print(" -", wide_csv)
     print(" -", long_csv)
-    print(" -", jsonl_path, "(streamed as you go)")
+    print(" -", jsonl_path, "(streamed)")
     print(" -", json_path)
     print(" -", os.path.join(output_dir, "tables", oem_slug, "<DTC>", "table_#.csv"))
     if verbose:
@@ -492,8 +510,6 @@ def main():
     ap.add_argument("--output-dir", type=str, default=".", help="Directory to write outputs")
     ap.add_argument("--flush-every", type=int, default=25, help="Flush CSV/JSONL every N records")
     ap.add_argument("--debug-html-max", type=int, default=5, help="Save up to N raw HTML pages to debug_html/ (verbose only)")
-    ap.add_argument("--max-scrolls", type=int, default=8, help="Max scroll passes to load lazy content")
-    ap.add_argument("--scroll-wait", type=int, default=500, help="Wait (ms) between scrolls")
     args = ap.parse_args()
 
     print("Note: Please ensure scraping complies with the site's Terms and robots.txt.")
@@ -511,8 +527,7 @@ def main():
         for oem in args.oems:
             oem_slug = oem.strip().strip("/")
             scrape_oem(oem_slug, fetcher, args.delay, args.max_pages, args.no_warmup,
-                       args.verbose, args.output_dir, args.flush_every, args.debug_html_max,
-                       args.max_scrolls, args.scroll_wait)
+                       args.verbose, args.output_dir, args.flush_every, args.debug_html_max)
     finally:
         fetcher.close()
 

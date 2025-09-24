@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap, Car, Calendar } from 'lucide-react'
+import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap, Car, Calendar, Info } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { PageLayout } from '@/components/layout/page-layout'
 import { Card, Button, Badge, StatCard } from '@/components/design-system'
 import { colors, spacing } from '@/lib/design-system/tokens'
+import { extractVINWithSource, formatVINSource, getVINSourceColor } from '@/lib/utils/vin-extractor'
 import { containerStyles, flexStyles, gridStyles } from '@/lib/design-system/styles'
 
 interface ECUSummary {
@@ -1892,16 +1893,32 @@ export default function JobDetailsPage() {
             <div style={{ fontSize: '20px', fontWeight: 600, color: colors.primary[900], marginBottom: '4px' }}>
               {job.Vehicle?.ModelYear?.Model?.OEM?.name || ''} {job.Vehicle?.ModelYear?.Model?.name || 'Unknown Vehicle'}
             </div>
-            <div style={{ display: 'flex', gap: spacing[4], alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: spacing[4], alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '16px', color: colors.primary[700] }}>
                 <Calendar size={14} style={{ display: 'inline', marginRight: '4px' }} />
                 {job.Vehicle?.ModelYear?.year || 'Unknown Year'}
               </span>
-              {job.Vehicle?.vin && (
-                <span style={{ fontSize: '14px', color: colors.primary[600] }}>
-                  VIN: {job.Vehicle.vin}
-                </span>
-              )}
+              {(() => {
+                const vinSource = extractVINWithSource(job)
+                if (vinSource) {
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '14px', color: colors.primary[600], fontFamily: 'monospace' }}>
+                        VIN: {vinSource.vin}
+                      </span>
+                      <Badge
+                        variant={getVINSourceColor(vinSource)}
+                        size="small"
+                        title={`VIN from ${formatVINSource(vinSource)}`}
+                      >
+                        <Info size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                        {formatVINSource(vinSource)}
+                      </Badge>
+                    </div>
+                  )
+                }
+                return null
+              })()}
               <Badge variant="secondary">
                 Job #{job.id.slice(0, 8).toUpperCase()}
               </Badge>
@@ -2015,7 +2032,28 @@ export default function JobDetailsPage() {
                 <div className="ds-grid-2" style={{ gap: spacing[5] }}>
                   <div>
                     <p className="ds-label">Vehicle VIN</p>
-                    <p className="ds-value">{job.Vehicle?.vin || 'Unknown'}</p>
+                    <div>
+                      {(() => {
+                        const vinSource = extractVINWithSource(job)
+                        if (vinSource) {
+                          return (
+                            <div>
+                              <p className="ds-value" style={{ fontFamily: 'monospace', marginBottom: '4px' }}>
+                                {vinSource.vin}
+                              </p>
+                              <Badge
+                                variant={getVINSourceColor(vinSource)}
+                                size="small"
+                                title={`VIN extracted from ${formatVINSource(vinSource)}`}
+                              >
+                                {formatVINSource(vinSource)}
+                              </Badge>
+                            </div>
+                          )
+                        }
+                        return <p className="ds-value">Not Available</p>
+                      })()}
+                    </div>
                   </div>
                   <div>
                     <p className="ds-label">Procedure Type</p>
