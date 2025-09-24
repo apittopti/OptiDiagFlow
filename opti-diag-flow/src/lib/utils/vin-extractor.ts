@@ -133,16 +133,25 @@ export function extractVINWithSource(job: any): VINSource | null {
   if (job.metadata?.messages) {
     const eobdVINMessages = job.metadata.messages.filter((msg: any) =>
       msg.data &&
-      (msg.data.startsWith('0902') || msg.data.startsWith('09 02') ||
-       (msg.data.startsWith('49') && msg.data.includes('02'))) // Response to mode 09
+      (msg.data.startsWith('0902') || msg.data.startsWith('0x0902') ||
+       msg.data.startsWith('09 02') ||
+       msg.data.startsWith('4902') || msg.data.startsWith('0x4902') ||
+       (msg.data.startsWith('49') && msg.data.includes('02')) ||
+       (msg.data.startsWith('0x49') && msg.data.includes('02'))) // Response to mode 09
     )
 
     for (const msg of eobdVINMessages) {
       // EOBD VIN response format: 49 02 01 [VIN bytes]
       // The VIN starts at byte 5 of the response
       let vinData = msg.data.replace(/\s/g, '')
+
+      // Remove 0x prefix if present
+      if (vinData.startsWith('0x') || vinData.startsWith('0X')) {
+        vinData = vinData.substring(2)
+      }
+
       if (vinData.startsWith('490201') || vinData.startsWith('490202')) {
-        vinData = vinData.substring(6) // Skip header
+        vinData = vinData.substring(6) // Skip header (490201 or 490202)
         const cleanedVIN = cleanVIN(vinData)
         if (validateVIN(cleanedVIN)) {
           vinSources.push({

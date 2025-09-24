@@ -129,29 +129,26 @@ function generateDefaultECUName(address: string): any {
     }
   }
 
-  // Generate based on address range
+  // Generate based on address range - but ALWAYS use ECU_ prefix per CLAUDE.md
   const addrNum = parseInt(address, 16)
   let category = 'Unknown'
-  let prefix = 'ECU'
 
+  // Determine category based on address range (for metadata only)
   if (addrNum >= 0x1700 && addrNum <= 0x17FF) {
     category = 'Powertrain'
-    prefix = 'PCM'
   } else if (addrNum >= 0x1400 && addrNum <= 0x14FF) {
     category = 'Body'
-    prefix = 'BCM'
   } else if (addrNum >= 0x1600 && addrNum <= 0x16FF) {
     category = 'Chassis'
-    prefix = 'CHAS'
   } else if (addrNum >= 0x1800 && addrNum <= 0x18FF) {
     category = 'Safety'
-    prefix = 'SAFE'
   }
 
+  // ALWAYS use ECU_ prefix for generic names
   return {
-    name: `${prefix}_${address}`,
-    fullName: `${category} Module ${address}`,
-    description: `Unknown ECU at address 0x${address}`,
+    name: `ECU_${address}`,
+    fullName: `ECU ${address}`,
+    description: `ECU at address 0x${address}`,
     category,
     source: 'generated',
     confidence: 0.1,

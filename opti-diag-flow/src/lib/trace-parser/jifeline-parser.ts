@@ -498,10 +498,17 @@ export class JifelineParser {
         const target = canId.slice(4, 6) // Characters 4-5 (target address)
         const source = canId.slice(6, 8) // Characters 6-7 (source address)
 
-        // The CAN ID already contains the correct source and target
-        // No need to swap based on direction
-        sourceAddr = source
-        targetAddr = target
+        // Special case: 18DB33F1 is functional addressing (broadcast)
+        if (canId === '18DB33F1') {
+          // Map functional broadcast to OBD-II broadcast address
+          sourceAddr = 'F1'     // Tester
+          targetAddr = '07DF'   // OBD-II broadcast
+        } else {
+          // The CAN ID already contains the correct source and target
+          // No need to swap based on direction
+          sourceAddr = source
+          targetAddr = target
+        }
       } else if (canId.startsWith('07')) {
         // Standard OBD-II addressing for EOBD and HYUNDAI/KIA ISOTP
         if (msg.protocol === 'HYUNDAI/KIA ISOTP') {
@@ -627,23 +634,42 @@ export class JifelineParser {
       const canId = msg.args[0].replace(/^0x/i, '').toUpperCase()
 
       if (canId.startsWith('18DA') || canId.startsWith('18DB')) {
-        // ISO-TP Extended for Honda/Hyundai/Kia: 18DAttSS or 18DBttSS where tt=target, SS=source
-        // Honda uses 18DA (e.g., 18DAB0F1)
-        // Hyundai/Kia uses 18DB (e.g., 18DB33F1)
-        const target = canId.slice(4, 6)
-        const source = canId.slice(6, 8)
+        // ISO-TP Extended addressing: 18DAttSS or 18DBttSS where tt=target, SS=source
+        // 18DA = Physical addressing (to specific ECU)
+        // 18DB = Functional addressing (broadcast to multiple ECUs)
 
-        // Identify the ECU address (not the tester F1)
-        if (source === 'F1') {
-          // Tester is source, ECU is target
-          ecuAddr = target
-        } else if (target === 'F1') {
-          // Tester is target, ECU is source
-          ecuAddr = source
+        if (canId.startsWith('18DB')) {
+          // This is functional addressing (broadcast), not a specific ECU
+          // Skip it entirely - functional addresses should not create ECU entries
+          const target = canId.slice(4, 6)
+          if (target === '33') {
+            // Functional address - treat as broadcast but don't create ECU
+            ecuAddr = '07DF'  // Mark as broadcast for message tracking
+          } else {
+            // Other 18DB addresses might be valid, extract normally
+            const source = canId.slice(6, 8)
+            if (source === 'F1') {
+              ecuAddr = target
+            } else if (target === 'F1') {
+              ecuAddr = source
+            }
+          }
         } else {
-          // Neither is F1, use the non-tester address
-          // F1 is typically the tester for both Honda and Hyundai/Kia
-          ecuAddr = msg.direction === 'Local->Remote' ? target : source
+          // 18DA - Physical addressing
+          const target = canId.slice(4, 6)
+          const source = canId.slice(6, 8)
+
+          // Physical addressing - identify the ECU address (not the tester F1)
+          if (source === 'F1') {
+            // Tester is source, ECU is target
+            ecuAddr = target
+          } else if (target === 'F1') {
+            // Tester is target, ECU is source
+            ecuAddr = source
+          } else {
+            // Neither is F1, use the non-tester address
+            ecuAddr = msg.direction === 'Local->Remote' ? target : source
+          }
         }
       } else if (canId.startsWith('07')) {
         // Standard OBD-II and HYUNDAI/KIA ISOTP addressing

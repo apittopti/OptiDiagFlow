@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap, Car, Calendar, Info } from 'lucide-react'
+import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap, Car, Calendar, Info, Shield, GitBranch, AlertTriangle, Hash, Wrench, Settings, Gauge, Lock, Key, FileText, Play, Square, RotateCw, HardDrive, Network, Power, Terminal, Binary, Upload, Trash2, Clock } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { PageLayout } from '@/components/layout/page-layout'
 import { Card, Button, Badge, StatCard } from '@/components/design-system'
@@ -48,7 +48,7 @@ export default function JobDetailsPage() {
   const router = useRouter()
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('jifeline')
   const [selectedEcu, setSelectedEcu] = useState<string | null>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [ecus, setEcus] = useState<ECUSummary[]>([])
@@ -1466,6 +1466,46 @@ export default function JobDetailsPage() {
     return getServiceName(serviceId, protocol)
   }
 
+  // Get service style with color and icon
+  const getServiceStyle = (service: string) => {
+    const serviceStyles: Record<string, { color: string, icon: any, bgColor: string }> = {
+      '10': { color: colors.primary[700], icon: Power, bgColor: colors.primary[100] }, // Diagnostic Session
+      '11': { color: colors.info[700], icon: RotateCw, bgColor: colors.info[100] }, // ECU Reset
+      '14': { color: '#7C3AED', icon: Trash2, bgColor: '#EDE9FE' }, // Clear DTCs - Purple
+      '19': { color: colors.error[700], icon: AlertTriangle, bgColor: colors.error[100] }, // Read DTCs
+      '20': { color: '#DC2626', icon: Square, bgColor: '#FEE2E2' }, // Stop Diagnostic Session - Red
+      '22': { color: colors.success[700], icon: FileText, bgColor: colors.success[100] }, // Read Data
+      '23': { color: '#7C3AED', icon: HardDrive, bgColor: '#EDE9FE' }, // Read Memory - Purple
+      '27': { color: colors.warning[700], icon: Lock, bgColor: colors.warning[100] }, // Security Access
+      '28': { color: '#0891B2', icon: Network, bgColor: '#CFFAFE' }, // Communication Control - Teal
+      '29': { color: colors.warning[700], icon: Key, bgColor: colors.warning[100] }, // Authentication
+      '2E': { color: '#4F46E5', icon: Upload, bgColor: '#E0E7FF' }, // Write Data - Indigo
+      '2F': { color: '#DB2777', icon: Settings, bgColor: '#FCE7F3' }, // Input/Output Control - Pink
+      '31': { color: '#EA580C', icon: Play, bgColor: '#FED7AA' }, // Routine Control - Orange
+      '3E': { color: '#0891B2', icon: Activity, bgColor: '#CFFAFE' }, // Tester Present - Cyan
+      '7F': { color: '#DC2626', icon: AlertCircle, bgColor: '#FEE2E2' }, // Negative Response - Red
+      '85': { color: '#D97706', icon: Shield, bgColor: '#FEF3C7' }, // Control DTC Setting - Amber
+      // OBD-II services
+      '01': { color: '#2563EB', icon: Gauge, bgColor: '#DBEAFE' }, // Current Data - Blue
+      '02': { color: colors.success[700], icon: Clock, bgColor: colors.success[100] }, // Freeze Frame
+      '03': { color: colors.error[700], icon: AlertCircle, bgColor: colors.error[100] }, // Stored DTCs
+      '04': { color: colors.gray[700], icon: Trash2, bgColor: colors.gray[100] }, // Clear DTCs
+      '05': { color: '#7C3AED', icon: Terminal, bgColor: '#EDE9FE' }, // Oxygen Sensor - Purple
+      '06': { color: '#4F46E5', icon: Zap, bgColor: '#E0E7FF' }, // Test Results - Indigo
+      '07': { color: '#EA580C', icon: AlertTriangle, bgColor: '#FED7AA' }, // Pending DTCs - Orange
+      '08': { color: '#0891B2', icon: Wrench, bgColor: '#CFFAFE' }, // Control Operation - Teal
+      '09': { color: '#DB2777', icon: Info, bgColor: '#FCE7F3' }, // Vehicle Info - Pink
+      '0A': { color: '#D97706', icon: Database, bgColor: '#FEF3C7' } // Permanent DTCs - Amber
+    }
+
+    const upperService = service.toUpperCase()
+    return serviceStyles[upperService] || {
+      color: colors.gray[700],
+      icon: Binary,
+      bgColor: colors.gray[100]
+    }
+  }
+
   // Get service name based on protocol
   function getServiceName(serviceId: string, protocol?: string): string {
     const service = parseInt(serviceId, 16)
@@ -1930,7 +1970,7 @@ export default function JobDetailsPage() {
         <div className="ds-grid-4" style={{ marginBottom: spacing[6] }}>
           <StatCard
             label="Total ECUs"
-            value={ecus.length}
+            value={ecus.filter(e => e.address !== '07DF').length}
             icon={<Cpu size={24} />}
             color="primary"
           />
@@ -1954,23 +1994,15 @@ export default function JobDetailsPage() {
           />
         </div>
 
-        {/* Tabs and Content */}
-        <Card>
-          {/* Tab Navigation */}
-          <div style={{ marginBottom: spacing[6] }}>
-            <div className="ds-tab-group">
-              <button
-                className={`ds-tab ${activeTab === 'overview' ? 'ds-tab-active' : ''}`}
-                onClick={() => setActiveTab('overview')}
-              >
-                Overview
-              </button>
+        {/* Tab Navigation - Full Width */}
+        <div style={{ marginBottom: spacing[5] }}>
+          <div className="ds-tab-group">
               <button
                 className={`ds-tab ${activeTab === 'jifeline' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('jifeline')}
               >
                 <FileDigit size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
-                Jifeline
+                Jifeline Overview
               </button>
               <button
                 className={`ds-tab ${activeTab === 'voltage' ? 'ds-tab-active' : ''}`}
@@ -1983,49 +2015,64 @@ export default function JobDetailsPage() {
                 className={`ds-tab ${activeTab === 'ecus' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('ecus')}
               >
-                ECUs ({ecus.length})
+                <Cpu size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
+                ECUs ({ecus.filter(e => e.address !== '07DF').length})
+              </button>
+              <button
+                className={`ds-tab ${activeTab === 'security' ? 'ds-tab-active' : ''}`}
+                onClick={() => setActiveTab('security')}
+              >
+                <Shield size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
+                Security Access
               </button>
               <button
                 className={`ds-tab ${activeTab === 'flow' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('flow')}
               >
+                <GitBranch size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
                 Diagnostic Flow ({tabCounts.messages})
               </button>
               <button
                 className={`ds-tab ${activeTab === 'dtcs' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('dtcs')}
               >
+                <AlertTriangle size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
                 DTCs ({job.DTC?.length || 0})
               </button>
               <button
                 className={`ds-tab ${activeTab === 'dids' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('dids')}
               >
+                <Hash size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
                 DIDs ({job.DataIdentifier?.length || 0})
               </button>
               <button
                 className={`ds-tab ${activeTab === 'routines' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('routines')}
               >
+                <Wrench size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
                 Routines ({job.Routine?.length || 0})
               </button>
               <button
                 className={`ds-tab ${activeTab === 'services' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('services')}
               >
+                <Settings size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
                 Services ({tabCounts.services})
               </button>
               <button
                 className={`ds-tab ${activeTab === 'eobd' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('eobd')}
               >
+                <Gauge size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
                 EOBD
               </button>
-            </div>
           </div>
+        </div>
 
-          {/* Tab Content */}
-          {activeTab === 'overview' && (
+        {/* Tab Content */}
+        <Card>
+          {false && activeTab === 'overview' && (
             <div className="ds-section">
               <h3 className="ds-heading-3">Session Information</h3>
               <Card variant="nested">
@@ -2247,67 +2294,298 @@ export default function JobDetailsPage() {
 
           {activeTab === 'jifeline' && (
             <div className="ds-section">
-              <h3 className="ds-heading-3">Jifeline Trace Metadata</h3>
+              <h3 className="ds-heading-3">Jifeline Trace Overview</h3>
 
-              {/* Connection Information */}
+              {/* Main Information Grid */}
+              <div className="ds-grid-2" style={{ gap: spacing[4], marginBottom: spacing[4] }}>
+                {/* Session & Vehicle Info */}
+                <Card variant="nested">
+                  <h4 className="ds-heading-4" style={{ marginBottom: spacing[3], color: colors.primary[700] }}>
+                    Session Details
+                  </h4>
+                  <div className="ds-stack" style={{ gap: spacing[3] }}>
+                    <div>
+                      <p className="ds-label">Vehicle VIN</p>
+                      {(() => {
+                        const vinSource = extractVINWithSource(job)
+                        if (vinSource) {
+                          return (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+                              <p className="ds-value" style={{ fontFamily: 'monospace' }}>
+                                {vinSource.vin}
+                              </p>
+                              <Badge
+                                variant={getVINSourceColor(vinSource)}
+                                size="small"
+                                title={`VIN extracted from ${formatVINSource(vinSource)}`}
+                              >
+                                {formatVINSource(vinSource)}
+                              </Badge>
+                            </div>
+                          )
+                        }
+                        return <p className="ds-value">Not Available</p>
+                      })()}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[3] }}>
+                      <div>
+                        <p className="ds-label">Procedure</p>
+                        <p className="ds-value">{job.procedureType || 'Unknown'}</p>
+                      </div>
+                      <div>
+                        <p className="ds-label">Status</p>
+                        <Badge variant={job.status === 'COMPLETED' ? 'success' : 'info'}>
+                          {job.status || 'Unknown'}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="ds-label">Created</p>
+                        <p className="ds-value" style={{ fontSize: '13px' }}>{new Date(job.createdAt).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="ds-label">Trace File</p>
+                        <p className="ds-value" style={{ fontSize: '13px' }}>{job.metadata?.traceFileName || job.name || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Communication Overview */}
+                <Card variant="nested">
+                  <h4 className="ds-heading-4" style={{ marginBottom: spacing[3], color: colors.primary[700] }}>
+                    Communication Overview
+                  </h4>
+                  <div className="ds-stack" style={{ gap: spacing[3] }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[3] }}>
+                      <div>
+                        <p className="ds-label">Protocol</p>
+                        <Badge variant="secondary">
+                          {(() => {
+                            // Find most common protocol
+                            const protocolCounts = messages.reduce((acc: any, msg: any) => {
+                              const protocol = msg.protocol || 'Unknown'
+                              acc[protocol] = (acc[protocol] || 0) + 1
+                              return acc
+                            }, {})
+                            const mostCommon = Object.entries(protocolCounts)
+                              .sort(([,a]: any, [,b]: any) => b - a)[0]
+                            return mostCommon ? mostCommon[0] : 'Unknown'
+                          })()}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="ds-label">Diagnostic</p>
+                        <Badge variant="secondary">
+                          {(() => {
+                            // Find most common diagnostic protocol
+                            const diagnosticCounts = messages.reduce((acc: any, msg: any) => {
+                              const diagnostic = msg.diagnosticProtocol || 'Unknown'
+                              acc[diagnostic] = (acc[diagnostic] || 0) + 1
+                              return acc
+                            }, {})
+                            const mostCommon = Object.entries(diagnosticCounts)
+                              .sort(([,a]: any, [,b]: any) => b - a)[0]
+                            return mostCommon ? mostCommon[0] : 'Unknown'
+                          })()}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="ds-label">Tester Address</p>
+                        <Badge variant="info">
+                          {(() => {
+                            // Determine tester address based on most common protocol
+                            const protocolCounts = messages.reduce((acc: any, msg: any) => {
+                              const protocol = msg.protocol || 'Unknown'
+                              acc[protocol] = (acc[protocol] || 0) + 1
+                              return acc
+                            }, {})
+                            const mostCommonProtocol = Object.entries(protocolCounts)
+                              .sort(([,a]: any, [,b]: any) => b - a)[0]?.[0] || ''
+
+                            // Return appropriate tester address based on protocol
+                            if (mostCommonProtocol.toLowerCase().includes('doip')) {
+                              return '0E80'  // DoIP tester address
+                            } else {
+                              return 'F1'    // ISO-TP/CAN tester address (ISO 14229 standard)
+                            }
+                          })()}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="ds-label">ECUs Found</p>
+                        <p className="ds-value">{ecus.filter(e => e.address !== '07DF').length}</p>
+                      </div>
+                    </div>
+                    {/* Protocol Distribution Bar */}
+                    <div style={{ marginTop: spacing[2] }}>
+                      <p className="ds-label" style={{ marginBottom: spacing[2] }}>Protocol Usage</p>
+                      {(() => {
+                        const protocols = messages.reduce((acc: any, msg: any) => {
+                          const protocol = msg.protocol || 'Unknown'
+                          acc[protocol] = (acc[protocol] || 0) + 1
+                          return acc
+                        }, {})
+
+                        const getProtocolColor = (protocol: string) => {
+                          if (protocol.includes('EOBD')) return colors.success[500]
+                          if (protocol.includes('ISOTP')) return colors.primary[500]
+                          if (protocol.includes('DoIP')) return colors.info[500]
+                          return colors.gray[500]
+                        }
+
+                        return (
+                          <div>
+                            <div className="ds-flex-row" style={{
+                              gap: '2px',
+                              height: '28px',
+                              marginBottom: '8px',
+                              backgroundColor: colors.background.secondary,
+                              padding: '2px',
+                              borderRadius: '6px'
+                            }}>
+                              {Object.entries(protocols)
+                                .sort(([, a]: any, [, b]: any) => b - a)
+                                .map(([protocol, count]: any) => {
+                                  const percentage = (count / messages.length) * 100
+                                  return (
+                                    <div
+                                      key={protocol}
+                                      style={{
+                                        flex: count,
+                                        backgroundColor: getProtocolColor(protocol),
+                                        borderRadius: '4px',
+                                        minWidth: percentage > 2 ? '0' : '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        fontSize: '10px',
+                                        fontWeight: 600,
+                                        padding: '0 2px',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                      }}
+                                      title={`${protocol}: ${count} messages (${percentage.toFixed(1)}%)`}
+                                    >
+                                      {percentage > 10 && (
+                                        <span style={{ textShadow: '0 0 2px rgba(0,0,0,0.5)' }}>
+                                          {protocol.replace('HYUNDAI/KIA ', '')} {percentage.toFixed(0)}%
+                                        </span>
+                                      )}
+                                    </div>
+                                  )
+                                })
+                              }
+                            </div>
+                            <div className="ds-flex-row ds-flex-wrap" style={{ gap: spacing[2], fontSize: '11px' }}>
+                              {Object.entries(protocols).map(([protocol, count]: any) => (
+                                <div key={protocol} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <div style={{
+                                    width: '12px',
+                                    height: '12px',
+                                    backgroundColor: getProtocolColor(protocol),
+                                    borderRadius: '2px'
+                                  }} />
+                                  <span style={{ color: colors.text.secondary }}>
+                                    {protocol} ({((count / messages.length) * 100).toFixed(0)}%)
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Message Statistics */}
               <Card variant="nested" style={{ marginBottom: spacing[4] }}>
-                <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>Connection Information</h4>
-                <div className="ds-grid-2" style={{ gap: spacing[5] }}>
-                  <div>
-                    <p className="ds-label">Protocol</p>
-                    <p className="ds-value">{job.metadata?.protocol || messages?.[0]?.protocol || 'Unknown'}</p>
+                <h4 className="ds-heading-4" style={{ marginBottom: spacing[3], color: colors.primary[700] }}>
+                  Message Analysis
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: spacing[3] }}>
+                  <div style={{
+                    padding: spacing[2],
+                    backgroundColor: colors.background.secondary,
+                    borderRadius: '6px',
+                    textAlign: 'center'
+                  }}>
+                    <p className="ds-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Total Messages</p>
+                    <p className="ds-value" style={{ fontSize: '20px', fontWeight: 600 }}>
+                      {job?.messageCount || messages.length}
+                    </p>
+                    {job?.metadata?.messagesComplete === false && (
+                      <p style={{ fontSize: '10px', color: colors.warning[600] }}>
+                        Partial: {messages.length}
+                      </p>
+                    )}
                   </div>
-                  <div>
-                    <p className="ds-label">Diagnostic Protocol</p>
-                    <p className="ds-value">{messages?.[0]?.diagnosticProtocol || 'UDS'}</p>
-                  </div>
-                  {job.metadata?.connectionInfo?.state && (
-                    <div>
-                      <p className="ds-label">Connection State</p>
-                      <Badge variant={job.metadata.connectionInfo.state === 'connected' ? 'success' : 'secondary'}>
-                        {job.metadata.connectionInfo.state}
-                      </Badge>
-                    </div>
-                  )}
-                  {job.metadata?.connectionInfo?.protocol && (
-                    <div>
-                      <p className="ds-label">Connection Protocol</p>
-                      <p className="ds-value">{job.metadata.connectionInfo.protocol}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="ds-label">Tester Address</p>
-                    <p className="ds-value">
-                      <Badge variant="secondary">0E80</Badge>
+
+                  <div style={{
+                    padding: spacing[2],
+                    backgroundColor: colors.background.secondary,
+                    borderRadius: '6px',
+                    textAlign: 'center'
+                  }}>
+                    <p className="ds-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Requests</p>
+                    <p className="ds-value" style={{ fontSize: '20px', fontWeight: 600, color: colors.primary[600] }}>
+                      {messages.filter(m => m.isRequest).length}
                     </p>
                   </div>
-                  <div>
-                    <p className="ds-label">Total ECUs</p>
-                    <p className="ds-value">{ecus.length}</p>
-                  </div>
-                </div>
-              </Card>
 
-              {/* Trace Statistics */}
-              <Card variant="nested" style={{ marginBottom: spacing[4] }}>
-                <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>Trace Statistics</h4>
-                <div className="ds-grid-3" style={{ gap: spacing[5] }}>
-                  <div>
-                    <p className="ds-label">Start Time</p>
-                    <p className="ds-value">{messages?.[0]?.timestamp || 'N/A'}</p>
+                  <div style={{
+                    padding: spacing[2],
+                    backgroundColor: colors.background.secondary,
+                    borderRadius: '6px',
+                    textAlign: 'center'
+                  }}>
+                    <p className="ds-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Responses</p>
+                    <p className="ds-value" style={{ fontSize: '20px', fontWeight: 600, color: colors.success[600] }}>
+                      {messages.filter(m => !m.isRequest).length}
+                    </p>
                   </div>
-                  <div>
-                    <p className="ds-label">End Time</p>
-                    <p className="ds-value">{messages?.[messages.length - 1]?.timestamp || 'N/A'}</p>
+
+                  <div style={{
+                    padding: spacing[2],
+                    backgroundColor: colors.background.secondary,
+                    borderRadius: '6px',
+                    textAlign: 'center'
+                  }}>
+                    <p className="ds-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Negative</p>
+                    <p className="ds-value" style={{ fontSize: '20px', fontWeight: 600, color: colors.error[600] }}>
+                      {messages.filter(m => {
+                        const decoded = decodeUDSMessage(m.data || '', m.isRequest, m.diagnosticProtocol, m.protocol)
+                        return decoded.service === '7F'
+                      }).length}
+                    </p>
                   </div>
-                  <div>
-                    <p className="ds-label">Duration</p>
-                    <p className="ds-value">
+
+                  <div style={{
+                    padding: spacing[2],
+                    backgroundColor: colors.background.secondary,
+                    borderRadius: '6px',
+                    textAlign: 'center'
+                  }}>
+                    <p className="ds-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Services</p>
+                    <p className="ds-value" style={{ fontSize: '20px', fontWeight: 600 }}>
+                      {tabCounts.filterOptions.services.length}
+                    </p>
+                  </div>
+
+                  <div style={{
+                    padding: spacing[2],
+                    backgroundColor: colors.background.secondary,
+                    borderRadius: '6px',
+                    textAlign: 'center'
+                  }}>
+                    <p className="ds-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Duration</p>
+                    <p className="ds-value" style={{ fontSize: '14px', fontWeight: 600 }}>
                       {(() => {
                         if (!messages || messages.length < 2) return 'N/A'
                         const start = messages[0].timestamp
                         const end = messages[messages.length - 1].timestamp
-                        // Parse timestamps (format: HH:MM:SS.mmm)
                         const parseTime = (time: string) => {
                           const parts = time.split(':')
                           if (parts.length !== 3) return 0
@@ -2318,39 +2596,19 @@ export default function JobDetailsPage() {
                         const durationMs = parseTime(end) - parseTime(start)
                         const minutes = Math.floor(durationMs / 60000)
                         const seconds = Math.floor((durationMs % 60000) / 1000)
-                        const ms = durationMs % 1000
-                        return `${minutes}m ${seconds}s ${ms}ms`
+                        return `${minutes}m ${seconds}s`
                       })()}
                     </p>
                   </div>
-                  <div>
-                    <p className="ds-label">Total Messages</p>
-                    <p className="ds-value">{messages.length}</p>
-                  </div>
-                  <div>
-                    <p className="ds-label">Request Messages</p>
-                    <p className="ds-value">{messages.filter(m => m.isRequest).length}</p>
-                  </div>
-                  <div>
-                    <p className="ds-label">Response Messages</p>
-                    <p className="ds-value">{messages.filter(m => !m.isRequest).length}</p>
-                  </div>
-                  <div>
-                    <p className="ds-label">Negative Responses</p>
-                    <p className="ds-value">
-                      {messages.filter(m => {
-                        const decoded = decodeUDSMessage(m.data || '', m.isRequest, m.diagnosticProtocol, m.protocol)
-                        return decoded.service === '7F'
-                      }).length}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="ds-label">Unique Services</p>
-                    <p className="ds-value">{tabCounts.filterOptions.services.length}</p>
-                  </div>
-                  <div>
-                    <p className="ds-label">Average Message Rate</p>
-                    <p className="ds-value">
+
+                  <div style={{
+                    padding: spacing[2],
+                    backgroundColor: colors.background.secondary,
+                    borderRadius: '6px',
+                    textAlign: 'center'
+                  }}>
+                    <p className="ds-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Rate</p>
+                    <p className="ds-value" style={{ fontSize: '14px', fontWeight: 600 }}>
                       {(() => {
                         if (!messages || messages.length < 2) return 'N/A'
                         const start = messages[0].timestamp
@@ -2364,100 +2622,26 @@ export default function JobDetailsPage() {
                         }
                         const durationSec = (parseTime(end) - parseTime(start)) / 1000
                         if (durationSec === 0) return 'N/A'
-                        return `${(messages.length / durationSec).toFixed(1)} msg/s`
+                        return `${(messages.length / durationSec).toFixed(1)}/s`
                       })()}
+                    </p>
+                  </div>
+
+                  <div style={{
+                    padding: spacing[2],
+                    backgroundColor: colors.background.secondary,
+                    borderRadius: '6px',
+                    textAlign: 'center'
+                  }}>
+                    <p className="ds-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Time Range</p>
+                    <p className="ds-value" style={{ fontSize: '11px', fontWeight: 600 }}>
+                      {messages?.[0]?.timestamp?.substring(0, 8) || 'N/A'}
+                      <span style={{ fontSize: '10px', color: colors.text.secondary, display: 'block' }}>to</span>
+                      {messages?.[messages.length - 1]?.timestamp?.substring(0, 8) || 'N/A'}
                     </p>
                   </div>
                 </div>
               </Card>
-
-              {/* Protocol Distribution */}
-              <Card variant="nested" style={{ marginBottom: spacing[4] }}>
-                <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>Protocol Distribution</h4>
-                <div className="ds-stack" style={{ gap: spacing[3] }}>
-                  {Object.entries(
-                    messages.reduce((acc: any, msg: any) => {
-                      const protocol = msg.protocol || 'Unknown'
-                      acc[protocol] = (acc[protocol] || 0) + 1
-                      return acc
-                    }, {})
-                  ).map(([protocol, count]: any) => (
-                    <div key={protocol} className="ds-flex-between" style={{
-                      padding: spacing[3],
-                      backgroundColor: colors.background.secondary,
-                      borderRadius: '8px'
-                    }}>
-                      <span className="ds-label">{protocol}</span>
-                      <div className="ds-flex-row" style={{ gap: spacing[3] }}>
-                        <span className="ds-value">{count} messages</span>
-                        <Badge variant="info">
-                          {((count / messages.length) * 100).toFixed(1)}%
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-
-              {/* ECU Channel Information */}
-              {job.metadata?.ecuChannels && job.metadata.ecuChannels.length > 0 && (
-                <Card variant="nested" style={{ marginBottom: spacing[4] }}>
-                  <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>ECU Channel Information</h4>
-                  <div className="ds-stack" style={{ gap: spacing[3] }}>
-                    {job.metadata.ecuChannels.map((channel: any, idx: number) => (
-                      <div key={idx} style={{
-                        padding: spacing[3],
-                        backgroundColor: colors.background.secondary,
-                        borderRadius: '8px',
-                        borderLeft: `3px solid ${colors.primary[600]}`
-                      }}>
-                        <div className="ds-flex-row" style={{ gap: spacing[4], marginBottom: spacing[2] }}>
-                          <div>
-                            <span className="ds-label" style={{ fontSize: '11px' }}>CHANNEL NAME</span>
-                            <p className="ds-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
-                              {channel.name}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="ds-label" style={{ fontSize: '11px' }}>PROTOCOL</span>
-                            <p className="ds-value" style={{ fontSize: '14px' }}>
-                              {channel.protocol.toUpperCase()}
-                            </p>
-                          </div>
-                          {channel.pins && (
-                            <div>
-                              <span className="ds-label" style={{ fontSize: '11px' }}>PINS</span>
-                              <p className="ds-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
-                                {channel.pins}
-                              </p>
-                            </div>
-                          )}
-                          {channel.addresses && (
-                            <div>
-                              <span className="ds-label" style={{ fontSize: '11px' }}>ECU ADDRESSES</span>
-                              <p className="ds-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
-                                {channel.addresses}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                        {channel.status && (
-                          <div style={{ marginTop: spacing[2] }}>
-                            <Badge variant={channel.status === 'since' ? 'success' : 'secondary'}>
-                              {channel.status === 'since' ? 'Connected' : 'Status: ' + channel.status}
-                            </Badge>
-                            {channel.timestamp && (
-                              <span className="ds-text-secondary" style={{ fontSize: '12px', marginLeft: spacing[2] }}>
-                                at {channel.timestamp}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
 
               {/* Connector Information */}
               {(() => {
@@ -2787,17 +2971,52 @@ export default function JobDetailsPage() {
             <div className="ds-section">
               <h3 className="ds-heading-3">Discovered ECUs</h3>
               <div className="ds-stack" style={{ gap: spacing[4] }}>
-                {ecus.map(ecu => (
-                  <Card key={ecu.address} variant="hover">
+                {ecus.map(ecu => {
+                  const isBroadcast = ecu.address === '07DF'
+
+                  // Find the channel for this ECU
+                  const ecuChannel = job.metadata?.ecuChannels?.find((channel: any) => {
+                    // Parse channel name to extract ECU address ranges
+                    // Format: "can:6-14-H-2:10-43:7E0-7E8" or "can:6-14-H-2:10-43:7E1-7E9"
+                    const parts = channel.name?.split(':')
+                    if (parts && parts.length >= 4) {
+                      const addressRange = parts[3] // e.g., "7E0-7E8" or "7E1-7E9"
+                      if (addressRange && addressRange.includes('-')) {
+                        const [start, end] = addressRange.split('-')
+                        const ecuAddrNum = parseInt(ecu.address, 16)
+                        const startNum = parseInt(start, 16)
+                        const endNum = parseInt(end, 16)
+                        return ecuAddrNum >= startNum && ecuAddrNum <= endNum
+                      }
+                    }
+                    // Also check if the address is mentioned in the addresses field
+                    return channel.addresses && channel.addresses.includes(ecu.address)
+                  })
+
+                  // Check if ECU has security access (service 0x27), authentication (service 0x29), or routine control (service 0x31)
+                  const hasSecurityAccess = ecu.services.includes('27')
+                  const hasAuthentication = ecu.services.includes('29')
+                  const hasRoutineControl = ecu.services.includes('31')
+
+                  return (
+                  <Card key={ecu.address} variant="hover" style={{
+                    backgroundColor: isBroadcast ? colors.warning[50] : colors.primary[50],
+                    border: isBroadcast ? `2px solid ${colors.warning[300]}` : `2px solid ${colors.primary[200]}`
+                  }}>
                     <div className="ds-flex-between">
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <div className="ds-flex-row" style={{ gap: spacing[3], marginBottom: spacing[2] }}>
-                          <Badge variant="secondary" size="large">
+                          <Badge variant={isBroadcast ? "warning" : "secondary"} size="large">
                             {ecu.address}
                           </Badge>
                           <span className="ds-heading-4">
                             {ecuNames[ecu.address]?.name || ecu.name}
                           </span>
+                          {isBroadcast && (
+                            <Badge variant="warning" size="small">
+                              BROADCAST
+                            </Badge>
+                          )}
                         </div>
                         {ecuNames[ecu.address]?.description && (
                           <p className="ds-text-secondary">
@@ -2805,28 +3024,64 @@ export default function JobDetailsPage() {
                           </p>
                         )}
                       </div>
-                      <div className="ds-flex-row" style={{ gap: spacing[2] }}>
-                        <Badge variant="info">{ecu.messageCount} messages</Badge>
-                        {ecuNames[ecu.address]?.isVerified && (
-                          <Badge variant="success" icon={<CheckCircle size={14} />}>
-                            Verified
-                          </Badge>
+                      <div className="ds-flex-row" style={{ gap: spacing[3], alignItems: 'center' }}>
+                        <div className="ds-flex-row" style={{ gap: spacing[2] }}>
+                          <Badge variant="info">{ecu.messageCount} messages</Badge>
+                          {ecuNames[ecu.address]?.isVerified && (
+                            <Badge variant="success" icon={<CheckCircle size={14} />}>
+                              Verified
+                            </Badge>
+                          )}
+                        </div>
+                        {/* Large Service Icons */}
+                        {(hasSecurityAccess || hasAuthentication || hasRoutineControl) && (
+                          <div className="ds-flex-row" style={{ gap: spacing[2], marginLeft: spacing[3] }}>
+                            {hasSecurityAccess && (
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 48,
+                                height: 48,
+                                borderRadius: '12px',
+                                backgroundColor: '#FFF4E6',
+                                border: `2px solid #FFB366`
+                              }}>
+                                <Lock size={28} color="#E67E00" strokeWidth={2} />
+                              </div>
+                            )}
+                            {hasAuthentication && (
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 48,
+                                height: 48,
+                                borderRadius: '12px',
+                                backgroundColor: '#FFF4E6',
+                                border: `2px solid #FFB366`
+                              }}>
+                                <Key size={28} color="#E67E00" strokeWidth={2} />
+                              </div>
+                            )}
+                            {hasRoutineControl && (
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 48,
+                                height: 48,
+                                borderRadius: '12px',
+                                backgroundColor: '#FED7AA',
+                                border: `2px solid #EA580C`
+                              }}>
+                                <Play size={28} color="#EA580C" strokeWidth={2} />
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
-
-                    {ecu.services.length > 0 && (
-                      <div style={{ marginTop: spacing[4] }}>
-                        <p className="ds-label" style={{ marginBottom: spacing[2] }}>SERVICES USED</p>
-                        <div className="ds-flex-row ds-flex-wrap" style={{ gap: spacing[2] }}>
-                          {ecu.services.map(service => (
-                            <Badge key={service} variant="secondary" size="small">
-                              {getServiceName(service, ecu.diagnosticProtocol)}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
                     {ecu.securityLevels.length > 0 && (
                       <div style={{ marginTop: spacing[3] }}>
@@ -2853,8 +3108,90 @@ export default function JobDetailsPage() {
                         </div>
                       </div>
                     )}
+
+                    {ecuChannel && (
+                      <div style={{
+                        marginTop: spacing[3],
+                        padding: spacing[3],
+                        backgroundColor: colors.background.secondary,
+                        borderRadius: '8px',
+                        borderLeft: `3px solid ${colors.primary[600]}`
+                      }}>
+                        <div className="ds-flex-row" style={{ gap: spacing[4], marginBottom: spacing[2] }}>
+                          <div>
+                            <span className="ds-label" style={{ fontSize: '11px' }}>CHANNEL NAME</span>
+                            <p className="ds-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                              {ecuChannel.name}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="ds-label" style={{ fontSize: '11px' }}>PROTOCOL</span>
+                            <p className="ds-value" style={{ fontSize: '14px' }}>
+                              {ecuChannel.protocol?.toUpperCase()}
+                            </p>
+                          </div>
+                          {ecuChannel.pins && (
+                            <div>
+                              <span className="ds-label" style={{ fontSize: '11px' }}>PINS</span>
+                              <p className="ds-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                                {ecuChannel.pins}
+                              </p>
+                            </div>
+                          )}
+                          {ecuChannel.addresses && (
+                            <div>
+                              <span className="ds-label" style={{ fontSize: '11px' }}>ECU ADDRESSES</span>
+                              <p className="ds-value" style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                                {ecuChannel.addresses}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        {ecuChannel.status && (
+                          <div style={{ marginTop: spacing[2] }}>
+                            <Badge variant={ecuChannel.status === 'since' ? 'success' : 'secondary'}>
+                              {ecuChannel.status === 'since' ? 'Connected' : 'Status: ' + ecuChannel.status}
+                            </Badge>
+                            {ecuChannel.timestamp && (
+                              <span className="ds-text-secondary" style={{ fontSize: '12px', marginLeft: spacing[2] }}>
+                                at {ecuChannel.timestamp}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {ecu.services.length > 0 && (
+                      <div style={{ marginTop: spacing[4] }}>
+                        <p className="ds-label" style={{ marginBottom: spacing[2] }}>SERVICES USED</p>
+                        <div className="ds-flex-row ds-flex-wrap" style={{ gap: spacing[2] }}>
+                          {ecu.services.map(service => {
+                            const style = getServiceStyle(service)
+                            const Icon = style.icon
+                            return (
+                              <div key={service} style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px 10px',
+                                backgroundColor: style.bgColor,
+                                color: style.color,
+                                borderRadius: '12px',
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                border: `1px solid ${style.color}20`
+                              }}>
+                                <Icon size={14} />
+                                {getServiceName(service, ecu.diagnosticProtocol)}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </Card>
-                ))}
+                )})}
               </div>
             </div>
           )}
@@ -4073,7 +4410,29 @@ export default function JobDetailsPage() {
 
           {activeTab === 'eobd' && (
             <div className="ds-section">
-              <h3 className="ds-heading-3">EOBD / OBD-II Data Analysis</h3>
+              <h3 className="ds-heading-3">
+                EOBD / OBD-II Data Analysis
+                {(() => {
+                  const obdEcus = new Set(messages
+                    .filter(msg => {
+                      if (!msg.data || msg.data.length < 2) return false
+                      const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+                      const service = parseInt(decoded.service, 16)
+                      return (service >= 0x01 && service <= 0x0A) || (service >= 0x41 && service <= 0x4A)
+                    })
+                    .map(msg => msg.isRequest ? msg.targetAddr : msg.sourceAddr)
+                    .filter(addr => addr && addr !== '0E80' && addr !== 'F1' && addr !== '07DF')
+                  )
+                  return obdEcus.size > 0 ? (
+                    <span style={{
+                      marginLeft: spacing[2],
+                      fontSize: '14px',
+                      fontWeight: 'normal',
+                      color: colors.gray[600]
+                    }}>({obdEcus.size} ECUs)</span>
+                  ) : null
+                })()}
+              </h3>
               {(() => {
                 // Filter messages for OBD-II services (01-0A, 41-4A)
                 const obdMessages = messages.filter((msg: any) => {
@@ -4106,6 +4465,7 @@ export default function JobDetailsPage() {
                     {Object.entries(obdByECU).map(([ecuAddr, ecuMessages]) => {
                       const ecuConfig = job.ECUConfiguration?.find((e: any) => e.targetAddress === ecuAddr)
                       const ecuName = ecuNames[ecuAddr]?.name || ecuConfig?.ecuName || `ECU_${ecuAddr}`
+                      const isBroadcast = ecuAddr === '07DF'
 
                       // Analyze OBD data for this ECU
                       const obdData = {
@@ -4218,17 +4578,80 @@ export default function JobDetailsPage() {
                         }
                       })
 
+                      // Check if this ECU has security, authentication, or routine services (from the main ECUs data)
+                      const ecuData = ecus.find(e => e.address === ecuAddr)
+                      const hasSecurityAccess = ecuData?.services?.includes('27') || false
+                      const hasAuthentication = ecuData?.services?.includes('29') || false
+                      const hasRoutineControl = ecuData?.services?.includes('31') || false
+
                       return (
-                        <Card key={ecuAddr} variant="nested">
+                        <Card key={ecuAddr} variant="nested" style={{
+                          backgroundColor: isBroadcast ? colors.warning[50] : colors.primary[50],
+                          border: isBroadcast ? `2px solid ${colors.warning[300]}` : `2px solid ${colors.primary[200]}`
+                        }}>
                           <div style={{ marginBottom: spacing[4] }}>
-                            <div className="ds-flex-row" style={{ gap: spacing[3], alignItems: 'center' }}>
-                              <Badge variant="primary" size="large">
-                                {ecuAddr}
-                              </Badge>
-                              <h4 className="ds-heading-4">{ecuName}</h4>
-                              <Badge variant="secondary" size="small">
-                                {ecuMessages.length} OBD messages
-                              </Badge>
+                            <div className="ds-flex-between">
+                              <div className="ds-flex-row" style={{ gap: spacing[3], alignItems: 'center' }}>
+                                <Badge variant="primary" size="large">
+                                  {ecuAddr}
+                                </Badge>
+                                <h4 className="ds-heading-4">{ecuName}</h4>
+                                {isBroadcast && (
+                                  <Badge variant="warning" size="small">
+                                    BROADCAST
+                                  </Badge>
+                                )}
+                                <Badge variant="secondary" size="small">
+                                  {ecuMessages.length} OBD messages
+                                </Badge>
+                              </div>
+                              {/* Large Service Icons */}
+                              {(hasSecurityAccess || hasAuthentication || hasRoutineControl) && (
+                                <div className="ds-flex-row" style={{ gap: spacing[2] }}>
+                                  {hasSecurityAccess && (
+                                    <div style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 48,
+                                      height: 48,
+                                      borderRadius: '12px',
+                                      backgroundColor: '#FFF4E6',
+                                      border: `2px solid #FFB366`
+                                    }}>
+                                      <Lock size={28} color="#E67E00" strokeWidth={2} />
+                                    </div>
+                                  )}
+                                  {hasAuthentication && (
+                                    <div style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 48,
+                                      height: 48,
+                                      borderRadius: '12px',
+                                      backgroundColor: '#FFF4E6',
+                                      border: `2px solid #FFB366`
+                                    }}>
+                                      <Key size={28} color="#E67E00" strokeWidth={2} />
+                                    </div>
+                                  )}
+                                  {hasRoutineControl && (
+                                    <div style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 48,
+                                      height: 48,
+                                      borderRadius: '12px',
+                                      backgroundColor: '#FED7AA',
+                                      border: `2px solid #EA580C`
+                                    }}>
+                                      <Play size={28} color="#EA580C" strokeWidth={2} />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
 
@@ -4421,6 +4844,159 @@ export default function JobDetailsPage() {
                   </div>
                 )
               })()}
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div className="ds-section">
+              <h3 className="ds-heading-3">Security Access Analysis</h3>
+              <Card variant="nested">
+                {(() => {
+                  const securityEvents = analyzeSecurityAccess()
+                  // Check both messages and ECU metadata for security access
+                  const ecuWithSecurity = ecus.filter(e => e.securityLevels.length > 0)
+                  const hasSecurityAccess = securityEvents.length > 0 || ecuWithSecurity.length > 0
+                  const successfulAuths = securityEvents.filter(e => e.type === 'Key Accepted').length
+                  const failedAuths = securityEvents.filter(e => e.type === 'Security Access Rejected').length
+                  const uniqueEcus = ecuWithSecurity.length > 0 ? ecuWithSecurity :
+                    [...new Set(securityEvents.filter(e => e.target !== '0E80').map(e => e.target))]
+
+                  return (
+                    <div>
+                      {hasSecurityAccess ? (
+                        <>
+                          <div className="ds-grid-3" style={{ gap: spacing[4], marginBottom: spacing[4] }}>
+                            <div style={{
+                              padding: spacing[3],
+                              backgroundColor: colors.success[50],
+                              borderRadius: '8px',
+                              border: `1px solid ${colors.success[200]}`
+                            }}>
+                              <p className="ds-label" style={{ color: colors.success[700] }}>Successful Authentications</p>
+                              <p style={{ fontSize: '24px', fontWeight: 600, color: colors.success[700] }}>
+                                {successfulAuths}
+                              </p>
+                            </div>
+                            <div style={{
+                              padding: spacing[3],
+                              backgroundColor: failedAuths > 0 ? colors.error[50] : colors.gray[50],
+                              borderRadius: '8px',
+                              border: `1px solid ${failedAuths > 0 ? colors.error[200] : colors.gray[200]}`
+                            }}>
+                              <p className="ds-label" style={{ color: failedAuths > 0 ? colors.error[700] : colors.gray[700] }}>Failed Attempts</p>
+                              <p style={{ fontSize: '24px', fontWeight: 600, color: failedAuths > 0 ? colors.error[700] : colors.gray[700] }}>
+                                {failedAuths}
+                              </p>
+                            </div>
+                            <div style={{
+                              padding: spacing[3],
+                              backgroundColor: colors.primary[50],
+                              borderRadius: '8px',
+                              border: `1px solid ${colors.primary[200]}`
+                            }}>
+                              <p className="ds-label" style={{ color: colors.primary[700] }}>ECUs with Security</p>
+                              <p style={{ fontSize: '24px', fontWeight: 600, color: colors.primary[700] }}>
+                                {ecuWithSecurity.length > 0 ? ecuWithSecurity.length : uniqueEcus.length}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div style={{ marginTop: spacing[4] }}>
+                            {securityEvents.length > 0 ? (
+                              <>
+                                <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>Security Events</h4>
+                                <div style={{ overflowX: 'auto' }}>
+                                  <table className="ds-table" style={{ width: '100%' }}>
+                                    <thead>
+                                      <tr>
+                                        <th style={{ padding: spacing[2], textAlign: 'left' }}>Time</th>
+                                        <th style={{ padding: spacing[2], textAlign: 'left' }}>ECU</th>
+                                        <th style={{ padding: spacing[2], textAlign: 'left' }}>Event</th>
+                                        <th style={{ padding: spacing[2], textAlign: 'left' }}>Level</th>
+                                        <th style={{ padding: spacing[2], textAlign: 'left' }}>Data/Status</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {securityEvents.map((event, idx) => (
+                                    <tr key={idx} style={{
+                                      borderBottom: `1px solid ${colors.border.light}`,
+                                      backgroundColor: event.type === 'Key Accepted' ? colors.success[50] :
+                                                      event.type === 'Security Access Rejected' ? colors.error[50] :
+                                                      'transparent'
+                                    }}>
+                                      <td style={{ padding: spacing[2], fontFamily: 'monospace', fontSize: '12px' }}>
+                                        {event.timestamp || 'N/A'}
+                                      </td>
+                                      <td style={{ padding: spacing[2] }}>
+                                        {event.target === '0E80' ? 'Tester' :
+                                          (ecuNames[event.target]?.name || event.target)}
+                                      </td>
+                                      <td style={{ padding: spacing[2] }}>
+                                        <Badge
+                                          variant={event.type === 'Key Accepted' ? 'success' :
+                                                  event.type === 'Security Access Rejected' ? 'error' :
+                                                  'secondary'}
+                                          size="small"
+                                        >
+                                          {event.type}
+                                        </Badge>
+                                      </td>
+                                      <td style={{ padding: spacing[2] }}>
+                                        {event.level || '-'}
+                                      </td>
+                                      <td style={{ padding: spacing[2], fontFamily: 'monospace', fontSize: '12px' }}>
+                                        {event.data || '-'}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </>
+                            ) : ecuWithSecurity.length > 0 ? (
+                              <>
+                                <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>ECUs with Security Access</h4>
+                                <div className="ds-flex-row ds-flex-wrap" style={{ gap: spacing[3] }}>
+                                  {ecuWithSecurity.map(ecu => (
+                                    <Card key={ecu.address} variant="nested">
+                                      <div className="ds-flex-row" style={{ gap: spacing[3], alignItems: 'center' }}>
+                                        <Badge variant="secondary">{ecu.address}</Badge>
+                                        <span>{ecu.name}</span>
+                                      </div>
+                                      <div className="ds-flex-row ds-flex-wrap" style={{ gap: spacing[2], marginTop: spacing[2] }}>
+                                        {ecu.securityLevels.map(level => (
+                                          <Badge key={level} variant="info" size="small">
+                                            Level 0x{level}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </Card>
+                                  ))}
+                                </div>
+                              </>
+                            ) : null}
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{
+                          padding: spacing[6],
+                          textAlign: 'center',
+                          backgroundColor: colors.gray[50],
+                          borderRadius: '8px'
+                        }}>
+                          <AlertCircle size={48} color={colors.gray[400]} style={{ marginBottom: spacing[3] }} />
+                          <p className="ds-heading-4" style={{ color: colors.gray[700], marginBottom: spacing[2] }}>
+                            No Security Access Detected
+                          </p>
+                          <p style={{ color: colors.gray[600] }}>
+                            This job did not include any security access (0x27) service usage
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+              </Card>
             </div>
           )}
         </Card>
