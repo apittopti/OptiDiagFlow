@@ -2893,7 +2893,13 @@ export default function JobDetailsPage() {
                         // ECU Reset (0x11)
                         (service === '11' && msg.isRequest) ||
                         // Clear DTCs (0x14)
-                        (service === '14' && msg.isRequest)
+                        (service === '14' && msg.isRequest) ||
+                        // Read DTC Information (0x19)
+                        (service === '19' && msg.isRequest) ||
+                        // OBD-II Read DTCs (0x03, 0x07, 0x0A)
+                        (service === '03' && msg.isRequest) ||
+                        (service === '07' && msg.isRequest) ||
+                        (service === '0A' && msg.isRequest)
                       )
                     })
                     .map(msg => {
@@ -2937,6 +2943,30 @@ export default function JobDetailsPage() {
                         eventType = 'Clear DTCs'
                         eventColor = '#7C3AED'
                         eventLabel = 'Clear DTCs'
+                      } else if (decoded.service === '19') {
+                        eventType = 'Read DTCs'
+                        eventColor = colors.error[600]
+                        eventLabel = 'Read DTCs'
+                        // Parse subfunction for more specific labels
+                        if (decoded.description.includes('0x02')) {
+                          eventLabel = 'Read DTCs by Status'
+                        } else if (decoded.description.includes('0x04')) {
+                          eventLabel = 'Read Snapshot'
+                        } else if (decoded.description.includes('0x06')) {
+                          eventLabel = 'Read Extended DTCs'
+                        }
+                      } else if (decoded.service === '03') {
+                        eventType = 'OBD Read DTCs'
+                        eventColor = colors.error[600]
+                        eventLabel = 'OBD Stored DTCs'
+                      } else if (decoded.service === '07') {
+                        eventType = 'OBD Read DTCs'
+                        eventColor = colors.warning[600]
+                        eventLabel = 'OBD Pending DTCs'
+                      } else if (decoded.service === '0A') {
+                        eventType = 'OBD Read DTCs'
+                        eventColor = colors.error[700]
+                        eventLabel = 'OBD Permanent DTCs'
                       }
 
                       return {
@@ -3051,9 +3081,17 @@ export default function JobDetailsPage() {
                               <Play size={12} style={{ marginRight: '4px' }} />
                               Routines: {diagnosticEvents.filter(e => e.type.includes('Routine')).length}
                             </Badge>
+                            <Badge variant="error" size="small">
+                              <AlertTriangle size={12} style={{ marginRight: '4px' }} />
+                              DTC Reads: {diagnosticEvents.filter(e => e.type.includes('Read DTC')).length}
+                            </Badge>
                             <Badge variant="secondary" size="small">
                               <Settings size={12} style={{ marginRight: '4px' }} />
-                              Other: {diagnosticEvents.filter(e => !e.type.includes('Security') && !e.type.includes('Routine')).length}
+                              Other: {diagnosticEvents.filter(e =>
+                                !e.type.includes('Security') &&
+                                !e.type.includes('Routine') &&
+                                !e.type.includes('Read DTC')
+                              ).length}
                             </Badge>
                           </div>
                         )}
