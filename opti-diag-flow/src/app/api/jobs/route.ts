@@ -207,8 +207,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function processTraceFile(jobId: string, traceFile: { name: string, content: string }) {
+async function processTraceFile(jobId: string, traceFile: { name: string, content: string, path?: string, fileName?: string }) {
   console.log(`Processing trace file: ${traceFile.name}`)
+  console.log(`Trace file path provided: ${traceFile.path || 'NO PATH PROVIDED'}`)
+  console.log(`Trace file fileName provided: ${traceFile.fileName || 'NO FILENAME PROVIDED'}`)
 
   const parser = new JifelineParser()
   const parsedData = parser.parseTrace(traceFile.content)
@@ -280,37 +282,42 @@ async function processTraceFile(jobId: string, traceFile: { name: string, conten
     }
   }
 
+  const metadataToStore = {
+    // Store ALL messages for complete UDS Flow display
+    messages: parsedData.messages,
+    messagesComplete: true,
+    procedures: parsedData.procedures,
+    ecuCount: discoveredECUs.size,
+    ecus: Array.from(discoveredECUs.values()).map(ecu => ({
+      address: ecu.address,
+      name: ecu.name,
+      protocol: ecu.protocol,
+      messageCount: ecu.messageCount,
+      services: Array.from(ecu.discoveredServices),
+      dtcCount: ecu.discoveredDTCs.size,
+      didCount: ecu.discoveredDIDs.size,
+      routineCount: ecu.discoveredRoutines.size
+    })),
+    traceFileName: traceFile.fileName || traceFile.name,
+    traceFilePath: traceFile.path || null, // Store the full path for reparse (log if missing)
+    startTime: parsedData.metadata?.startTime,
+    endTime: parsedData.metadata?.endTime,
+    duration: parsedData.metadata?.duration,
+    // Include Jifeline metadata from parser
+    vehicleVoltage: parsedData.metadata?.vehicleVoltage,
+    connectionInfo: parsedData.metadata?.connectionInfo,
+    connectorMetrics: parsedData.metadata?.connectorMetrics,
+    ecuChannels: parsedData.metadata?.ecuChannels,
+    metadataMessages: parsedData.metadata?.metadataMessages
+  }
+
+  console.log(`Storing metadata with traceFilePath: ${metadataToStore.traceFilePath}`)
+
   await prisma.diagnosticJob.update({
     where: { id: jobId },
     data: {
       messageCount: parsedData.messages.length,
-      metadata: {
-        // Store ALL messages for complete UDS Flow display
-        messages: parsedData.messages,
-        messagesComplete: true,
-        procedures: parsedData.procedures,
-        ecuCount: discoveredECUs.size,
-        ecus: Array.from(discoveredECUs.values()).map(ecu => ({
-          address: ecu.address,
-          name: ecu.name,
-          protocol: ecu.protocol,
-          messageCount: ecu.messageCount,
-          services: Array.from(ecu.discoveredServices),
-          dtcCount: ecu.discoveredDTCs.size,
-          didCount: ecu.discoveredDIDs.size,
-          routineCount: ecu.discoveredRoutines.size
-        })),
-        traceFileName: traceFile.name,
-        startTime: parsedData.metadata?.startTime,
-        endTime: parsedData.metadata?.endTime,
-        duration: parsedData.metadata?.duration,
-        // Include Jifeline metadata from parser
-        vehicleVoltage: parsedData.metadata?.vehicleVoltage,
-        connectionInfo: parsedData.metadata?.connectionInfo,
-        connectorMetrics: parsedData.metadata?.connectorMetrics,
-        ecuChannels: parsedData.metadata?.ecuChannels,
-        metadataMessages: parsedData.metadata?.metadataMessages
-      }
+      metadata: metadataToStore
     }
   })
 

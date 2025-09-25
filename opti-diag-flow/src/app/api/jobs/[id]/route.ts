@@ -133,16 +133,51 @@ export async function DELETE(
   try {
     const { id } = await params
 
+    // Check if job exists
+    const job = await prisma.diagnosticJob.findUnique({
+      where: { id },
+      select: { id: true, name: true }
+    })
+
+    if (!job) {
+      return NextResponse.json(
+        { error: 'Job not found' },
+        { status: 404 }
+      )
+    }
+
     // Delete the job (cascade will handle related data)
     await prisma.diagnosticJob.delete({
       where: { id }
     })
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
+    return NextResponse.json({
+      success: true,
+      message: `Job "${job.name}" deleted successfully`
+    })
+  } catch (error: any) {
     console.error('Error deleting job:', error)
+
+    // Provide more detailed error information
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Job not found' },
+        { status: 404 }
+      )
+    }
+
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Cannot delete job due to foreign key constraint' },
+        { status: 409 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Failed to delete job' },
+      {
+        error: 'Failed to delete job',
+        details: error.message || 'Unknown error'
+      },
       { status: 500 }
     )
   }

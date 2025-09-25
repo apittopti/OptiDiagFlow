@@ -90,6 +90,8 @@ interface UploadedFile {
   error?: string
   content?: string
   file?: File
+  path?: string
+  fileName?: string
 }
 
 interface VehicleHierarchy {
@@ -199,9 +201,18 @@ export default function JobsPage() {
 
   const reparseJob = async (jobId: string) => {
     try {
-      const response = await fetch(`/api/jobs/${jobId}/reparse`, {
-        method: 'POST'
+      console.log('Reparsing job with ID:', jobId)
+      const url = `/api/jobs/${jobId}/reparse`
+      console.log('Reparse URL:', url)
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
+
+      console.log('Reparse response status:', response.status)
 
       if (response.ok) {
         const result = await response.json()
@@ -209,8 +220,14 @@ export default function JobsPage() {
         await fetchJobs()
         alert(result.message || 'Job reparsed successfully')
       } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to reparse job')
+        const errorText = await response.text()
+        console.error('Reparse failed with response:', errorText)
+        try {
+          const error = JSON.parse(errorText)
+          alert(error.error || 'Failed to reparse job')
+        } catch {
+          alert(`Failed to reparse job: ${errorText}`)
+        }
       }
     } catch (error) {
       console.error('Error reparsing job:', error)
@@ -344,9 +361,16 @@ export default function JobsPage() {
 
       const result = await response.json()
 
-      // Update with success status and content
+      // Update with success status, content, and path
       setFiles(prev => prev.map(f =>
-        f.id === fileId ? { ...f, status: 'success', progress: 100, content: result.content } : f
+        f.id === fileId ? {
+          ...f,
+          status: 'success',
+          progress: 100,
+          content: result.content,
+          path: result.path,  // Store the file path
+          fileName: result.fileName  // Store the saved filename
+        } : f
       ))
     } catch (error) {
       console.error('Error uploading file:', error)
@@ -396,7 +420,9 @@ export default function JobsPage() {
           vin: selectedVin || null,
           traceFiles: files.filter(f => f.status === 'success').map(f => ({
             name: f.name,
-            content: f.content || ''
+            content: f.content || '',
+            path: f.path,
+            fileName: f.fileName
           }))
         })
       })
@@ -966,7 +992,11 @@ export default function JobsPage() {
                           variant="success"
                           size="small"
                           icon={<PlayCircle size={16} />}
-                          onClick={() => processTrace(job.id)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            e.preventDefault()
+                            processTrace(job.id)
+                          }}
                         >
                           Process Trace
                         </Button>
@@ -994,7 +1024,11 @@ export default function JobsPage() {
                         variant="success"
                         size="small"
                         icon={<RefreshCw size={16} />}
-                        onClick={() => reparseJob(job.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          e.preventDefault()
+                          reparseJob(job.id)
+                        }}
                       >
                         Reparse
                       </Button>
@@ -1007,7 +1041,11 @@ export default function JobsPage() {
                         variant="error"
                         size="small"
                         icon={<Trash2 size={16} />}
-                        onClick={() => deleteJob(job.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          e.preventDefault()
+                          deleteJob(job.id)
+                        }}
                       >
                         Delete
                       </Button>

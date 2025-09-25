@@ -54,6 +54,7 @@ export async function GET(
       { status: 500 }
     )
   }
+}
 
 // PUT /api/model-years/[id] - Update a model year
 export async function PUT(

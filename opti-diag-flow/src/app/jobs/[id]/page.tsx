@@ -126,8 +126,10 @@ export default function JobDetailsPage() {
   }, [messages])
 
   useEffect(() => {
-    fetchJob()
-  }, [params.id])
+    if (params) {
+      fetchJob()
+    }
+  }, [params])
 
   // Fetch knowledge base data
   useEffect(() => {
@@ -1660,7 +1662,17 @@ export default function JobDetailsPage() {
 
   const fetchJob = async () => {
     try {
-      const response = await fetch(`/api/jobs/${params.id}`)
+      // Get the job ID from params
+      const jobId = params.id || params
+      console.log('FetchJob - params:', params, 'jobId:', jobId)
+
+      if (!jobId) {
+        console.error('Unable to determine job ID')
+        setLoading(false)
+        return
+      }
+
+      const response = await fetch(`/api/jobs/${jobId}`)
       if (response.ok) {
         const data = await response.json()
         setJob(data)
@@ -1827,8 +1839,17 @@ export default function JobDetailsPage() {
 
   const handleReparse = async () => {
     try {
+      // Get the job ID from params
+      const jobId = params.id || params
+      console.log('Reparse - params:', params, 'jobId:', jobId)
+
+      if (!jobId) {
+        alert('Unable to determine job ID')
+        return
+      }
+
       // Call the reparse API endpoint
-      const response = await fetch(`/api/jobs/${params.id}/reparse`, {
+      const response = await fetch(`/api/jobs/${jobId}/reparse`, {
         method: 'POST'
       })
 
@@ -2008,8 +2029,8 @@ export default function JobDetailsPage() {
                 className={`ds-tab ${activeTab === 'voltage' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('voltage')}
               >
-                <Zap size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
-                Battery Voltage
+                <Activity size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
+                Diagnostic Flow
               </button>
               <button
                 className={`ds-tab ${activeTab === 'ecus' ? 'ds-tab-active' : ''}`}
@@ -2029,8 +2050,8 @@ export default function JobDetailsPage() {
                 className={`ds-tab ${activeTab === 'flow' ? 'ds-tab-active' : ''}`}
                 onClick={() => setActiveTab('flow')}
               >
-                <GitBranch size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
-                Diagnostic Flow ({tabCounts.messages})
+                <FileText size={14} style={{ display: 'inline-block', marginRight: '4px' }} />
+                Diagnostic Trace ({tabCounts.messages})
               </button>
               <button
                 className={`ds-tab ${activeTab === 'dtcs' ? 'ds-tab-active' : ''}`}
@@ -2809,7 +2830,7 @@ export default function JobDetailsPage() {
 
           {activeTab === 'voltage' && (
             <div className="ds-section">
-              <h3 className="ds-heading-3">Battery Voltage Over Time</h3>
+              <h3 className="ds-heading-3">Diagnostic Flow</h3>
               <Card variant="nested">
                 {(() => {
                   // Define event type colors as a single source of truth (moved to top for scope visibility)
@@ -3042,7 +3063,7 @@ export default function JobDetailsPage() {
                     return (
                       <div className="ds-empty-state" style={{ padding: spacing[6] }}>
                         <Zap size={48} style={{ color: colors.text.secondary, marginBottom: spacing[3] }} />
-                        <p className="ds-heading-4">No Battery Voltage Data Found</p>
+                        <p className="ds-heading-4">No Voltage Data Found</p>
                         <p className="ds-text-secondary" style={{ marginTop: spacing[2] }}>
                           This trace does not contain battery voltage readings.
                         </p>
@@ -3366,7 +3387,7 @@ export default function JobDetailsPage() {
                                 }
                                 return <circle key={`dot-${props.index}-${props.cx}-${props.cy}`} cx={props.cx} cy={props.cy} r={2} fill={colors.primary[600]} />
                               }}
-                              name="Battery Voltage (V)"
+                              name="Voltage (V)"
                             />
 
 
@@ -3842,7 +3863,7 @@ export default function JobDetailsPage() {
           {activeTab === 'flow' && (
             <div className="ds-section">
               <div className="ds-flex-between" style={{ marginBottom: spacing[4] }}>
-                <h3 className="ds-heading-3">Diagnostic Communication Flow</h3>
+                <h3 className="ds-heading-3">Diagnostic Trace</h3>
                 <select
                   className="ds-select"
                   style={{
@@ -5056,15 +5077,15 @@ export default function JobDetailsPage() {
               <h3 className="ds-heading-3">
                 EOBD / OBD-II Data Analysis
                 {(() => {
+                  // Count ECUs that have OBD-II protocol messages
                   const obdEcus = new Set(messages
                     .filter(msg => {
                       if (!msg.data || msg.data.length < 2) return false
-                      const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
-                      const service = parseInt(decoded.service, 16)
-                      return (service >= 0x01 && service <= 0x0A) || (service >= 0x41 && service <= 0x4A)
+                      // Use the diagnosticProtocol field set by the parser
+                      return msg.diagnosticProtocol === 'OBD-II'
                     })
                     .map(msg => msg.isRequest ? msg.targetAddr : msg.sourceAddr)
-                    .filter(addr => addr && addr !== '0E80' && addr !== 'F1' && addr !== '07DF')
+                    .filter(addr => addr && addr !== '0E80' && addr !== 'F1' && addr !== '07DF' && addr !== 'TESTER')
                   )
                   return obdEcus.size > 0 ? (
                     <span style={{
@@ -5077,12 +5098,14 @@ export default function JobDetailsPage() {
                 })()}
               </h3>
               {(() => {
-                // Filter messages for OBD-II services (01-0A, 41-4A)
+                // Filter messages for OBD-II - check diagnosticProtocol field set by parser
+                // The JifelineParser sets diagnosticProtocol: 'OBD-II' for messages with [EOBD] protocol marker
                 const obdMessages = messages.filter((msg: any) => {
                   if (!msg.data || msg.data.length < 2) return false
-                  const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
-                  const service = parseInt(decoded.service, 16)
-                  return (service >= 0x01 && service <= 0x0A) || (service >= 0x41 && service <= 0x4A)
+
+                  // Primary check: Use the diagnosticProtocol field set by the parser
+                  // This field is set to 'OBD-II' when the trace shows [EOBD] protocol
+                  return msg.diagnosticProtocol === 'OBD-II'
                 })
 
                 if (obdMessages.length === 0) {

@@ -1,0 +1,38 @@
+Setting up vehicle hierarchy...
+
+
+Processing OEM: Fiat
+  - OEM exists: Fiat
+    Processing Model: 500e
+      - Model exists: 500e
+        - Model Year exists: 2021
+Error: PrismaClientValidationError: 
+Invalid `prisma.vehicle.create()` invocation in
+C:\Optimotive-dev\OptiDiagFlow\opti-diag-flow\add-all-vehicles-and-jobs.js:113:42
+
+  110 });
+  111 
+  112 if (!vehicle) {
+→ 113   vehicle = await prisma.vehicle.create({
+          data: {
+            modelYearId: "cmfz7c2cd0001ucnoz0jks9ar",
+            vin: null,
+            userId: "cmfod1h740000uchsac3ni1qm",
+        +   User: {
+        +     create: UserCreateWithoutVehicleInput | UserUncheckedCreateWithoutVehicleInput,
+        +     connectOrCreate: UserCreateOrConnectWithoutVehicleInput,
+        +     connect: UserWhereUniqueInput
+        +   }
+          }
+        })
+
+Argument `User` is missing.
+    at Nn (C:\Optimotive-dev\OptiDiagFlow\opti-diag-flow\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at ei.handleRequestError (C:\Optimotive-dev\OptiDiagFlow\opti-diag-flow\node_modules\@prisma\client\runtime\library.js:121:6911)
+    at ei.handleAndLogRequestError (C:\Optimotive-dev\OptiDiagFlow\opti-diag-flow\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (C:\Optimotive-dev\OptiDiagFlow\opti-diag-flow\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (C:\Optimotive-dev\OptiDiagFlow\opti-diag-flow\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async setupVehicleHierarchy (C:\Optimotive-dev\OptiDiagFlow\opti-diag-flow\add-all-vehicles-and-jobs.js:113:21)
+    at async main (C:\Optimotive-dev\OptiDiagFlow\opti-diag-flow\add-all-vehicles-and-jobs.js:305:5) {
+  clientVersion: '6.16.1'
+}

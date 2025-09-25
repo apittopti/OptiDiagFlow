@@ -559,15 +559,19 @@ export class JifelineParser {
     // Determine the diagnostic protocol based on transport protocol and service ID
     let diagnosticProtocol: 'OBD-II' | 'UDS' | 'KWP2000' | undefined
 
-    // EOBD and PLUGIN 56 use OBD-II protocol
-    if (msg.protocol === 'EOBD' || msg.protocol === 'PLUGIN 56') {
+    // Only EOBD explicitly uses OBD-II protocol
+    // PLUGIN 56 should be determined by service IDs (usually UDS)
+    if (msg.protocol === 'EOBD') {
       diagnosticProtocol = 'OBD-II'
     } else if (msg.protocol === 'ISO14230') {
       // ISO 14230 is KWP2000 (Keyword Protocol 2000), not UDS
       diagnosticProtocol = 'KWP2000'
     } else if (msg.protocol === 'DoIP' || msg.protocol === 'HONDA ISOTP' ||
-               msg.protocol === 'HYUNDAI/KIA ISOTP') {
-      // These protocols use full UDS
+               msg.protocol === 'HYUNDAI/KIA ISOTP' || msg.protocol === 'PLUGIN 56' ||
+               msg.protocol === 'ISOTP VAG V2' || msg.protocol === 'FORD ISOTP' ||
+               msg.protocol === 'TOYOTA ISOTP' || msg.protocol === 'RENAULT ISOTP' ||
+               msg.protocol === 'MG ISOTP' || msg.protocol?.includes('ISOTP')) {
+      // These protocols typically use UDS
       diagnosticProtocol = 'UDS'
     }
     // If protocol is undefined, empty, or "UNDEFINED", leave diagnosticProtocol as undefined

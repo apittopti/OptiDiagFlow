@@ -1,0 +1,272 @@
+[
+  {
+    "oem": "Fiat",
+    "model": "500e",
+    "year": 2021,
+    "procedureType": "Static Front Camera Calibration",
+    "jobName": "8898249",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Fiat\\500e\\2021\\Static Front Camera Calibration\\8898249.txt",
+    "fileName": "8898249.txt"
+  },
+  {
+    "oem": "Ford",
+    "model": "Torneo",
+    "year": 2024,
+    "procedureType": "Dynamic Camera Calibration",
+    "jobName": "8899977",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Ford\\Torneo\\2024\\Dynamic Camera Calibration\\8899977.txt",
+    "fileName": "8899977.txt"
+  },
+  {
+    "oem": "Ford",
+    "model": "Transit V363",
+    "year": 2025,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "EA25MUB",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Ford\\Transit V363\\2025\\Dynamic Front Camera Calibration\\JOB-EA25MUB\\EA25MUB_TRANSIT_CAMERA_CARYUK_LOG.txt",
+    "fileName": "EA25MUB_TRANSIT_CAMERA_CARYUK_LOG.txt"
+  },
+  {
+    "oem": "Ford",
+    "model": "Transit V363",
+    "year": 2025,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "EJ79793",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Ford\\Transit V363\\2025\\Dynamic Front Camera Calibration\\JOB-EJ79793\\EJ79793_TRANSIT_CAMERA_DANSKBILGLAS_LOG.txt",
+    "fileName": "EJ79793_TRANSIT_CAMERA_DANSKBILGLAS_LOG.txt"
+  },
+  {
+    "oem": "Honda",
+    "model": "Civic XI",
+    "year": 2023,
+    "procedureType": "Static Front Camera Calibration",
+    "jobName": "8901379",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Honda\\Civic XI\\2023\\Static Front Camera Calibration\\8901379.txt",
+    "fileName": "8901379.txt"
+  },
+  {
+    "oem": "Honda",
+    "model": "Jazz V",
+    "year": 2020,
+    "procedureType": "Camera Calibration",
+    "jobName": "HONDA_JAZZ_CAM_RYDS",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Honda\\Jazz V\\2020\\Camera Calibration\\HONDA_JAZZ_CAM_RYDS.txt",
+    "fileName": "HONDA_JAZZ_CAM_RYDS.txt"
+  },
+  {
+    "oem": "Hyundai",
+    "model": "i20",
+    "year": 2021,
+    "procedureType": "Camera Calibration",
+    "jobName": "8882747",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Hyundai\\i20\\2021\\Camera Calibration\\8882747.txt",
+    "fileName": "8882747.txt"
+  },
+  {
+    "oem": "Hyundai",
+    "model": "IONIQ - 5 (NE)",
+    "year": 2025,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "8899458",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Hyundai\\IONIQ - 5 (NE)\\2025\\Dynamic Front Camera Calibration\\8899458.txt",
+    "fileName": "8899458.txt"
+  },
+  {
+    "oem": "Hyundai",
+    "model": "Kona SX2",
+    "year": 2025,
+    "procedureType": "Front Camera Calibration",
+    "jobName": "EJ25LZU_KONA_CAMERA_ALLSCREENS_LOG",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Hyundai\\Kona SX2\\2025\\Front Camera Calibration\\EJ25LZU_KONA_CAMERA_ALLSCREENS_LOG.txt",
+    "fileName": "EJ25LZU_KONA_CAMERA_ALLSCREENS_LOG.txt"
+  },
+  {
+    "oem": "Kia",
+    "model": "Sportage",
+    "year": 2022,
+    "procedureType": "Front Camera Calibration",
+    "jobName": "8898588",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Kia\\Sportage\\2022\\Front Camera Calibration\\8898588.txt",
+    "fileName": "8898588.txt"
+  },
+  {
+    "oem": "Kia",
+    "model": "SPORTAGE - V (NQ5)",
+    "year": 2022,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "8899553",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Kia\\SPORTAGE - V (NQ5)\\2022\\Dynamic Front Camera Calibration\\8899553.txt",
+    "fileName": "8899553.txt"
+  },
+  {
+    "oem": "Kia",
+    "model": "Stonic",
+    "year": 2024,
+    "procedureType": "Front Camera Calibration",
+    "jobName": "8898166",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Kia\\Stonic\\2024\\Front Camera Calibration\\8898166.txt",
+    "fileName": "8898166.txt"
+  },
+  {
+    "oem": "Landrover",
+    "model": "Defender",
+    "year": 2020,
+    "procedureType": "Camera Calibration",
+    "jobName": "8873778",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Landrover\\Defender\\2020\\Camera Calibration\\8873778.txt",
+    "fileName": "8873778.txt"
+  },
+  {
+    "oem": "Landrover",
+    "model": "Discovery",
+    "year": 2022,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "LANDROVER_DISCO_CAM_CARY",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Landrover\\Discovery\\2022\\Dynamic Front Camera Calibration\\LANDROVER_DISCO_CAM_CARY.txt",
+    "fileName": "LANDROVER_DISCO_CAM_CARY.txt"
+  },
+  {
+    "oem": "Landrover",
+    "model": "Discovery",
+    "year": 2023,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "L4EXA_DISCOVERY_CAMERA_CARYUK_LOG",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Landrover\\Discovery\\2023\\Dynamic Front Camera Calibration\\L4EXA_DISCOVERY_CAMERA_CARYUK_LOG.txt",
+    "fileName": "L4EXA_DISCOVERY_CAMERA_CARYUK_LOG.txt"
+  },
+  {
+    "oem": "Landrover",
+    "model": "Range Rover Sport III",
+    "year": 2023,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "8898268",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Landrover\\Range Rover Sport III\\2023\\Dynamic Front Camera Calibration\\8898268.txt",
+    "fileName": "8898268.txt"
+  },
+  {
+    "oem": "Landrover",
+    "model": "Range Rover Sport III",
+    "year": 2025,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "8896252",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Landrover\\Range Rover Sport III\\2025\\Dynamic Front Camera Calibration\\8896252.txt",
+    "fileName": "8896252.txt"
+  },
+  {
+    "oem": "Mercedes",
+    "model": "GLB (X247)",
+    "year": 2025,
+    "procedureType": "Static Front Camera Calibration",
+    "jobName": "8898301",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Mercedes\\GLB (X247)\\2025\\Static Front Camera Calibration\\8898301.txt",
+    "fileName": "8898301.txt"
+  },
+  {
+    "oem": "Mercedes",
+    "model": "S-Class 222",
+    "year": 2019,
+    "procedureType": "Static Front Camera Calibration",
+    "jobName": "8899173",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Mercedes\\S-Class 222\\2019\\Static Front Camera Calibration\\8899173.txt",
+    "fileName": "8899173.txt"
+  },
+  {
+    "oem": "MG",
+    "model": "3",
+    "year": 2021,
+    "procedureType": "Camera Calibration",
+    "jobName": "8884494",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\MG\\3\\2021\\Camera Calibration\\8884494.txt",
+    "fileName": "8884494.txt"
+  },
+  {
+    "oem": "Mitsubishi",
+    "model": "L200 - Triton",
+    "year": 2019,
+    "procedureType": "Dynamic Camera Calibration",
+    "jobName": "8903321",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Mitsubishi\\L200 - Triton\\2019\\Dynamic Camera Calibration\\8903321.txt",
+    "fileName": "8903321.txt"
+  },
+  {
+    "oem": "Nissan",
+    "model": "JUKE -F16",
+    "year": 2022,
+    "procedureType": "Static Front Camera Calibration",
+    "jobName": "8899572",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Nissan\\JUKE -F16\\2022\\Static Front Camera Calibration\\8899572.txt",
+    "fileName": "8899572.txt"
+  },
+  {
+    "oem": "Nissan",
+    "model": "Qashqai",
+    "year": 2022,
+    "procedureType": "Camera Calibration",
+    "jobName": "8882943",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Nissan\\Qashqai\\2022\\Camera Calibration\\8882943.txt",
+    "fileName": "8882943.txt"
+  },
+  {
+    "oem": "Polestar",
+    "model": "Polestar 2",
+    "year": 2022,
+    "procedureType": "Static Front Camera Calibration",
+    "jobName": "8875011",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Polestar\\Polestar 2\\2022\\Static Front Camera Calibration\\8875011.txt",
+    "fileName": "8875011.txt"
+  },
+  {
+    "oem": "Polestar",
+    "model": "Polestar 2",
+    "year": 2024,
+    "procedureType": "Static Front Camera Calibration",
+    "jobName": "OW74CRX_POLESTAR_CAMERA_CARYUK_LOG",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Polestar\\Polestar 2\\2024\\Static Front Camera Calibration\\OW74CRX_POLESTAR_CAMERA_CARYUK_LOG.txt",
+    "fileName": "OW74CRX_POLESTAR_CAMERA_CARYUK_LOG.txt"
+  },
+  {
+    "oem": "Toyota",
+    "model": "Yaris",
+    "year": 2024,
+    "procedureType": "Camera Calibration",
+    "jobName": "8885638",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Toyota\\Yaris\\2024\\Camera Calibration\\8885638.txt",
+    "fileName": "8885638.txt"
+  },
+  {
+    "oem": "Vauxhall",
+    "model": "COMBO - E Tour (K9)",
+    "year": 2023,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "8899333",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Vauxhall\\COMBO - E Tour (K9)\\2023\\Dynamic Front Camera Calibration\\8899333.txt",
+    "fileName": "8899333.txt"
+  },
+  {
+    "oem": "Volkswagen",
+    "model": "ID Buzz Cargo",
+    "year": 2024,
+    "procedureType": "Dynamic Front Camera Calibration",
+    "jobName": "8901243",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Volkswagen\\ID Buzz Cargo\\2024\\Dynamic Front Camera Calibration\\8901243.txt",
+    "fileName": "8901243.txt"
+  },
+  {
+    "oem": "Volvo",
+    "model": "V60-ll",
+    "year": 2022,
+    "procedureType": "Static Front Camera Calibration",
+    "jobName": "YN72OGH_VOLVO_CAMERA_CARYUK_LOG",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Volvo\\V60-ll\\2022\\Static Front Camera Calibration\\YN72OGH_VOLVO_CAMERA_CARYUK_LOG.txt",
+    "fileName": "YN72OGH_VOLVO_CAMERA_CARYUK_LOG.txt"
+  },
+  {
+    "oem": "Volvo",
+    "model": "XC90-II",
+    "year": 2021,
+    "procedureType": "Static Front Camera Calibration",
+    "jobName": "WJ71YHO_XC90_CAMERA_CARYUK_LOG",
+    "traceFile": "C:\\Optimotive-dev\\OptiDiagFlow\\ExamplesForClaude\\TraceLogsComplete\\Volvo\\XC90-II\\2021\\Static Front Camera Calibration\\WJ71YHO_XC90_CAMERA_CARYUK_LOG.txt",
+    "fileName": "WJ71YHO_XC90_CAMERA_CARYUK_LOG.txt"
+  }
+]

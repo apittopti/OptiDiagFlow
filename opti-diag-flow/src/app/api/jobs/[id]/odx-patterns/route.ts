@@ -38,6 +38,7 @@ export async function GET(
         { error: 'Job not found' },
         { status: 404 }
       );
+    }
 
     // Get ODX discovery results for this job
     const patterns = await prisma.oDXDiscoveryResult.findMany({

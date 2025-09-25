@@ -18,65 +18,101 @@ export async function POST(
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
-    // Find the uploaded trace file for this job
+    // Find the trace file for this job
     const fs = require('fs')
     const path = require('path')
 
-    // Find the trace file for this job
-    // Map job names to trace files based on what we know was uploaded
-    const jobNameToTraceMap: Record<string, string> = {
-      // Honda jobs
-      'Honda Jazz Test': 'HONDA_JAZZ_CAM_RYDS.txt',
-
-      // Land Rover jobs
-      '8873778': '8873778.txt',
-      '8884157': '8884157.txt'
-    }
-
     let traceFilePath = ''
-    const uploadsDir = path.join(process.cwd(), 'uploads', 'traces')
 
-    // First try to find based on job name mapping
-    const mappedFile = jobNameToTraceMap[job.name]
-    if (mappedFile) {
-      const files = fs.readdirSync(uploadsDir)
-      const matchingFile = files.find((f: string) => f.includes(mappedFile))
-      if (matchingFile) {
-        traceFilePath = path.join(uploadsDir, matchingFile)
-        console.log('Using mapped trace file:', matchingFile)
+    // First check if job metadata contains the full trace file path (from batch import)
+    if (job.metadata && typeof job.metadata === 'object') {
+      const metadata = job.metadata as any
+
+      // Check for full path first (from batch import)
+      if (metadata.traceFilePath && fs.existsSync(metadata.traceFilePath)) {
+        traceFilePath = metadata.traceFilePath
+        console.log('Using trace file from metadata path:', traceFilePath)
       }
-    }
+      // Otherwise check uploads directory
+      else if (metadata.traceFileName) {
+        const uploadsDir = path.join(process.cwd(), 'uploads', 'traces')
+        const metadataTraceFileName = metadata.traceFileName
 
-    // If not found, try to match by job name
-    if (!traceFilePath) {
-      const files = fs.readdirSync(uploadsDir)
+        // Look for the file in the uploads directory
+        if (fs.existsSync(uploadsDir)) {
+          const files = fs.readdirSync(uploadsDir)
 
-      // Special handling for numeric job names (Land Rover files)
-      if (/^\d+$/.test(job.name)) {
-        // Look for files containing the job name as the numeric part
-        const matchingFile = files.find((f: string) => f.includes(job.name))
-        if (matchingFile) {
-          traceFilePath = path.join(uploadsDir, matchingFile)
-          console.log('Using numeric-matched trace file:', matchingFile)
-        }
-      } else {
-        // For other jobs, try fuzzy matching
-        const jobNamePart = job.name?.replace(/[^a-zA-Z0-9]/g, '') || ''
-        if (jobNamePart) {
-          const matchingFile = files.find((f: string) => {
-            const filePart = f.replace(/[^a-zA-Z0-9]/g, '')
-            return filePart.includes(jobNamePart) || jobNamePart.includes(filePart.substring(0, 7))
-          })
-
-          if (matchingFile) {
-            traceFilePath = path.join(uploadsDir, matchingFile)
-            console.log('Using name-matched trace file:', matchingFile)
+          // Try exact match first
+          if (files.includes(metadataTraceFileName)) {
+            traceFilePath = path.join(uploadsDir, metadataTraceFileName)
+            console.log('Using exact trace file:', metadataTraceFileName)
+          } else {
+            // Look for a file that ends with the stored trace file name
+            const matchingFile = files.find((f: string) => f.endsWith(metadataTraceFileName))
+            if (matchingFile) {
+              traceFilePath = path.join(uploadsDir, matchingFile)
+              console.log('Using trace file from metadata (suffix match):', matchingFile)
+            } else {
+              // Try to find file containing the base name (without extension)
+              const baseName = metadataTraceFileName.replace(/\.[^/.]+$/, '')
+              const matchingFile2 = files.find((f: string) => f.includes(baseName))
+              if (matchingFile2) {
+                traceFilePath = path.join(uploadsDir, matchingFile2)
+                console.log('Using trace file by base name:', matchingFile2)
+              }
+            }
           }
         }
       }
     }
 
+    // Fallback: try to match by job name in uploads directory
     if (!traceFilePath) {
+      console.log('No metadata trace file found, trying fallback matches...')
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'traces')
+      if (fs.existsSync(uploadsDir)) {
+        const files = fs.readdirSync(uploadsDir)
+        console.log(`Searching ${files.length} files for job name: ${job.name}`)
+
+        // Strategy 1: Special handling for numeric job names (Land Rover files)
+        if (/^\d+$/.test(job.name)) {
+          // Look for files containing the job name as the numeric part
+          const matchingFile = files.find((f: string) => f.includes(job.name))
+          if (matchingFile) {
+            traceFilePath = path.join(uploadsDir, matchingFile)
+            console.log('Using numeric-matched trace file:', matchingFile)
+          }
+        }
+
+        // Strategy 2: Look for files ending with job name + .txt
+        if (!traceFilePath) {
+          const jobNameWithExt = job.name.endsWith('.txt') ? job.name : `${job.name}.txt`
+          const matchingFile = files.find((f: string) => f.endsWith(jobNameWithExt))
+          if (matchingFile) {
+            traceFilePath = path.join(uploadsDir, matchingFile)
+            console.log('Using suffix-matched trace file:', matchingFile)
+          }
+        }
+
+        // Strategy 3: For other jobs, try fuzzy matching
+        if (!traceFilePath) {
+          const jobNamePart = job.name?.replace(/[^a-zA-Z0-9]/g, '') || ''
+          if (jobNamePart) {
+            const matchingFile = files.find((f: string) => {
+              const filePart = f.replace(/[^a-zA-Z0-9]/g, '')
+              return filePart.includes(jobNamePart) || jobNamePart.includes(filePart.substring(0, 7))
+            })
+
+            if (matchingFile) {
+              traceFilePath = path.join(uploadsDir, matchingFile)
+              console.log('Using fuzzy-matched trace file:', matchingFile)
+            }
+          }
+        }
+      }
+    }
+
+    if (!traceFilePath || !fs.existsSync(traceFilePath)) {
       return NextResponse.json({ error: 'No trace file found for this job' }, { status: 404 })
     }
 
@@ -190,7 +226,7 @@ export async function POST(
     const allMessages = parsedData.messages
 
     // Extract the trace filename from the path
-    const traceFileName = path.basename(traceFilePath)
+    const baseTraceFileName = path.basename(traceFilePath)
 
     const metadata = {
       messageCount: allMessages.length,
@@ -207,7 +243,7 @@ export async function POST(
         didCount: ecu.discoveredDIDs.size,
         routineCount: ecu.discoveredRoutines.size
       })),
-      traceFileName: traceFileName,
+      traceFileName: baseTraceFileName,
       startTime: parsedData.metadata?.startTime,
       endTime: parsedData.metadata?.endTime,
       duration: parsedData.metadata?.duration,
