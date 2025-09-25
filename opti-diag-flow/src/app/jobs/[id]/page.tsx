@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap, Car, Calendar, Info, Shield, GitBranch, AlertTriangle, Hash, Wrench, Settings, Gauge, Lock, Key, FileText, Play, Square, RotateCw, HardDrive, Network, Power, Terminal, Binary, Upload, Trash2, Clock } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, Dot } from 'recharts'
+import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, XCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap, Car, Calendar, Info, Shield, GitBranch, AlertTriangle, Hash, Wrench, Settings, Gauge, Lock, Key, FileText, Play, Square, RotateCw, HardDrive, Network, Power, Terminal, Binary, Upload, Trash2, Clock } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea, Dot } from 'recharts'
 import { PageLayout } from '@/components/layout/page-layout'
 import { Card, Button, Badge, StatCard } from '@/components/design-system'
 import { colors, spacing } from '@/lib/design-system/tokens'
@@ -2812,6 +2812,22 @@ export default function JobDetailsPage() {
               <h3 className="ds-heading-3">Battery Voltage Over Time</h3>
               <Card variant="nested">
                 {(() => {
+                  // Define event type colors as a single source of truth (moved to top for scope visibility)
+                  const eventTypeColors: Record<string, string> = {
+                    'Security Key': '#F59E0B',      // Amber/Warning
+                    'Security Success': '#10B981',  // Green/Success
+                    'Routine Start': '#EA580C',     // Orange
+                    'Routine Response': '#10B981',  // Green/Success
+                    'Session Change': '#3B82F6',    // Blue/Primary
+                    'ECU Reset': '#06B6D4',         // Cyan/Info
+                    'Clear DTCs': '#7C3AED',        // Purple
+                    'Read DTCs': '#EF4444',         // Red/Error
+                    'OBD Stored DTCs': '#EF4444',   // Red/Error
+                    'OBD Pending DTCs': '#F59E0B',  // Amber/Warning
+                    'OBD Permanent DTCs': '#DC2626', // Dark Red
+                    'Other': '#9CA3AF'              // Gray
+                  }
+
                   // Extract battery voltage data from metadata
                   // Method 1: From METADATA messages parsed by JifelineParser
                   const metadataVoltage = job.metadata?.vehicleVoltage
@@ -2905,22 +2921,18 @@ export default function JobDetailsPage() {
                     .map(msg => {
                       const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
                       let eventType = 'Other'
-                      let eventColor = colors.gray[600]
                       let eventLabel = ''
 
                       if (decoded.service === '27') {
                         if (decoded.description.includes('Send Key')) {
                           eventType = 'Security Key'
-                          eventColor = colors.warning[600]
                           eventLabel = 'Key Sent'
                         } else if (decoded.description.includes('Positive Response')) {
                           eventType = 'Security Success'
-                          eventColor = colors.success[600]
                           eventLabel = 'Authenticated'
                         }
                       } else if (decoded.service === '31') {
                         eventType = 'Routine Start'
-                        eventColor = '#EA580C'
                         eventLabel = 'Routine'
                         if (decoded.description.includes('0201')) {
                           eventLabel = 'Start Routine'
@@ -2929,23 +2941,18 @@ export default function JobDetailsPage() {
                         }
                       } else if (decoded.service === '71') {
                         eventType = 'Routine Response'
-                        eventColor = colors.success[600]
                         eventLabel = 'Results'
                       } else if (decoded.service === '10') {
                         eventType = 'Session Change'
-                        eventColor = colors.primary[600]
                         eventLabel = 'Extended Session'
                       } else if (decoded.service === '11') {
                         eventType = 'ECU Reset'
-                        eventColor = colors.info[600]
                         eventLabel = 'Reset'
                       } else if (decoded.service === '14') {
                         eventType = 'Clear DTCs'
-                        eventColor = '#7C3AED'
                         eventLabel = 'Clear DTCs'
                       } else if (decoded.service === '19') {
                         eventType = 'Read DTCs'
-                        eventColor = colors.error[600]
                         eventLabel = 'Read DTCs'
                         // Parse subfunction for more specific labels
                         if (decoded.description.includes('0x02')) {
@@ -2956,18 +2963,18 @@ export default function JobDetailsPage() {
                           eventLabel = 'Read Extended DTCs'
                         }
                       } else if (decoded.service === '03') {
-                        eventType = 'OBD Read DTCs'
-                        eventColor = colors.error[600]
+                        eventType = 'OBD Stored DTCs'
                         eventLabel = 'OBD Stored DTCs'
                       } else if (decoded.service === '07') {
-                        eventType = 'OBD Read DTCs'
-                        eventColor = colors.warning[600]
+                        eventType = 'OBD Pending DTCs'
                         eventLabel = 'OBD Pending DTCs'
                       } else if (decoded.service === '0A') {
-                        eventType = 'OBD Read DTCs'
-                        eventColor = colors.error[700]
+                        eventType = 'OBD Permanent DTCs'
                         eventLabel = 'OBD Permanent DTCs'
                       }
+
+                      // Get color from the single source of truth
+                      const eventColor = eventTypeColors[eventType] || eventTypeColors['Other']
 
                       return {
                         time: msg.timestamp,
@@ -3073,34 +3080,201 @@ export default function JobDetailsPage() {
                         <h4 className="ds-heading-5">Voltage Timeline with Diagnostic Events</h4>
                         {diagnosticEvents.length > 0 && (
                           <div style={{ display: 'flex', gap: spacing[2], marginTop: spacing[2], flexWrap: 'wrap' }}>
-                            <Badge variant="warning" size="small">
-                              <Lock size={12} style={{ marginRight: '4px' }} />
-                              Security: {diagnosticEvents.filter(e => e.type.includes('Security')).length}
-                            </Badge>
-                            <Badge variant="info" size="small">
-                              <Play size={12} style={{ marginRight: '4px' }} />
-                              Routines: {diagnosticEvents.filter(e => e.type.includes('Routine')).length}
-                            </Badge>
-                            <Badge variant="error" size="small">
-                              <AlertTriangle size={12} style={{ marginRight: '4px' }} />
-                              DTC Reads: {diagnosticEvents.filter(e => e.type.includes('Read DTC')).length}
-                            </Badge>
-                            <Badge variant="secondary" size="small">
-                              <Settings size={12} style={{ marginRight: '4px' }} />
-                              Other: {diagnosticEvents.filter(e =>
-                                !e.type.includes('Security') &&
-                                !e.type.includes('Routine') &&
-                                !e.type.includes('Read DTC')
-                              ).length}
-                            </Badge>
+                            {/* Group events by type and show count for each */}
+                            {Object.entries(
+                              diagnosticEvents.reduce((acc, event) => {
+                                acc[event.type] = (acc[event.type] || 0) + 1
+                                return acc
+                              }, {} as Record<string, number>)
+                            ).map(([eventType, count]) => (
+                              <div key={eventType} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px 8px',
+                                backgroundColor: colors.background.secondary,
+                                borderRadius: '4px',
+                                border: `1px solid ${colors.border.light}`
+                              }}>
+                                <div style={{
+                                  width: '12px',
+                                  height: '12px',
+                                  borderRadius: '50%',
+                                  backgroundColor: eventTypeColors[eventType] || eventTypeColors['Other'],
+                                  border: '1px solid white',
+                                  boxShadow: '0 0 2px rgba(0,0,0,0.2)'
+                                }} />
+                                <span style={{ fontSize: '12px', fontWeight: 500 }}>
+                                  {eventType}: {count}
+                                </span>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
 
-                      <div style={{ width: '100%', height: '450px', marginTop: spacing[4] }}>
+
+                      <div style={{ width: '100%', height: '550px', marginTop: spacing[2] }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={voltageData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
+                          <LineChart data={voltageData} margin={{ top: 60, right: 30, left: 20, bottom: 40 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke={colors.border.light} />
+
+                            {/* Add routine start/stop lines and spans */}
+                            {(() => {
+                              // Group routines by ECU and routine ID to find first and last occurrence
+                              const routineGroups: Record<string, any[]> = {}
+
+                              messages.forEach(msg => {
+                                const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+                                if (decoded.service === '31' && msg.isRequest) {
+                                  const ecuAddr = msg.targetAddr || msg.target
+                                  const cleanData = msg.data && msg.data.startsWith('0x') ? msg.data.substring(2) : msg.data || ''
+                                  let routineId = 'unknown'
+                                  if (cleanData.length >= 8) {
+                                    routineId = cleanData.substring(4, 8).toUpperCase()
+                                  }
+
+                                  const key = `${ecuAddr}_${routineId}`
+                                  if (!routineGroups[key]) {
+                                    routineGroups[key] = []
+                                  }
+                                  routineGroups[key].push({
+                                    timestamp: msg.timestamp,
+                                    ecu: ecuAddr,
+                                    routineId: routineId
+                                  })
+                                }
+                              })
+
+                              const routineSpans: any[] = []
+                              Object.entries(routineGroups).forEach(([key, events]) => {
+                                if (events.length > 0) {
+                                  // Sort by timestamp to find first and last
+                                  events.sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+                                  const first = events[0]
+                                  const last = events[events.length - 1]
+
+                                  routineSpans.push({
+                                    startTime: first.timestamp,
+                                    endTime: last.timestamp,
+                                    routineId: first.routineId,
+                                    ecu: ecuNames[first.ecu]?.name || first.ecu
+                                  })
+                                }
+                              })
+
+                              return (
+                                <>
+                                  {/* Draw spans and lines for each routine */}
+                                  {routineSpans.map((span, idx) => (
+                                    <g key={`routine-span-${idx}`}>
+                                      {/* Shaded area between start and stop */}
+                                      <ReferenceArea
+                                        x1={span.startTime}
+                                        x2={span.endTime}
+                                        y1="dataMax"
+                                        y2="dataMin"
+                                        fill="#EA580C"
+                                        fillOpacity={0.1}
+                                        stroke="none"
+                                      />
+
+                                      {/* Start line */}
+                                      <ReferenceLine
+                                        x={span.startTime}
+                                        stroke="#EA580C"
+                                        strokeWidth={2}
+                                        strokeDasharray="none"
+                                      />
+
+                                      {/* Stop line */}
+                                      <ReferenceLine
+                                        x={span.endTime}
+                                        stroke="#EA580C"
+                                        strokeWidth={2}
+                                        strokeDasharray="none"
+                                      />
+
+                                      {/* Label in the center with pointer lines */}
+                                      {(() => {
+                                        // Find the midpoint timestamp
+                                        const startIdx = voltageData.findIndex(d => d.time === span.startTime)
+                                        const endIdx = voltageData.findIndex(d => d.time === span.endTime)
+                                        let midTime = span.startTime
+
+                                        if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+                                          const midIdx = Math.floor((startIdx + endIdx) / 2)
+                                          if (voltageData[midIdx]) {
+                                            midTime = voltageData[midIdx].time
+                                          }
+                                        }
+
+                                        return (
+                                          <>
+                                            {/* Center label */}
+                                            <ReferenceLine
+                                              x={midTime}
+                                              stroke="transparent"
+                                              label={{
+                                                value: `Routine 0x${span.routineId} - ${span.ecu}`,
+                                                position: 'top',
+                                                offset: 20,
+                                                style: {
+                                                  fontSize: 12,
+                                                  fill: '#EA580C',
+                                                  fontWeight: 700,
+                                                  backgroundColor: 'white',
+                                                  padding: '4px 8px',
+                                                  borderRadius: '4px',
+                                                  border: '2px solid #EA580C',
+                                                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                                }
+                                              }}
+                                            />
+
+                                            {/* Pointer line from start to label */}
+                                            <ReferenceLine
+                                              x={span.startTime}
+                                              stroke="#EA580C"
+                                              strokeWidth={1}
+                                              strokeDasharray="2 2"
+                                              opacity={0.5}
+                                              label={{
+                                                value: '▼',
+                                                position: 'top',
+                                                offset: 5,
+                                                style: {
+                                                  fontSize: 10,
+                                                  fill: '#EA580C'
+                                                }
+                                              }}
+                                            />
+
+                                            {/* Pointer line from end to label */}
+                                            <ReferenceLine
+                                              x={span.endTime}
+                                              stroke="#EA580C"
+                                              strokeWidth={1}
+                                              strokeDasharray="2 2"
+                                              opacity={0.5}
+                                              label={{
+                                                value: '▼',
+                                                position: 'top',
+                                                offset: 5,
+                                                style: {
+                                                  fontSize: 10,
+                                                  fill: '#EA580C'
+                                                }
+                                              }}
+                                            />
+                                          </>
+                                        )
+                                      })()}
+                                    </g>
+                                  ))}
+                                </>
+                              )
+                            })()}
                             <XAxis
                               dataKey="time"
                               tick={{ fontSize: 11 }}
@@ -3156,7 +3330,6 @@ export default function JobDetailsPage() {
                                 return null
                               }}
                             />
-                            <Legend />
                             <Line
                               type="monotone"
                               dataKey="voltage"
@@ -3167,7 +3340,7 @@ export default function JobDetailsPage() {
                                 if (pointEvents.length > 0) {
                                   const event = pointEvents[0]
                                   return (
-                                    <g key={props.key}>
+                                    <g key={`dot-${props.index}-${props.cx}-${props.cy}`}>
                                       <circle
                                         cx={props.cx}
                                         cy={props.cy}
@@ -3191,35 +3364,195 @@ export default function JobDetailsPage() {
                                     </g>
                                   )
                                 }
-                                return <circle cx={props.cx} cy={props.cy} r={2} fill={colors.primary[600]} />
+                                return <circle key={`dot-${props.index}-${props.cx}-${props.cy}`} cx={props.cx} cy={props.cy} r={2} fill={colors.primary[600]} />
                               }}
                               name="Battery Voltage (V)"
                             />
 
-                            {/* Add vertical reference lines for major events */}
-                            {diagnosticEvents
-                              .filter(e => e.type.includes('Security Success') || e.type.includes('Routine') || e.type === 'ECU Reset')
-                              .map((event, idx) => {
-                                const dataPoint = voltageData.find(d => d.time === event.time)
-                                if (!dataPoint) return null
-                                return (
-                                  <ReferenceLine
-                                    key={`event-${idx}`}
-                                    x={event.time}
-                                    stroke={event.color}
-                                    strokeDasharray="3 3"
-                                    strokeWidth={1}
-                                    opacity={0.5}
-                                  />
-                                )
-                              })}
+
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
 
+                      {/* Routine Execution Summary Table */}
+                      {(() => {
+                        // Analyze routines performed on each ECU
+                        const ecuRoutineAnalysis: Record<string, {
+                          ecuAddress: string
+                          ecuName: string
+                          routines: Array<{ time: string, routineId?: string }>
+                          hadExtendedSession: boolean
+                          hadSecurityAccess: boolean
+                          securityLevels: string[]
+                        }> = {}
+
+                        // Process messages to find routines and their prerequisites
+                        messages.forEach((msg, index) => {
+                          const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+
+                          // Track routine requests (0x31)
+                          if (decoded.service === '31' && msg.isRequest) {
+                            const ecuAddr = msg.targetAddr || msg.target
+                            if (!ecuRoutineAnalysis[ecuAddr]) {
+                              ecuRoutineAnalysis[ecuAddr] = {
+                                ecuAddress: ecuAddr,
+                                ecuName: ecuNames[ecuAddr]?.name || `ECU_${ecuAddr}`,
+                                routines: [],
+                                hadExtendedSession: false,
+                                hadSecurityAccess: false,
+                                securityLevels: []
+                              }
+                            }
+
+                            // Extract routine ID from data if available
+                            const cleanData = msg.data && msg.data.startsWith('0x') ? msg.data.substring(2) : msg.data || ''
+                            let routineId = ''
+                            if (cleanData.length >= 6) {
+                              // Format: 31 01 XXXX (start routine by ID)
+                              routineId = cleanData.substring(4, 8).toUpperCase()
+                            }
+
+                            ecuRoutineAnalysis[ecuAddr].routines.push({
+                              time: msg.timestamp,
+                              routineId
+                            })
+                          }
+                        })
+
+                        // Now look back through messages to find session and security for ECUs with routines
+                        Object.keys(ecuRoutineAnalysis).forEach(ecuAddr => {
+                          const ecuMessages = messages.filter(msg =>
+                            (msg.targetAddr === ecuAddr || msg.target === ecuAddr) ||
+                            (msg.sourceAddr === ecuAddr || msg.source === ecuAddr)
+                          )
+
+                          ecuMessages.forEach(msg => {
+                            const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+
+                            // Check for extended session (0x10 with subfunction 03)
+                            if (decoded.service === '10' && msg.isRequest) {
+                              if (decoded.description.includes('Extended') || decoded.description.includes('0x03')) {
+                                ecuRoutineAnalysis[ecuAddr].hadExtendedSession = true
+                              }
+                            }
+
+                            // Check for security access
+                            if (decoded.service === '27') {
+                              if (decoded.description.includes('Send Key')) {
+                                ecuRoutineAnalysis[ecuAddr].hadSecurityAccess = true
+                                // Extract security level
+                                const cleanData = msg.data && msg.data.startsWith('0x') ? msg.data.substring(2) : msg.data || ''
+                                if (cleanData.length >= 4) {
+                                  const level = cleanData.substring(2, 4)
+                                  if (!ecuRoutineAnalysis[ecuAddr].securityLevels.includes(level)) {
+                                    ecuRoutineAnalysis[ecuAddr].securityLevels.push(level)
+                                  }
+                                }
+                              }
+                            }
+                          })
+                        })
+
+                        const ecusWithRoutines = Object.values(ecuRoutineAnalysis).filter(ecu => ecu.routines.length > 0)
+
+                        if (ecusWithRoutines.length > 0) {
+                          return (
+                            <div style={{ marginTop: spacing[6], marginBottom: '80px' }}>
+                              <h5 className="ds-heading-6" style={{ marginBottom: spacing[2] }}>
+                                Routine Execution Summary
+                              </h5>
+                              <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                  <thead>
+                                    <tr style={{ backgroundColor: colors.background.secondary }}>
+                                      <th style={{ padding: spacing[2], textAlign: 'left', fontWeight: 600 }}>ECU</th>
+                                      <th style={{ padding: spacing[2], textAlign: 'left', fontWeight: 600 }}>Address</th>
+                                      <th style={{ padding: spacing[2], textAlign: 'center', fontWeight: 600 }}>Routines</th>
+                                      <th style={{ padding: spacing[2], textAlign: 'center', fontWeight: 600 }}>Extended Session</th>
+                                      <th style={{ padding: spacing[2], textAlign: 'center', fontWeight: 600 }}>Security Access</th>
+                                      <th style={{ padding: spacing[2], textAlign: 'left', fontWeight: 600 }}>Security Levels</th>
+                                      <th style={{ padding: spacing[2], textAlign: 'left', fontWeight: 600 }}>Routine IDs</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {ecusWithRoutines.map((ecu, idx) => (
+                                      <tr key={idx} style={{
+                                        borderBottom: `1px solid ${colors.border.light}`,
+                                        backgroundColor: idx % 2 === 0 ? 'transparent' : colors.background.secondary + '40'
+                                      }}>
+                                        <td style={{ padding: spacing[2], fontWeight: 500 }}>
+                                          {ecu.ecuName}
+                                        </td>
+                                        <td style={{ padding: spacing[2] }}>
+                                          <Badge variant="secondary" size="small">
+                                            {ecu.ecuAddress}
+                                          </Badge>
+                                        </td>
+                                        <td style={{ padding: spacing[2], textAlign: 'center' }}>
+                                          <Badge variant="info" size="small">
+                                            {ecu.routines.length}
+                                          </Badge>
+                                        </td>
+                                        <td style={{ padding: spacing[2], textAlign: 'center' }}>
+                                          {ecu.hadExtendedSession ? (
+                                            <CheckCircle size={16} style={{ color: colors.success[600] }} />
+                                          ) : (
+                                            <XCircle size={16} style={{ color: colors.text.secondary }} />
+                                          )}
+                                        </td>
+                                        <td style={{ padding: spacing[2], textAlign: 'center' }}>
+                                          {ecu.hadSecurityAccess ? (
+                                            <CheckCircle size={16} style={{ color: colors.success[600] }} />
+                                          ) : (
+                                            <XCircle size={16} style={{ color: colors.text.secondary }} />
+                                          )}
+                                        </td>
+                                        <td style={{ padding: spacing[2] }}>
+                                          {ecu.securityLevels.length > 0 ? (
+                                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                              {ecu.securityLevels.map(level => (
+                                                <Badge key={level} variant="warning" size="small">
+                                                  0x{level}
+                                                </Badge>
+                                              ))}
+                                            </div>
+                                          ) : (
+                                            <span style={{ color: colors.text.secondary }}>-</span>
+                                          )}
+                                        </td>
+                                        <td style={{ padding: spacing[2] }}>
+                                          {[...new Set(ecu.routines.map(r => r.routineId).filter(id => id))].length > 0 ? (
+                                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                              {[...new Set(ecu.routines.map(r => r.routineId).filter(id => id))].map(id => (
+                                                <Badge key={id} variant="primary" size="small">
+                                                  0x{id}
+                                                </Badge>
+                                              ))}
+                                            </div>
+                                          ) : (
+                                            <span style={{ color: colors.text.secondary }}>-</span>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                              <div style={{ marginTop: spacing[2], fontSize: '11px', color: colors.text.secondary }}>
+                                <p>
+                                  <strong>Note:</strong> This table shows ECUs that had diagnostic routines executed during the session.
+                                  Extended session and security access indicate prerequisites that were established before routine execution.
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        }
+                        return null
+                      })()}
+
                       {/* Diagnostic Events Table */}
                       {diagnosticEvents.length > 0 && (
-                        <div style={{ marginTop: spacing[4] }}>
+                        <div style={{ marginTop: '60px' }}>
                           <h5 className="ds-heading-6" style={{ marginBottom: spacing[2] }}>Diagnostic Events During Voltage Monitoring</h5>
                           <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -3270,28 +3603,6 @@ export default function JobDetailsPage() {
                         </div>
                       )}
 
-                      <div style={{ marginTop: spacing[4] }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                          <thead>
-                            <tr style={{ backgroundColor: colors.background.secondary }}>
-                              <th style={{ padding: spacing[2], textAlign: 'left', fontSize: '12px', fontWeight: 600 }}>Time</th>
-                              <th style={{ padding: spacing[2], textAlign: 'left', fontSize: '12px', fontWeight: 600 }}>ECU</th>
-                              <th style={{ padding: spacing[2], textAlign: 'left', fontSize: '12px', fontWeight: 600 }}>Voltage</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {voltageData.map((data, idx) => (
-                              <tr key={idx} style={{ borderBottom: `1px solid ${colors.border.light}` }}>
-                                <td style={{ padding: spacing[2], fontSize: '12px' }}>{data.time}</td>
-                                <td style={{ padding: spacing[2], fontSize: '12px' }}>{data.ecu}</td>
-                                <td style={{ padding: spacing[2], fontSize: '12px' }}>
-                                  <Badge variant="info">{data.voltage}V</Badge>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
                     </div>
                   )
                 })()}
