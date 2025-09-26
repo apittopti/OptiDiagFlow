@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { PageLayout } from '@/components/layout/page-layout'
-import { Card, Button, Badge } from '@/components/design-system'
+import { Card, Button, Badge, StatCard } from '@/components/design-system'
 import { colors, spacing } from '@/lib/design-system/tokens'
 import { inputStyles, combineStyles } from '@/lib/design-system/styles'
 import {
@@ -316,15 +316,49 @@ export default function VehicleManagementPage() {
       description="Manage your vehicle hierarchy: OEMs, Models, and Model Years"
     >
       <div className="ds-container">
+        {/* Stats */}
+        <div className="ds-grid-3" style={{ marginBottom: spacing[8] }}>
+          <StatCard
+            icon={<Building size={20} style={{ color: colors.primary[600] }} />}
+            value={hierarchy.length}
+            label="OEMs"
+            variant="primary"
+          />
+          <StatCard
+            icon={<Car size={20} style={{ color: colors.success[600] }} />}
+            value={(() => {
+              const uniqueModels = new Set();
+              hierarchy.forEach(oem => {
+                oem.models?.forEach((model: any) => {
+                  uniqueModels.add(model.name);
+                });
+              });
+              return uniqueModels.size;
+            })()}
+            label="Models"
+            variant="success"
+          />
+          <StatCard
+            icon={<Calendar size={20} style={{ color: colors.purple[600] }} />}
+            value={(() => {
+              const uniqueYears = new Set();
+              hierarchy.forEach(oem => {
+                oem.models?.forEach((model: any) => {
+                  model.years?.forEach((year: any) => {
+                    uniqueYears.add(year.year);
+                  });
+                });
+              });
+              return uniqueYears.size;
+            })()}
+            label="Years"
+            variant="purple"
+          />
+        </div>
+
         <Card>
-          {/* Header with Add OEM button */}
-          <div className="ds-flex-between" style={{ marginBottom: spacing[8] }}>
-            <div>
-              <h2 className="ds-heading-2">Vehicle Hierarchy</h2>
-              <p className="ds-text-secondary">
-                Organize your vehicles by OEM → Model → Model Year
-              </p>
-            </div>
+          {/* Add OEM button */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: spacing[4] }}>
             <Button
               variant={showOEMForm ? 'error' : 'primary'}
               icon={showOEMForm ? <X size={16} /> : <Plus size={16} />}
@@ -334,54 +368,53 @@ export default function VehicleManagementPage() {
             </Button>
           </div>
 
-          {/* Search Bar and Filter Toggle */}
-          <div style={{
-            display: 'flex',
-            gap: spacing[3],
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: spacing[4]
-          }}>
+          {/* Search and Filters */}
+          <Card style={{ marginBottom: spacing[6] }}>
             <div style={{
-              position: 'relative',
-              width: '350px',
-              maxWidth: '100%'
+              display: 'flex',
+              gap: spacing[3],
+              alignItems: 'center',
+              justifyContent: 'space-between'
             }}>
-              <Search size={16} className="ds-search-icon" />
-              <input
-                type="text"
-                placeholder="Search OEM, Model, or Platform..."
-                className="ds-search-input"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: '100%' }}
-              />
+              <div style={{
+                position: 'relative',
+                width: '350px',
+                maxWidth: '100%'
+              }}>
+                <Search size={16} className="ds-search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search OEM, Model, or Platform..."
+                  className="ds-search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <Button
+                variant="secondary"
+                icon={<Filter size={16} />}
+                onClick={() => setShowFilters(!showFilters)}
+                style={{ flexShrink: 0 }}
+              >
+                Filters {(selectedOEM || selectedModel || selectedYear) && (
+                  <Badge variant="primary" size="small" style={{ marginLeft: spacing[2] }}>
+                    Active
+                  </Badge>
+                )}
+              </Button>
             </div>
-            <Button
-              variant="secondary"
-              icon={<Filter size={16} />}
-              onClick={() => setShowFilters(!showFilters)}
-              style={{ flexShrink: 0 }}
-            >
-              Filters {(selectedOEM || selectedModel || selectedYear) && (
-                <Badge variant="primary" size="small" style={{ marginLeft: spacing[2] }}>
-                  Active
-                </Badge>
-              )}
-            </Button>
-          </div>
 
-          {/* Filter Controls */}
-          {showFilters && (
-            <div style={{
-              marginTop: spacing[4],
-              paddingTop: spacing[4],
-              borderTop: `1px solid ${colors.border.light}`,
-              marginBottom: spacing[6],
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: spacing[3]
-            }}>
+            {/* Filter Controls */}
+            {showFilters && (
+              <div style={{
+                marginTop: spacing[4],
+                paddingTop: spacing[4],
+                borderTop: `1px solid ${colors.border.light}`,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: spacing[3]
+              }}>
               <div>
                 <label className="ds-label" style={{ fontSize: '12px', marginBottom: spacing[1] }}>
                   OEM
@@ -472,8 +505,9 @@ export default function VehicleManagementPage() {
                   </Button>
                 </div>
               )}
-            </div>
-          )}
+              </div>
+            )}
+          </Card>
 
           {/* OEM Creation Form */}
           {showOEMForm && (
