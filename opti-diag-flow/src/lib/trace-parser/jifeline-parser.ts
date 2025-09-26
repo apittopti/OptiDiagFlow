@@ -379,14 +379,19 @@ export class JifelineParser {
     const detectedProtocol = this.detectProtocol(messages)
     const probableOEM = this.detectProbableOEM(detectedProtocol, messages)
 
+    const startTime = messages[0] ? this.parseTime(messages[0].timestamp) : this.currentTime
+    const endTime = messages[messages.length - 1] ? this.parseTime(messages[messages.length - 1].timestamp) : this.currentTime
+    const duration = endTime.getTime() - startTime.getTime()
+
     return {
       messages,
       procedures,
       metadata: {
         protocol: detectedProtocol,
         probableOEM,
-        startTime: messages[0] ? this.parseTime(messages[0].timestamp) : this.currentTime,
-        endTime: messages[messages.length - 1] ? this.parseTime(messages[messages.length - 1].timestamp) : this.currentTime,
+        startTime,
+        endTime,
+        duration,
         messageCount: messages.length,
         procedureCount: procedures.length,
         ecuCount: this.ecus.size,
@@ -405,6 +410,9 @@ export class JifelineParser {
     // Remove line numbers (if present)
     const cleanLine = line.replace(/^\s*\d+→\s*/, '').trim()
     if (!cleanLine) return null
+
+    // Skip OVERLOAD lines
+    if (cleanLine.includes('OVERLOAD:')) return null
 
     // Parse timestamp
     const timestampMatch = cleanLine.match(/^(\d{2}:\d{2}:\d{2}\.\d{3})\s*\|/)
@@ -443,6 +451,7 @@ export class JifelineParser {
 
     // Parse DATA messages (CAN/ISOTP format)
     if (afterDirection.startsWith('DATA')) {
+      // First try the standard format: mod[xxx] [protocol] cmd[xxx] args[xxx] data[xxx]
       const dataMatch = afterDirection.match(/DATA\s*=>\s*mod\[([^\]]+)\]\s*\[([^\]]+)\]\s*cmd\[([^\]]+)\]\s*args\[([^\]]+)\]\s*data\[([^\]]+)\]/)
       if (dataMatch) {
         return {
@@ -454,6 +463,22 @@ export class JifelineParser {
           command: dataMatch[3],
           args: dataMatch[4].split(',').map(a => a.trim()),
           data: dataMatch[5]
+        }
+      }
+
+      // Try Mercedes format: mod[CAN2] can_id[xxx] data[xxx]
+      const mercedesMatch = afterDirection.match(/DATA\s*=>\s*mod\[([^\]]+)\]\s*can_id\[([^\]]+)\]\s*data\[([^\]]+)\]/)
+      if (mercedesMatch) {
+        const canId = mercedesMatch[2].toUpperCase()
+        return {
+          lineNumber: 0,
+          timestamp,
+          direction,
+          module: mercedesMatch[1], // CAN2
+          protocol: 'ISO-TP', // Mercedes uses ISO-TP
+          command: canId,
+          args: [canId], // Use CAN ID as argument
+          data: mercedesMatch[3]
         }
       }
     }

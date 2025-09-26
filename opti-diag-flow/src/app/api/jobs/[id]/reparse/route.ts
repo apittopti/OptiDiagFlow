@@ -262,6 +262,7 @@ export async function POST(
       where: { id: jobId },
       data: {
         messageCount: parsedData.messages.length,
+        duration: parsedData.metadata?.duration || 0,
         metadata: metadata as any,
         status: 'ACTIVE'
       }

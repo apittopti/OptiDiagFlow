@@ -354,10 +354,10 @@ export const components = {
   },
 
   input: {
-    height: '40px',
-    padding: `${spacing[2]} ${spacing[3]}`,
-    borderRadius: borderRadius.md,
-    fontSize: typography.fontSize.base,
+    height: '36px',
+    padding: '8px 10px',
+    borderRadius: borderRadius.default,
+    fontSize: '14px',
     borderColor: colors.border.default,
     focusBorderColor: colors.primary[500],
   },

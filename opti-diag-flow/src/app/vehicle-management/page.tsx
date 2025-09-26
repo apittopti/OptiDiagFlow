@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { PageLayout } from '@/components/layout/page-layout'
 import { Card, Button, Badge } from '@/components/design-system'
 import { colors, spacing } from '@/lib/design-system/tokens'
+import { inputStyles, combineStyles } from '@/lib/design-system/styles'
 import {
   Building,
   Car,
@@ -16,14 +17,24 @@ import {
   Trash2,
   Package,
   Layers,
-  FileText
+  FileText,
+  Search,
+  Filter
 } from 'lucide-react'
 
 export default function VehicleManagementPage() {
   const [hierarchy, setHierarchy] = useState<any[]>([])
+  const [filteredHierarchy, setFilteredHierarchy] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedOEMs, setExpandedOEMs] = useState<Set<string>>(new Set())
   const [expandedModels, setExpandedModels] = useState<Set<string>>(new Set())
+
+  // Filter states
+  const [selectedOEM, setSelectedOEM] = useState<string>('')
+  const [selectedModel, setSelectedModel] = useState<string>('')
+  const [selectedYear, setSelectedYear] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [showFilters, setShowFilters] = useState(false)
 
   // Form states
   const [showOEMForm, setShowOEMForm] = useState(false)
@@ -62,11 +73,82 @@ export default function VehicleManagementPage() {
       }))
 
       setHierarchy(hierarchyData)
+      setFilteredHierarchy(hierarchyData)
     } catch (error) {
       console.error('Error loading hierarchy:', error)
     }
     setLoading(false)
   }
+
+  // Apply filters
+  useEffect(() => {
+    let filtered = [...hierarchy]
+
+    // Filter by OEM
+    if (selectedOEM) {
+      filtered = filtered.filter(oem => oem.id === selectedOEM)
+    }
+
+    // Filter by Model (requires OEM filter)
+    if (selectedModel) {
+      filtered = filtered.map(oem => ({
+        ...oem,
+        models: oem.models?.filter((model: any) => model.id === selectedModel)
+      })).filter(oem => oem.models?.length > 0)
+    }
+
+    // Filter by Year (requires Model filter)
+    if (selectedYear) {
+      filtered = filtered.map(oem => ({
+        ...oem,
+        models: oem.models?.map((model: any) => ({
+          ...model,
+          years: model.years?.filter((year: any) => year.year === parseInt(selectedYear))
+        })).filter((model: any) => model.years?.length > 0)
+      })).filter(oem => oem.models?.length > 0)
+    }
+
+    // Search filter (searches OEM names, model names, and platforms)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.map(oem => {
+        // Check if OEM matches
+        const oemMatches = oem.name.toLowerCase().includes(query) ||
+                          oem.shortName?.toLowerCase().includes(query)
+
+        // Filter models that match
+        const filteredModels = oem.models?.filter((model: any) =>
+          model.name.toLowerCase().includes(query) ||
+          model.platform?.toLowerCase().includes(query) ||
+          oemMatches // Include all models if OEM matches
+        )
+
+        // Only include OEM if it matches or has matching models
+        if (oemMatches || filteredModels?.length > 0) {
+          return {
+            ...oem,
+            models: oemMatches ? oem.models : filteredModels
+          }
+        }
+        return null
+      }).filter(Boolean)
+    }
+
+    setFilteredHierarchy(filtered)
+
+    // Auto-expand filtered items
+    if (selectedOEM || searchQuery) {
+      const oemIds = filtered.map(oem => oem.id)
+      setExpandedOEMs(new Set(oemIds))
+
+      if (selectedModel || searchQuery) {
+        const modelIds = filtered.flatMap(oem =>
+          oem.models?.map((model: any) => model.id) || []
+        )
+        setExpandedModels(new Set(modelIds))
+      }
+    }
+  }, [hierarchy, selectedOEM, selectedModel, selectedYear, searchQuery])
 
   useEffect(() => {
     loadHierarchy()
@@ -252,6 +334,147 @@ export default function VehicleManagementPage() {
             </Button>
           </div>
 
+          {/* Search Bar and Filter Toggle */}
+          <div style={{
+            display: 'flex',
+            gap: spacing[3],
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: spacing[4]
+          }}>
+            <div style={{
+              position: 'relative',
+              width: '350px',
+              maxWidth: '100%'
+            }}>
+              <Search size={16} className="ds-search-icon" />
+              <input
+                type="text"
+                placeholder="Search OEM, Model, or Platform..."
+                className="ds-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <Button
+              variant="secondary"
+              icon={<Filter size={16} />}
+              onClick={() => setShowFilters(!showFilters)}
+              style={{ flexShrink: 0 }}
+            >
+              Filters {(selectedOEM || selectedModel || selectedYear) && (
+                <Badge variant="primary" size="small" style={{ marginLeft: spacing[2] }}>
+                  Active
+                </Badge>
+              )}
+            </Button>
+          </div>
+
+          {/* Filter Controls */}
+          {showFilters && (
+            <div style={{
+              marginTop: spacing[4],
+              paddingTop: spacing[4],
+              borderTop: `1px solid ${colors.border.light}`,
+              marginBottom: spacing[6],
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: spacing[3]
+            }}>
+              <div>
+                <label className="ds-label" style={{ fontSize: '12px', marginBottom: spacing[1] }}>
+                  OEM
+                </label>
+                <select
+                  className="ds-select"
+                  value={selectedOEM}
+                  onChange={(e) => {
+                    setSelectedOEM(e.target.value)
+                    setSelectedModel('') // Reset model when OEM changes
+                    setSelectedYear('')  // Reset year when OEM changes
+                  }}
+                  style={combineStyles(inputStyles.base, { cursor: 'pointer' })}
+                >
+                  <option value="">All OEMs</option>
+                  {hierarchy.map(oem => (
+                    <option key={oem.id} value={oem.id}>
+                      {oem.name} {oem.shortName && `(${oem.shortName})`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="ds-label" style={{ fontSize: '12px', marginBottom: spacing[1] }}>
+                  Model
+                </label>
+                <select
+                  className="ds-select"
+                  value={selectedModel}
+                  onChange={(e) => {
+                    setSelectedModel(e.target.value)
+                    setSelectedYear('')
+                  }}
+                  style={combineStyles(inputStyles.base, { cursor: 'pointer' })}
+                  disabled={!selectedOEM}
+                >
+                  <option value="">All Models</option>
+                  {selectedOEM && hierarchy
+                    .find(oem => oem.id === selectedOEM)
+                    ?.models?.map((model: any) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name} {model.platform && `(${model.platform})`}
+                      </option>
+                    ))
+                  }
+                </select>
+              </div>
+
+              <div>
+                <label className="ds-label" style={{ fontSize: '12px', marginBottom: spacing[1] }}>
+                  Year
+                </label>
+                <select
+                  className="ds-select"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  style={combineStyles(inputStyles.base, { cursor: 'pointer' })}
+                  disabled={!selectedModel}
+                >
+                  <option value="">All Years</option>
+                  {selectedModel && hierarchy
+                    .find(oem => oem.id === selectedOEM)
+                    ?.models?.find((model: any) => model.id === selectedModel)
+                    ?.years?.map((year: any) => (
+                      <option key={year.id} value={year.year}>
+                        {year.year}
+                      </option>
+                    ))
+                  }
+                </select>
+              </div>
+
+              {/* Clear Filters */}
+              {(selectedOEM || selectedModel || selectedYear) && (
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={() => {
+                      setSelectedOEM('')
+                      setSelectedModel('')
+                      setSelectedYear('')
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    Clear All Filters
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* OEM Creation Form */}
           {showOEMForm && (
             <Card variant="nested" style={{ marginBottom: spacing[6] }}>
@@ -308,9 +531,10 @@ export default function VehicleManagementPage() {
               <p className="ds-text-secondary">Loading vehicle hierarchy...</p>
             </div>
           ) : hierarchy.length > 0 ? (
-            <Card variant="nested">
-              <div style={{ padding: spacing[3] }}>
-                {hierarchy.map(oem => (
+            filteredHierarchy.length > 0 ? (
+              <Card variant="nested">
+                <div style={{ padding: spacing[3] }}>
+                  {filteredHierarchy.map(oem => (
                   <div key={oem.id} style={{ marginBottom: spacing[4] }}>
                     {/* OEM Level */}
                     <Card
@@ -607,9 +831,29 @@ export default function VehicleManagementPage() {
                       </div>
                     ))}
                   </div>
-                ))}
+                  ))}
+                </div>
+              </Card>
+            ) : (
+              <div className="ds-empty-state">
+                <Building size={48} style={{ color: colors.gray[400] }} />
+                <h3 className="ds-heading-3">No Results Found</h3>
+                <p>Try adjusting your filters or search criteria</p>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setSelectedOEM('')
+                    setSelectedModel('')
+                    setSelectedYear('')
+                    setSearchQuery('')
+                    setShowOnlyWithJobs(false)
+                  }}
+                  style={{ marginTop: spacing[4] }}
+                >
+                  Clear All Filters
+                </Button>
               </div>
-            </Card>
+            )
           ) : (
             <div className="ds-empty-state">
               <Building size={48} style={{ color: colors.gray[400] }} />

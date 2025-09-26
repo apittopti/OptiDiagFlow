@@ -72,14 +72,13 @@ export async function PATCH(
   try {
     const { id } = await params
     const body = await request.json()
-    const { name, description, status, procedureType } = body
+    const { name, description, procedureType } = body
 
     const job = await prisma.diagnosticJob.update({
       where: { id },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
-        ...(status && { status }),
         ...(procedureType && { procedureType })
       },
       include: {

@@ -161,6 +161,7 @@ export const inputStyles = {
     color: colors.text.primary,
     transition: transitions.colors,
     outline: 'none',
+    boxSizing: 'border-box' as const,
   } as CSSProperties,
 
   focus: {
@@ -181,6 +182,24 @@ export const inputStyles = {
     color: colors.text.muted,
     cursor: 'not-allowed',
     opacity: 0.6,
+  } as CSSProperties,
+
+  textarea: {
+    width: '100%',
+    padding: components.input.padding,
+    fontSize: components.input.fontSize,
+    borderRadius: components.input.borderRadius,
+    border: `1px solid ${components.input.borderColor}`,
+    backgroundColor: colors.background.primary,
+    color: colors.text.primary,
+    transition: transitions.colors,
+    outline: 'none',
+    resize: 'vertical' as const,
+    minHeight: '70px',
+    maxHeight: '120px',
+    fontFamily: 'inherit',
+    lineHeight: 1.4,
+    boxSizing: 'border-box' as const,
   } as CSSProperties,
 } as const
 

@@ -501,6 +501,36 @@ model DTCStatusBit {
   @@unique([dtcDefinitionId, bitPosition])
 }
 
+// ==========================================
+// OBD-II STANDARD DTC DEFINITIONS
+// ==========================================
+
+model OBDIIDTCDefinition {
+  id              String   @id @default(cuid())
+  code            String   @unique // e.g., "P0300", "B1234", "C0456", "U0789"
+  name            String   // Standard OBD-II name
+  description     String?  // Detailed description
+
+  // DTC classification
+  system          String   // "Powertrain", "Body", "Chassis", "Network"
+  isGeneric       Boolean  @default(true) // true for P0xxx, false for P1xxx manufacturer codes
+  category        String?  // More specific category e.g., "Fuel and Air Metering", "Ignition System"
+
+  // Additional information
+  symptoms        String?  // Common symptoms
+  causes          String?  // Common causes
+  diagnosticSteps String?  // Standard diagnostic procedure
+  repairActions   String?  // Common repair actions
+
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([code])
+  @@index([system])
+  @@index([isGeneric])
+}
+
 enum DTCSeverity {
   CRITICAL
   HIGH

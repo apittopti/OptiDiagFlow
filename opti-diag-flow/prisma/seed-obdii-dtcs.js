@@ -1,0 +1,4421 @@
+// OBD-II DTC definitions seed file
+// Generated from hardcoded DTCs in the application
+// Total DTCs: 545
+
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
+
+async function seedOBDIIDTCs() {
+  console.log('Seeding OBD-II DTC definitions...')
+
+  const dtcs = [
+  {
+    "code": "B0001",
+    "name": "Driver Air Bag Circuit Open",
+    "description": "Driver Air Bag Circuit Open",
+    "system": "Body",
+    "isGeneric": true,
+    "category": "Airbag and Supplemental Restraint Systems"
+  },
+  {
+    "code": "B0002",
+    "name": "Driver Air Bag Circuit Shorted",
+    "description": "Driver Air Bag Circuit Shorted",
+    "system": "Body",
+    "isGeneric": true,
+    "category": "Airbag and Supplemental Restraint Systems"
+  },
+  {
+    "code": "B0003",
+    "name": "Driver Air Bag Circuit Resistance Out of Range",
+    "description": "Driver Air Bag Circuit Resistance Out of Range",
+    "system": "Body",
+    "isGeneric": true,
+    "category": "Airbag and Supplemental Restraint Systems"
+  },
+  {
+    "code": "B0004",
+    "name": "Passenger Air Bag Circuit Open",
+    "description": "Passenger Air Bag Circuit Open",
+    "system": "Body",
+    "isGeneric": true,
+    "category": "Airbag and Supplemental Restraint Systems"
+  },
+  {
+    "code": "B0005",
+    "name": "Passenger Air Bag Circuit Shorted",
+    "description": "Passenger Air Bag Circuit Shorted",
+    "system": "Body",
+    "isGeneric": true,
+    "category": "Airbag and Supplemental Restraint Systems"
+  },
+  {
+    "code": "B0010",
+    "name": "Driver Side Impact Sensor Circuit Open",
+    "description": "Driver Side Impact Sensor Circuit Open",
+    "system": "Body",
+    "isGeneric": true,
+    "category": "Airbag and Supplemental Restraint Systems"
+  },
+  {
+    "code": "B0020",
+    "name": "Passenger Side Impact Sensor Circuit Open",
+    "description": "Passenger Side Impact Sensor Circuit Open",
+    "system": "Body",
+    "isGeneric": true,
+    "category": "Airbag and Supplemental Restraint Systems"
+  },
+  {
+    "code": "B0050",
+    "name": "Left Front Crash Sensor Circuit Open",
+    "description": "Left Front Crash Sensor Circuit Open",
+    "system": "Body",
+    "isGeneric": true,
+    "category": "Airbag and Supplemental Restraint Systems"
+  },
+  {
+    "code": "B0060",
+    "name": "Right Front Crash Sensor Circuit Open",
+    "description": "Right Front Crash Sensor Circuit Open",
+    "system": "Body",
+    "isGeneric": true,
+    "category": "Airbag and Supplemental Restraint Systems"
+  },
+  {
+    "code": "C0001",
+    "name": "ABS System Voltage Low",
+    "description": "ABS System Voltage Low",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0002",
+    "name": "ABS System Voltage High",
+    "description": "ABS System Voltage High",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0005",
+    "name": "Left Front Wheel Speed Sensor Circuit",
+    "description": "Left Front Wheel Speed Sensor Circuit",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0010",
+    "name": "Right Front Wheel Speed Sensor Circuit",
+    "description": "Right Front Wheel Speed Sensor Circuit",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0015",
+    "name": "Left Rear Wheel Speed Sensor Circuit",
+    "description": "Left Rear Wheel Speed Sensor Circuit",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0020",
+    "name": "Right Rear Wheel Speed Sensor Circuit",
+    "description": "Right Rear Wheel Speed Sensor Circuit",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0035",
+    "name": "Left Front Wheel Speed Circuit Malfunction",
+    "description": "Left Front Wheel Speed Circuit Malfunction",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0040",
+    "name": "Right Front Wheel Speed Circuit Malfunction",
+    "description": "Right Front Wheel Speed Circuit Malfunction",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0045",
+    "name": "Left Rear Wheel Speed Circuit Malfunction",
+    "description": "Left Rear Wheel Speed Circuit Malfunction",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0050",
+    "name": "Right Rear Wheel Speed Circuit Malfunction",
+    "description": "Right Rear Wheel Speed Circuit Malfunction",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0060",
+    "name": "ABS Solenoid \"A\" Malfunction",
+    "description": "ABS Solenoid \"A\" Malfunction",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0065",
+    "name": "ABS Solenoid \"B\" Malfunction",
+    "description": "ABS Solenoid \"B\" Malfunction",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0070",
+    "name": "ABS Solenoid \"C\" Malfunction",
+    "description": "ABS Solenoid \"C\" Malfunction",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "C0075",
+    "name": "ABS Solenoid \"D\" Malfunction",
+    "description": "ABS Solenoid \"D\" Malfunction",
+    "system": "Chassis",
+    "isGeneric": true,
+    "category": "ABS and Traction Control"
+  },
+  {
+    "code": "P0020",
+    "name": "Intake Camshaft Position Actuator Circuit/Open (Bank 2)",
+    "description": "Intake Camshaft Position Actuator Circuit/Open (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0021",
+    "name": "Intake Camshaft Position Timing - Over-Advanced (Bank 2)",
+    "description": "Intake Camshaft Position Timing - Over-Advanced (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0022",
+    "name": "Intake Camshaft Position Timing - Over-Retarded (Bank 2)",
+    "description": "Intake Camshaft Position Timing - Over-Retarded (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0023",
+    "name": "Exhaust Camshaft Position Actuator Circuit/Open (Bank 2)",
+    "description": "Exhaust Camshaft Position Actuator Circuit/Open (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0024",
+    "name": "Exhaust Camshaft Position Timing - Over-Advanced (Bank 2)",
+    "description": "Exhaust Camshaft Position Timing - Over-Advanced (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0025",
+    "name": "Exhaust Camshaft Position Timing - Over-Retarded (Bank 2)",
+    "description": "Exhaust Camshaft Position Timing - Over-Retarded (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0026",
+    "name": "Intake Valve Control Solenoid Circuit Range/Performance (Bank 1)",
+    "description": "Intake Valve Control Solenoid Circuit Range/Performance (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0027",
+    "name": "Exhaust Valve Control Solenoid Circuit Range/Performance (Bank 1)",
+    "description": "Exhaust Valve Control Solenoid Circuit Range/Performance (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0028",
+    "name": "Intake Valve Control Solenoid Circuit Range/Performance (Bank 2)",
+    "description": "Intake Valve Control Solenoid Circuit Range/Performance (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0029",
+    "name": "Exhaust Valve Control Solenoid Circuit Range/Performance (Bank 2)",
+    "description": "Exhaust Valve Control Solenoid Circuit Range/Performance (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0030",
+    "name": "O2 Sensor Heater Control Circuit (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Heater Control Circuit (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0031",
+    "name": "O2 Sensor Heater Control Circuit Low (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Heater Control Circuit Low (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0032",
+    "name": "O2 Sensor Heater Control Circuit High (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Heater Control Circuit High (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0033",
+    "name": "Turbo/Super Charger Bypass Valve Control Circuit",
+    "description": "Turbo/Super Charger Bypass Valve Control Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0034",
+    "name": "Turbo/Super Charger Bypass Valve Control Circuit Low",
+    "description": "Turbo/Super Charger Bypass Valve Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0035",
+    "name": "Turbo/Super Charger Bypass Valve Control Circuit High",
+    "description": "Turbo/Super Charger Bypass Valve Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0036",
+    "name": "O2 Sensor Heater Control Circuit (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Heater Control Circuit (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0037",
+    "name": "O2 Sensor Heater Control Circuit Low (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Heater Control Circuit Low (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0038",
+    "name": "O2 Sensor Heater Control Circuit High (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Heater Control Circuit High (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0039",
+    "name": "Turbo/Super Charger Bypass Valve Control Circuit Range/Performance",
+    "description": "Turbo/Super Charger Bypass Valve Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0040",
+    "name": "O2 Sensor Signals Swapped (Bank 1, Sensor 1 / Bank 2, Sensor 1)",
+    "description": "O2 Sensor Signals Swapped (Bank 1, Sensor 1 / Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0041",
+    "name": "O2 Sensor Signals Swapped (Bank 1, Sensor 2 / Bank 2, Sensor 2)",
+    "description": "O2 Sensor Signals Swapped (Bank 1, Sensor 2 / Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0042",
+    "name": "O2 Sensor Heater Control Circuit (Bank 1, Sensor 3)",
+    "description": "O2 Sensor Heater Control Circuit (Bank 1, Sensor 3)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0043",
+    "name": "O2 Sensor Heater Control Circuit Low (Bank 1, Sensor 3)",
+    "description": "O2 Sensor Heater Control Circuit Low (Bank 1, Sensor 3)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0044",
+    "name": "O2 Sensor Heater Control Circuit High (Bank 1, Sensor 3)",
+    "description": "O2 Sensor Heater Control Circuit High (Bank 1, Sensor 3)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0045",
+    "name": "Turbo/Super Charger Boost Control Solenoid Circuit/Open",
+    "description": "Turbo/Super Charger Boost Control Solenoid Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0046",
+    "name": "Turbo/Super Charger Boost Control Solenoid Circuit Range/Performance",
+    "description": "Turbo/Super Charger Boost Control Solenoid Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0047",
+    "name": "Turbo/Super Charger Boost Control Solenoid Circuit Low",
+    "description": "Turbo/Super Charger Boost Control Solenoid Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0048",
+    "name": "Turbo/Super Charger Boost Control Solenoid Circuit High",
+    "description": "Turbo/Super Charger Boost Control Solenoid Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0049",
+    "name": "Turbo/Super Charger Turbine Overspeed",
+    "description": "Turbo/Super Charger Turbine Overspeed",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0050",
+    "name": "O2 Sensor Heater Control Circuit (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Heater Control Circuit (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0051",
+    "name": "O2 Sensor Heater Control Circuit Low (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Heater Control Circuit Low (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0052",
+    "name": "O2 Sensor Heater Control Circuit High (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Heater Control Circuit High (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0053",
+    "name": "O2 Sensor Heater Resistance (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Heater Resistance (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0054",
+    "name": "O2 Sensor Heater Resistance (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Heater Resistance (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0055",
+    "name": "O2 Sensor Heater Resistance (Bank 1, Sensor 3)",
+    "description": "O2 Sensor Heater Resistance (Bank 1, Sensor 3)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0056",
+    "name": "O2 Sensor Heater Control Circuit (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Heater Control Circuit (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0057",
+    "name": "O2 Sensor Heater Control Circuit Low (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Heater Control Circuit Low (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0058",
+    "name": "O2 Sensor Heater Control Circuit High (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Heater Control Circuit High (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0059",
+    "name": "O2 Sensor Heater Resistance (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Heater Resistance (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0060",
+    "name": "O2 Sensor Heater Resistance (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Heater Resistance (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0061",
+    "name": "O2 Sensor Heater Resistance (Bank 2, Sensor 3)",
+    "description": "O2 Sensor Heater Resistance (Bank 2, Sensor 3)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0062",
+    "name": "O2 Sensor Heater Control Circuit (Bank 2, Sensor 3)",
+    "description": "O2 Sensor Heater Control Circuit (Bank 2, Sensor 3)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0063",
+    "name": "O2 Sensor Heater Control Circuit Low (Bank 2, Sensor 3)",
+    "description": "O2 Sensor Heater Control Circuit Low (Bank 2, Sensor 3)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0064",
+    "name": "O2 Sensor Heater Control Circuit High (Bank 2, Sensor 3)",
+    "description": "O2 Sensor Heater Control Circuit High (Bank 2, Sensor 3)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0065",
+    "name": "Air Assisted Injector Control Range/Performance",
+    "description": "Air Assisted Injector Control Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0066",
+    "name": "Air Assisted Injector Control Circuit/Open",
+    "description": "Air Assisted Injector Control Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0067",
+    "name": "Air Assisted Injector Control Circuit Low",
+    "description": "Air Assisted Injector Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0068",
+    "name": "Manifold Absolute Pressure/Mass Air Flow Throttle Position Correlation",
+    "description": "Manifold Absolute Pressure/Mass Air Flow Throttle Position Correlation",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0069",
+    "name": "Manifold Absolute Pressure/Barometric Pressure Correlation",
+    "description": "Manifold Absolute Pressure/Barometric Pressure Correlation",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0070",
+    "name": "Ambient Air Temperature Sensor Circuit",
+    "description": "Ambient Air Temperature Sensor Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0071",
+    "name": "Ambient Air Temperature Sensor Range/Performance",
+    "description": "Ambient Air Temperature Sensor Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0072",
+    "name": "Ambient Air Temperature Sensor Circuit Low",
+    "description": "Ambient Air Temperature Sensor Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0073",
+    "name": "Ambient Air Temperature Sensor Circuit High",
+    "description": "Ambient Air Temperature Sensor Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0074",
+    "name": "Ambient Air Temperature Sensor Circuit Intermittent",
+    "description": "Ambient Air Temperature Sensor Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0075",
+    "name": "Intake Valve Control Solenoid Circuit (Bank 1)",
+    "description": "Intake Valve Control Solenoid Circuit (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0076",
+    "name": "Intake Valve Control Solenoid Circuit Low (Bank 1)",
+    "description": "Intake Valve Control Solenoid Circuit Low (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0077",
+    "name": "Intake Valve Control Solenoid Circuit High (Bank 1)",
+    "description": "Intake Valve Control Solenoid Circuit High (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0078",
+    "name": "Exhaust Valve Control Solenoid Circuit (Bank 1)",
+    "description": "Exhaust Valve Control Solenoid Circuit (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0079",
+    "name": "Exhaust Valve Control Solenoid Circuit Low (Bank 1)",
+    "description": "Exhaust Valve Control Solenoid Circuit Low (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0080",
+    "name": "Exhaust Valve Control Solenoid Circuit High (Bank 1)",
+    "description": "Exhaust Valve Control Solenoid Circuit High (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0081",
+    "name": "Intake Valve Control Solenoid Circuit (Bank 2)",
+    "description": "Intake Valve Control Solenoid Circuit (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0082",
+    "name": "Intake Valve Control Solenoid Circuit Low (Bank 2)",
+    "description": "Intake Valve Control Solenoid Circuit Low (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0083",
+    "name": "Intake Valve Control Solenoid Circuit High (Bank 2)",
+    "description": "Intake Valve Control Solenoid Circuit High (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0084",
+    "name": "Exhaust Valve Control Solenoid Circuit (Bank 2)",
+    "description": "Exhaust Valve Control Solenoid Circuit (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0085",
+    "name": "Exhaust Valve Control Solenoid Circuit Low (Bank 2)",
+    "description": "Exhaust Valve Control Solenoid Circuit Low (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0086",
+    "name": "Exhaust Valve Control Solenoid Circuit High (Bank 2)",
+    "description": "Exhaust Valve Control Solenoid Circuit High (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0087",
+    "name": "Fuel Rail/System Pressure Too Low",
+    "description": "Fuel Rail/System Pressure Too Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0088",
+    "name": "Fuel Rail/System Pressure Too High",
+    "description": "Fuel Rail/System Pressure Too High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0089",
+    "name": "Fuel Pressure Regulator Performance",
+    "description": "Fuel Pressure Regulator Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0090",
+    "name": "Fuel Pressure Regulator Control Circuit",
+    "description": "Fuel Pressure Regulator Control Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0091",
+    "name": "Fuel Pressure Regulator Control Circuit Low",
+    "description": "Fuel Pressure Regulator Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0092",
+    "name": "Fuel Pressure Regulator Control Circuit High",
+    "description": "Fuel Pressure Regulator Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0093",
+    "name": "Fuel System Leak Detected - Large Leak",
+    "description": "Fuel System Leak Detected - Large Leak",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0094",
+    "name": "Fuel System Leak Detected - Small Leak",
+    "description": "Fuel System Leak Detected - Small Leak",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0095",
+    "name": "Intake Air Temperature Sensor 2 Circuit",
+    "description": "Intake Air Temperature Sensor 2 Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0096",
+    "name": "Intake Air Temperature Sensor 2 Circuit Range/Performance",
+    "description": "Intake Air Temperature Sensor 2 Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0097",
+    "name": "Intake Air Temperature Sensor 2 Circuit Low",
+    "description": "Intake Air Temperature Sensor 2 Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0098",
+    "name": "Intake Air Temperature Sensor 2 Circuit High",
+    "description": "Intake Air Temperature Sensor 2 Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0099",
+    "name": "Intake Air Temperature Sensor 2 Circuit Intermittent/Erratic",
+    "description": "Intake Air Temperature Sensor 2 Circuit Intermittent/Erratic",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering and Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0100",
+    "name": "Mass or Volume Air Flow Circuit Malfunction",
+    "description": "Mass or Volume Air Flow Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0101",
+    "name": "Mass or Volume Air Flow Circuit Range/Performance Problem",
+    "description": "Mass or Volume Air Flow Circuit Range/Performance Problem",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0102",
+    "name": "Mass or Volume Air Flow Circuit Low Input",
+    "description": "Mass or Volume Air Flow Circuit Low Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0103",
+    "name": "Mass or Volume Air Flow Circuit High Input",
+    "description": "Mass or Volume Air Flow Circuit High Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0104",
+    "name": "Mass or Volume Air Flow Circuit Intermittent",
+    "description": "Mass or Volume Air Flow Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0105",
+    "name": "Manifold Absolute Pressure/Barometric Pressure Circuit Malfunction",
+    "description": "Manifold Absolute Pressure/Barometric Pressure Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0106",
+    "name": "Manifold Absolute Pressure/Barometric Pressure Circuit Range/Performance Problem",
+    "description": "Manifold Absolute Pressure/Barometric Pressure Circuit Range/Performance Problem",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0107",
+    "name": "Manifold Absolute Pressure/Barometric Pressure Circuit Low Input",
+    "description": "Manifold Absolute Pressure/Barometric Pressure Circuit Low Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0108",
+    "name": "Manifold Absolute Pressure/Barometric Pressure Circuit High Input",
+    "description": "Manifold Absolute Pressure/Barometric Pressure Circuit High Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0109",
+    "name": "Manifold Absolute Pressure/Barometric Pressure Circuit Intermittent",
+    "description": "Manifold Absolute Pressure/Barometric Pressure Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0110",
+    "name": "Intake Air Temperature Circuit Malfunction",
+    "description": "Intake Air Temperature Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0111",
+    "name": "Intake Air Temperature Circuit Range/Performance Problem",
+    "description": "Intake Air Temperature Circuit Range/Performance Problem",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0112",
+    "name": "Intake Air Temperature Circuit Low Input",
+    "description": "Intake Air Temperature Circuit Low Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0113",
+    "name": "Intake Air Temperature Circuit High Input",
+    "description": "Intake Air Temperature Circuit High Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0114",
+    "name": "Intake Air Temperature Circuit Intermittent",
+    "description": "Intake Air Temperature Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0115",
+    "name": "Engine Coolant Temperature Circuit Malfunction",
+    "description": "Engine Coolant Temperature Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0116",
+    "name": "Engine Coolant Temperature Circuit Range/Performance Problem",
+    "description": "Engine Coolant Temperature Circuit Range/Performance Problem",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0117",
+    "name": "Engine Coolant Temperature Circuit Low Input",
+    "description": "Engine Coolant Temperature Circuit Low Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0118",
+    "name": "Engine Coolant Temperature Circuit High Input",
+    "description": "Engine Coolant Temperature Circuit High Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0119",
+    "name": "Engine Coolant Temperature Circuit Intermittent",
+    "description": "Engine Coolant Temperature Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0120",
+    "name": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit Malfunction",
+    "description": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0121",
+    "name": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit Range/Performance Problem",
+    "description": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit Range/Performance Problem",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0122",
+    "name": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit Low Input",
+    "description": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit Low Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0123",
+    "name": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit High Input",
+    "description": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit High Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0124",
+    "name": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit Intermittent",
+    "description": "Throttle/Pedal Position Sensor/Switch \"A\" Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0125",
+    "name": "Insufficient Coolant Temperature for Closed Loop Fuel Control",
+    "description": "Insufficient Coolant Temperature for Closed Loop Fuel Control",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0126",
+    "name": "Insufficient Coolant Temperature for Stable Operation",
+    "description": "Insufficient Coolant Temperature for Stable Operation",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0127",
+    "name": "Intake Air Temperature Too High",
+    "description": "Intake Air Temperature Too High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0128",
+    "name": "Coolant Thermostat (Coolant Temperature Below Thermostat Regulating Temperature)",
+    "description": "Coolant Thermostat (Coolant Temperature Below Thermostat Regulating Temperature)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0129",
+    "name": "Barometric Pressure Too Low",
+    "description": "Barometric Pressure Too Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0130",
+    "name": "O2 Sensor Circuit Malfunction (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Circuit Malfunction (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0131",
+    "name": "O2 Sensor Circuit Low Voltage (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Circuit Low Voltage (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0132",
+    "name": "O2 Sensor Circuit High Voltage (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Circuit High Voltage (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0133",
+    "name": "O2 Sensor Circuit Slow Response (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Circuit Slow Response (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0134",
+    "name": "O2 Sensor Circuit No Activity Detected (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Circuit No Activity Detected (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0135",
+    "name": "O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 1)",
+    "description": "O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0136",
+    "name": "O2 Sensor Circuit Malfunction (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Circuit Malfunction (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0137",
+    "name": "O2 Sensor Circuit Low Voltage (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Circuit Low Voltage (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0138",
+    "name": "O2 Sensor Circuit High Voltage (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Circuit High Voltage (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0139",
+    "name": "O2 Sensor Circuit Slow Response (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Circuit Slow Response (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0140",
+    "name": "O2 Sensor Circuit No Activity Detected (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Circuit No Activity Detected (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0141",
+    "name": "O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 2)",
+    "description": "O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0150",
+    "name": "O2 Sensor Circuit Malfunction (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Circuit Malfunction (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0151",
+    "name": "O2 Sensor Circuit Low Voltage (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Circuit Low Voltage (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0152",
+    "name": "O2 Sensor Circuit High Voltage (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Circuit High Voltage (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0153",
+    "name": "O2 Sensor Circuit Slow Response (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Circuit Slow Response (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0154",
+    "name": "O2 Sensor Circuit No Activity Detected (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Circuit No Activity Detected (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0155",
+    "name": "O2 Sensor Heater Circuit Malfunction (Bank 2, Sensor 1)",
+    "description": "O2 Sensor Heater Circuit Malfunction (Bank 2, Sensor 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0156",
+    "name": "O2 Sensor Circuit Malfunction (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Circuit Malfunction (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0157",
+    "name": "O2 Sensor Circuit Low Voltage (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Circuit Low Voltage (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0158",
+    "name": "O2 Sensor Circuit High Voltage (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Circuit High Voltage (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0159",
+    "name": "O2 Sensor Circuit Slow Response (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Circuit Slow Response (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0160",
+    "name": "O2 Sensor Circuit No Activity Detected (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Circuit No Activity Detected (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0161",
+    "name": "O2 Sensor Heater Circuit Malfunction (Bank 2, Sensor 2)",
+    "description": "O2 Sensor Heater Circuit Malfunction (Bank 2, Sensor 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0170",
+    "name": "Fuel Trim Malfunction (Bank 1)",
+    "description": "Fuel Trim Malfunction (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0171",
+    "name": "System Too Lean (Bank 1)",
+    "description": "System Too Lean (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0172",
+    "name": "System Too Rich (Bank 1)",
+    "description": "System Too Rich (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0173",
+    "name": "Fuel Trim Malfunction (Bank 2)",
+    "description": "Fuel Trim Malfunction (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0174",
+    "name": "System Too Lean (Bank 2)",
+    "description": "System Too Lean (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0175",
+    "name": "System Too Rich (Bank 2)",
+    "description": "System Too Rich (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Fuel and Air Metering"
+  },
+  {
+    "code": "P0300",
+    "name": "Random/Multiple Cylinder Misfire Detected",
+    "description": "Random/Multiple Cylinder Misfire Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0301",
+    "name": "Cylinder 1 Misfire Detected",
+    "description": "Cylinder 1 Misfire Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0302",
+    "name": "Cylinder 2 Misfire Detected",
+    "description": "Cylinder 2 Misfire Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0303",
+    "name": "Cylinder 3 Misfire Detected",
+    "description": "Cylinder 3 Misfire Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0304",
+    "name": "Cylinder 4 Misfire Detected",
+    "description": "Cylinder 4 Misfire Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0305",
+    "name": "Cylinder 5 Misfire Detected",
+    "description": "Cylinder 5 Misfire Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0306",
+    "name": "Cylinder 6 Misfire Detected",
+    "description": "Cylinder 6 Misfire Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0307",
+    "name": "Cylinder 7 Misfire Detected",
+    "description": "Cylinder 7 Misfire Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0308",
+    "name": "Cylinder 8 Misfire Detected",
+    "description": "Cylinder 8 Misfire Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0320",
+    "name": "Ignition/Distributor Engine Speed Input Circuit Malfunction",
+    "description": "Ignition/Distributor Engine Speed Input Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0325",
+    "name": "Knock Sensor 1 Circuit Malfunction (Bank 1 or Single Sensor)",
+    "description": "Knock Sensor 1 Circuit Malfunction (Bank 1 or Single Sensor)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0330",
+    "name": "Knock Sensor 2 Circuit Malfunction (Bank 2)",
+    "description": "Knock Sensor 2 Circuit Malfunction (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0335",
+    "name": "Crankshaft Position Sensor \"A\" Circuit Malfunction",
+    "description": "Crankshaft Position Sensor \"A\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0340",
+    "name": "Camshaft Position Sensor Circuit Malfunction",
+    "description": "Camshaft Position Sensor Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Ignition System or Misfire"
+  },
+  {
+    "code": "P0401",
+    "name": "Exhaust Gas Recirculation Flow Insufficient Detected",
+    "description": "Exhaust Gas Recirculation Flow Insufficient Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0402",
+    "name": "Exhaust Gas Recirculation Flow Excessive Detected",
+    "description": "Exhaust Gas Recirculation Flow Excessive Detected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0403",
+    "name": "Exhaust Gas Recirculation Circuit Malfunction",
+    "description": "Exhaust Gas Recirculation Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0404",
+    "name": "Exhaust Gas Recirculation Circuit Range/Performance",
+    "description": "Exhaust Gas Recirculation Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0405",
+    "name": "Exhaust Gas Recirculation Sensor \"A\" Circuit Low",
+    "description": "Exhaust Gas Recirculation Sensor \"A\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0406",
+    "name": "Exhaust Gas Recirculation Sensor \"A\" Circuit High",
+    "description": "Exhaust Gas Recirculation Sensor \"A\" Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0420",
+    "name": "Catalyst System Efficiency Below Threshold (Bank 1)",
+    "description": "Catalyst System Efficiency Below Threshold (Bank 1)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0430",
+    "name": "Catalyst System Efficiency Below Threshold (Bank 2)",
+    "description": "Catalyst System Efficiency Below Threshold (Bank 2)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0440",
+    "name": "Evaporative Emission Control System Malfunction",
+    "description": "Evaporative Emission Control System Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0441",
+    "name": "Evaporative Emission Control System Incorrect Purge Flow",
+    "description": "Evaporative Emission Control System Incorrect Purge Flow",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0442",
+    "name": "Evaporative Emission Control System Leak Detected (Small Leak)",
+    "description": "Evaporative Emission Control System Leak Detected (Small Leak)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0443",
+    "name": "Evaporative Emission Control System Purge Control Valve Circuit Malfunction",
+    "description": "Evaporative Emission Control System Purge Control Valve Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0446",
+    "name": "Evaporative Emission Control System Vent Control Circuit Malfunction",
+    "description": "Evaporative Emission Control System Vent Control Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0449",
+    "name": "Evaporative Emission Control System Vent Valve/Solenoid Circuit Malfunction",
+    "description": "Evaporative Emission Control System Vent Valve/Solenoid Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0450",
+    "name": "Evaporative Emission Control System Pressure Sensor Malfunction",
+    "description": "Evaporative Emission Control System Pressure Sensor Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0451",
+    "name": "Evaporative Emission Control System Pressure Sensor Range/Performance",
+    "description": "Evaporative Emission Control System Pressure Sensor Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0452",
+    "name": "Evaporative Emission Control System Pressure Sensor Low Input",
+    "description": "Evaporative Emission Control System Pressure Sensor Low Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0453",
+    "name": "Evaporative Emission Control System Pressure Sensor High Input",
+    "description": "Evaporative Emission Control System Pressure Sensor High Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0455",
+    "name": "Evaporative Emission Control System Leak Detected (Gross Leak)",
+    "description": "Evaporative Emission Control System Leak Detected (Gross Leak)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Auxiliary Emission Controls"
+  },
+  {
+    "code": "P0500",
+    "name": "Vehicle Speed Sensor Malfunction",
+    "description": "Vehicle Speed Sensor Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Vehicle Speed Controls and Idle Control System"
+  },
+  {
+    "code": "P0501",
+    "name": "Vehicle Speed Sensor Range/Performance",
+    "description": "Vehicle Speed Sensor Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Vehicle Speed Controls and Idle Control System"
+  },
+  {
+    "code": "P0502",
+    "name": "Vehicle Speed Sensor Circuit Low Input",
+    "description": "Vehicle Speed Sensor Circuit Low Input",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Vehicle Speed Controls and Idle Control System"
+  },
+  {
+    "code": "P0503",
+    "name": "Vehicle Speed Sensor Intermittent/Erratic/High",
+    "description": "Vehicle Speed Sensor Intermittent/Erratic/High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Vehicle Speed Controls and Idle Control System"
+  },
+  {
+    "code": "P0505",
+    "name": "Idle Control System Malfunction",
+    "description": "Idle Control System Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Vehicle Speed Controls and Idle Control System"
+  },
+  {
+    "code": "P0506",
+    "name": "Idle Control System RPM Lower Than Expected",
+    "description": "Idle Control System RPM Lower Than Expected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Vehicle Speed Controls and Idle Control System"
+  },
+  {
+    "code": "P0507",
+    "name": "Idle Control System RPM Higher Than Expected",
+    "description": "Idle Control System RPM Higher Than Expected",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Vehicle Speed Controls and Idle Control System"
+  },
+  {
+    "code": "P0510",
+    "name": "Closed Throttle Position Switch Malfunction",
+    "description": "Closed Throttle Position Switch Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Vehicle Speed Controls and Idle Control System"
+  },
+  {
+    "code": "P0600",
+    "name": "Serial Communication Link Malfunction",
+    "description": "Serial Communication Link Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Computer Output Circuit"
+  },
+  {
+    "code": "P0601",
+    "name": "Internal Control Module Memory Check Sum Error",
+    "description": "Internal Control Module Memory Check Sum Error",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Computer Output Circuit"
+  },
+  {
+    "code": "P0602",
+    "name": "Control Module Programming Error",
+    "description": "Control Module Programming Error",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Computer Output Circuit"
+  },
+  {
+    "code": "P0603",
+    "name": "Internal Control Module Keep Alive Memory (KAM) Error",
+    "description": "Internal Control Module Keep Alive Memory (KAM) Error",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Computer Output Circuit"
+  },
+  {
+    "code": "P0604",
+    "name": "Internal Control Module Random Access Memory (RAM) Error",
+    "description": "Internal Control Module Random Access Memory (RAM) Error",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Computer Output Circuit"
+  },
+  {
+    "code": "P0605",
+    "name": "Internal Control Module Read Only Memory (ROM) Error",
+    "description": "Internal Control Module Read Only Memory (ROM) Error",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Computer Output Circuit"
+  },
+  {
+    "code": "P0700",
+    "name": "Transmission Control System Malfunction",
+    "description": "Transmission Control System Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0701",
+    "name": "Transmission Control System Range/Performance",
+    "description": "Transmission Control System Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0702",
+    "name": "Transmission Control System Electrical",
+    "description": "Transmission Control System Electrical",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0703",
+    "name": "Torque Converter/Brake Switch \"B\" Circuit Malfunction",
+    "description": "Torque Converter/Brake Switch \"B\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0704",
+    "name": "Clutch Switch Input Circuit Malfunction",
+    "description": "Clutch Switch Input Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0705",
+    "name": "Transmission Range Sensor Circuit Malfunction (PRNDL Input)",
+    "description": "Transmission Range Sensor Circuit Malfunction (PRNDL Input)",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0720",
+    "name": "Output Speed Sensor Circuit Malfunction",
+    "description": "Output Speed Sensor Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0725",
+    "name": "Engine Speed Input Circuit Malfunction",
+    "description": "Engine Speed Input Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0730",
+    "name": "Incorrect Gear Ratio",
+    "description": "Incorrect Gear Ratio",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0740",
+    "name": "Torque Converter Clutch Circuit Malfunction",
+    "description": "Torque Converter Clutch Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0741",
+    "name": "Torque Converter Clutch Circuit Performance or Stuck Off",
+    "description": "Torque Converter Clutch Circuit Performance or Stuck Off",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0742",
+    "name": "Torque Converter Clutch Circuit Stuck On",
+    "description": "Torque Converter Clutch Circuit Stuck On",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0743",
+    "name": "Torque Converter Clutch Circuit Electrical",
+    "description": "Torque Converter Clutch Circuit Electrical",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0744",
+    "name": "Torque Converter Clutch Circuit Intermittent",
+    "description": "Torque Converter Clutch Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0745",
+    "name": "Pressure Control Solenoid Malfunction",
+    "description": "Pressure Control Solenoid Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0746",
+    "name": "Pressure Control Solenoid Performance or Stuck Off",
+    "description": "Pressure Control Solenoid Performance or Stuck Off",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0747",
+    "name": "Pressure Control Solenoid Stuck On",
+    "description": "Pressure Control Solenoid Stuck On",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0748",
+    "name": "Pressure Control Solenoid Electrical",
+    "description": "Pressure Control Solenoid Electrical",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0749",
+    "name": "Pressure Control Solenoid Intermittent",
+    "description": "Pressure Control Solenoid Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0750",
+    "name": "Shift Solenoid \"A\" Malfunction",
+    "description": "Shift Solenoid \"A\" Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0751",
+    "name": "Shift Solenoid \"A\" Performance or Stuck Off",
+    "description": "Shift Solenoid \"A\" Performance or Stuck Off",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0752",
+    "name": "Shift Solenoid \"A\" Stuck On",
+    "description": "Shift Solenoid \"A\" Stuck On",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0753",
+    "name": "Shift Solenoid \"A\" Electrical",
+    "description": "Shift Solenoid \"A\" Electrical",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0754",
+    "name": "Shift Solenoid \"A\" Intermittent",
+    "description": "Shift Solenoid \"A\" Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0755",
+    "name": "Shift Solenoid \"B\" Malfunction",
+    "description": "Shift Solenoid \"B\" Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0756",
+    "name": "Shift Solenoid \"B\" Performance or Stuck Off",
+    "description": "Shift Solenoid \"B\" Performance or Stuck Off",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0757",
+    "name": "Shift Solenoid \"B\" Stuck On",
+    "description": "Shift Solenoid \"B\" Stuck On",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0758",
+    "name": "Shift Solenoid \"B\" Electrical",
+    "description": "Shift Solenoid \"B\" Electrical",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0759",
+    "name": "Shift Solenoid \"B\" Intermittent",
+    "description": "Shift Solenoid \"B\" Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0760",
+    "name": "Shift Solenoid \"C\" Malfunction",
+    "description": "Shift Solenoid \"C\" Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0761",
+    "name": "Shift Solenoid \"C\" Performance or Stuck Off",
+    "description": "Shift Solenoid \"C\" Performance or Stuck Off",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0762",
+    "name": "Shift Solenoid \"C\" Stuck On",
+    "description": "Shift Solenoid \"C\" Stuck On",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0763",
+    "name": "Shift Solenoid \"C\" Electrical",
+    "description": "Shift Solenoid \"C\" Electrical",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0764",
+    "name": "Shift Solenoid \"C\" Intermittent",
+    "description": "Shift Solenoid \"C\" Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0765",
+    "name": "Shift Solenoid \"D\" Malfunction",
+    "description": "Shift Solenoid \"D\" Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0766",
+    "name": "Shift Solenoid \"D\" Performance or Stuck Off",
+    "description": "Shift Solenoid \"D\" Performance or Stuck Off",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0767",
+    "name": "Shift Solenoid \"D\" Stuck On",
+    "description": "Shift Solenoid \"D\" Stuck On",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0768",
+    "name": "Shift Solenoid \"D\" Electrical",
+    "description": "Shift Solenoid \"D\" Electrical",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0769",
+    "name": "Shift Solenoid \"D\" Intermittent",
+    "description": "Shift Solenoid \"D\" Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0770",
+    "name": "Shift Solenoid \"E\" Malfunction",
+    "description": "Shift Solenoid \"E\" Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0771",
+    "name": "Shift Solenoid \"E\" Performance or Stuck Off",
+    "description": "Shift Solenoid \"E\" Performance or Stuck Off",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0772",
+    "name": "Shift Solenoid \"E\" Stuck On",
+    "description": "Shift Solenoid \"E\" Stuck On",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0773",
+    "name": "Shift Solenoid \"E\" Electrical",
+    "description": "Shift Solenoid \"E\" Electrical",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0774",
+    "name": "Shift Solenoid \"E\" Intermittent",
+    "description": "Shift Solenoid \"E\" Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0780",
+    "name": "Shift Malfunction",
+    "description": "Shift Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0781",
+    "name": "1-2 Shift Malfunction",
+    "description": "1-2 Shift Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0782",
+    "name": "2-3 Shift Malfunction",
+    "description": "2-3 Shift Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0783",
+    "name": "3-4 Shift Malfunction",
+    "description": "3-4 Shift Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0784",
+    "name": "4-5 Shift Malfunction",
+    "description": "4-5 Shift Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0785",
+    "name": "Shift/Timing Solenoid Malfunction",
+    "description": "Shift/Timing Solenoid Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0786",
+    "name": "Shift/Timing Solenoid Range/Performance",
+    "description": "Shift/Timing Solenoid Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0787",
+    "name": "Shift/Timing Solenoid Low",
+    "description": "Shift/Timing Solenoid Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0788",
+    "name": "Shift/Timing Solenoid High",
+    "description": "Shift/Timing Solenoid High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0789",
+    "name": "Shift/Timing Solenoid Intermittent",
+    "description": "Shift/Timing Solenoid Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0790",
+    "name": "Normal/Performance Switch Circuit Malfunction",
+    "description": "Normal/Performance Switch Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0791",
+    "name": "Intermediate Shaft Speed Sensor Circuit",
+    "description": "Intermediate Shaft Speed Sensor Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0792",
+    "name": "Intermediate Shaft Speed Sensor Circuit Range/Performance",
+    "description": "Intermediate Shaft Speed Sensor Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0793",
+    "name": "Intermediate Shaft Speed Sensor Circuit No Signal",
+    "description": "Intermediate Shaft Speed Sensor Circuit No Signal",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0794",
+    "name": "Intermediate Shaft Speed Sensor Circuit Intermittent",
+    "description": "Intermediate Shaft Speed Sensor Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0795",
+    "name": "Pressure Control Solenoid \"C\"",
+    "description": "Pressure Control Solenoid \"C\"",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0796",
+    "name": "Pressure Control Solenoid \"C\" Performance or Stuck Off",
+    "description": "Pressure Control Solenoid \"C\" Performance or Stuck Off",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0797",
+    "name": "Pressure Control Solenoid \"C\" Stuck On",
+    "description": "Pressure Control Solenoid \"C\" Stuck On",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0798",
+    "name": "Pressure Control Solenoid \"C\" Electrical",
+    "description": "Pressure Control Solenoid \"C\" Electrical",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0799",
+    "name": "Pressure Control Solenoid \"C\" Intermittent",
+    "description": "Pressure Control Solenoid \"C\" Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0800",
+    "name": "Transfer Case Control System Request MIL",
+    "description": "Transfer Case Control System Request MIL",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0801",
+    "name": "Reverse Inhibit Control Circuit Malfunction",
+    "description": "Reverse Inhibit Control Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0803",
+    "name": "1-4 Upshift (Skip Shift) Solenoid Control Circuit Malfunction",
+    "description": "1-4 Upshift (Skip Shift) Solenoid Control Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0804",
+    "name": "1-4 Upshift (Skip Shift) Lamp Control Circuit Malfunction",
+    "description": "1-4 Upshift (Skip Shift) Lamp Control Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0805",
+    "name": "Clutch Position Sensor Circuit Malfunction",
+    "description": "Clutch Position Sensor Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0820",
+    "name": "Gear Lever X-Y Position Sensor Circuit",
+    "description": "Gear Lever X-Y Position Sensor Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0830",
+    "name": "Clutch Pedal Switch \"A\" Circuit",
+    "description": "Clutch Pedal Switch \"A\" Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0831",
+    "name": "Clutch Pedal Switch \"A\" Circuit Low",
+    "description": "Clutch Pedal Switch \"A\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0832",
+    "name": "Clutch Pedal Switch \"A\" Circuit High",
+    "description": "Clutch Pedal Switch \"A\" Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0833",
+    "name": "Clutch Pedal Switch \"B\" Circuit",
+    "description": "Clutch Pedal Switch \"B\" Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0834",
+    "name": "Clutch Pedal Switch \"B\" Circuit Low",
+    "description": "Clutch Pedal Switch \"B\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0835",
+    "name": "Clutch Pedal Switch \"B\" Circuit High",
+    "description": "Clutch Pedal Switch \"B\" Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0840",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0841",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit Range/Performance",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0842",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit Low",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0843",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit High",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0844",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit Intermittent",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0845",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0846",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Range/Performance",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0847",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Low",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0848",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit High",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0849",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Intermittent",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0850",
+    "name": "Park/Neutral Position (PNP) Switch Input Circuit",
+    "description": "Park/Neutral Position (PNP) Switch Input Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0851",
+    "name": "Park/Neutral Position (PNP) Switch Input Circuit Low",
+    "description": "Park/Neutral Position (PNP) Switch Input Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0852",
+    "name": "Park/Neutral Position (PNP) Switch Input Circuit High",
+    "description": "Park/Neutral Position (PNP) Switch Input Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0853",
+    "name": "Drive Switch Input Circuit",
+    "description": "Drive Switch Input Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0854",
+    "name": "Drive Switch Input Circuit Low",
+    "description": "Drive Switch Input Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0855",
+    "name": "Drive Switch Input Circuit High",
+    "description": "Drive Switch Input Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0856",
+    "name": "Traction Control Input Signal",
+    "description": "Traction Control Input Signal",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0857",
+    "name": "Traction Control Input Signal Range/Performance",
+    "description": "Traction Control Input Signal Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0858",
+    "name": "Traction Control Input Signal Low",
+    "description": "Traction Control Input Signal Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0859",
+    "name": "Traction Control Input Signal High",
+    "description": "Traction Control Input Signal High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0860",
+    "name": "Gear Shift Module Communication Circuit",
+    "description": "Gear Shift Module Communication Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0861",
+    "name": "Gear Shift Module Communication Circuit Low",
+    "description": "Gear Shift Module Communication Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0862",
+    "name": "Gear Shift Module Communication Circuit High",
+    "description": "Gear Shift Module Communication Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0863",
+    "name": "TCM Communication Circuit",
+    "description": "TCM Communication Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0864",
+    "name": "TCM Communication Circuit Range/Performance",
+    "description": "TCM Communication Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0865",
+    "name": "TCM Communication Circuit Low",
+    "description": "TCM Communication Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0866",
+    "name": "TCM Communication Circuit High",
+    "description": "TCM Communication Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0867",
+    "name": "Transmission Fluid Pressure",
+    "description": "Transmission Fluid Pressure",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0868",
+    "name": "Transmission Fluid Pressure Low",
+    "description": "Transmission Fluid Pressure Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0869",
+    "name": "Transmission Fluid Pressure High",
+    "description": "Transmission Fluid Pressure High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0870",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0871",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit Range/Performance",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0872",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit Low",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0873",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit High",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0874",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit Intermittent",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"C\" Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0875",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0876",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit Range/Performance",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0877",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit Low",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0878",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit High",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0879",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit Intermittent",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"D\" Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0880",
+    "name": "TCM Power Input Signal",
+    "description": "TCM Power Input Signal",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0881",
+    "name": "TCM Power Input Signal Range/Performance",
+    "description": "TCM Power Input Signal Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0882",
+    "name": "TCM Power Input Signal Low",
+    "description": "TCM Power Input Signal Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0883",
+    "name": "TCM Power Input Signal High",
+    "description": "TCM Power Input Signal High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0884",
+    "name": "TCM Power Input Signal Intermittent",
+    "description": "TCM Power Input Signal Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0885",
+    "name": "TCM Power Relay Control Circuit/Open",
+    "description": "TCM Power Relay Control Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0886",
+    "name": "TCM Power Relay Control Circuit Low",
+    "description": "TCM Power Relay Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0887",
+    "name": "TCM Power Relay Control Circuit High",
+    "description": "TCM Power Relay Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0888",
+    "name": "TCM Power Relay Sense Circuit",
+    "description": "TCM Power Relay Sense Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0889",
+    "name": "TCM Power Relay Sense Circuit Range/Performance",
+    "description": "TCM Power Relay Sense Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0890",
+    "name": "TCM Power Relay Sense Circuit Low",
+    "description": "TCM Power Relay Sense Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0891",
+    "name": "TCM Power Relay Sense Circuit High",
+    "description": "TCM Power Relay Sense Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0892",
+    "name": "TCM Power Relay Sense Circuit Intermittent",
+    "description": "TCM Power Relay Sense Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0893",
+    "name": "Multiple Gears Engaged",
+    "description": "Multiple Gears Engaged",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0894",
+    "name": "Transmission Component Slipping",
+    "description": "Transmission Component Slipping",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0895",
+    "name": "Shift Time Too Short",
+    "description": "Shift Time Too Short",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0896",
+    "name": "Shift Time Too Long",
+    "description": "Shift Time Too Long",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0897",
+    "name": "Transmission Fluid Deteriorated",
+    "description": "Transmission Fluid Deteriorated",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0898",
+    "name": "Transmission Control System MIL Request Circuit Low",
+    "description": "Transmission Control System MIL Request Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0899",
+    "name": "Transmission Control System MIL Request Circuit High",
+    "description": "Transmission Control System MIL Request Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0900",
+    "name": "Clutch Actuator Circuit/Open",
+    "description": "Clutch Actuator Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0901",
+    "name": "Clutch Actuator Circuit Range/Performance",
+    "description": "Clutch Actuator Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0902",
+    "name": "Clutch Actuator Circuit Low",
+    "description": "Clutch Actuator Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0903",
+    "name": "Clutch Actuator Circuit High",
+    "description": "Clutch Actuator Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0904",
+    "name": "Gate Select Position Circuit",
+    "description": "Gate Select Position Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0905",
+    "name": "Gate Select Position Circuit Range/Performance",
+    "description": "Gate Select Position Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0906",
+    "name": "Gate Select Position Circuit Low",
+    "description": "Gate Select Position Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0907",
+    "name": "Gate Select Position Circuit High",
+    "description": "Gate Select Position Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0908",
+    "name": "Gate Select Position Circuit Intermittent",
+    "description": "Gate Select Position Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0909",
+    "name": "Gate Select Control Error",
+    "description": "Gate Select Control Error",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0910",
+    "name": "Gate Select Actuator Circuit/Open",
+    "description": "Gate Select Actuator Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0911",
+    "name": "Gate Select Actuator Circuit Range/Performance",
+    "description": "Gate Select Actuator Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0912",
+    "name": "Gate Select Actuator Circuit Low",
+    "description": "Gate Select Actuator Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0913",
+    "name": "Gate Select Actuator Circuit High",
+    "description": "Gate Select Actuator Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0914",
+    "name": "Gear Shift Position Circuit",
+    "description": "Gear Shift Position Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0915",
+    "name": "Gear Shift Position Circuit Range/Performance",
+    "description": "Gear Shift Position Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0916",
+    "name": "Gear Shift Position Circuit Low",
+    "description": "Gear Shift Position Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0917",
+    "name": "Gear Shift Position Circuit High",
+    "description": "Gear Shift Position Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0918",
+    "name": "Gear Shift Position Circuit Intermittent",
+    "description": "Gear Shift Position Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0919",
+    "name": "Gear Shift Position Control Error",
+    "description": "Gear Shift Position Control Error",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0920",
+    "name": "Gear Shift Forward Actuator Circuit/Open",
+    "description": "Gear Shift Forward Actuator Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0921",
+    "name": "Gear Shift Forward Actuator Circuit Range/Performance",
+    "description": "Gear Shift Forward Actuator Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0922",
+    "name": "Gear Shift Forward Actuator Circuit Low",
+    "description": "Gear Shift Forward Actuator Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0923",
+    "name": "Gear Shift Forward Actuator Circuit High",
+    "description": "Gear Shift Forward Actuator Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0924",
+    "name": "Gear Shift Reverse Actuator Circuit/Open",
+    "description": "Gear Shift Reverse Actuator Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0925",
+    "name": "Gear Shift Reverse Actuator Circuit Range/Performance",
+    "description": "Gear Shift Reverse Actuator Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0926",
+    "name": "Gear Shift Reverse Actuator Circuit Low",
+    "description": "Gear Shift Reverse Actuator Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0927",
+    "name": "Gear Shift Reverse Actuator Circuit High",
+    "description": "Gear Shift Reverse Actuator Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0928",
+    "name": "Gear Shift Lock Solenoid Control Circuit/Open",
+    "description": "Gear Shift Lock Solenoid Control Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0929",
+    "name": "Gear Shift Lock Solenoid Control Circuit Range/Performance",
+    "description": "Gear Shift Lock Solenoid Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0930",
+    "name": "Gear Shift Lock Solenoid Control Circuit Low",
+    "description": "Gear Shift Lock Solenoid Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0931",
+    "name": "Gear Shift Lock Solenoid Control Circuit High",
+    "description": "Gear Shift Lock Solenoid Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0932",
+    "name": "Hydraulic Pressure Sensor Circuit",
+    "description": "Hydraulic Pressure Sensor Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0933",
+    "name": "Hydraulic Pressure Sensor Circuit Range/Performance",
+    "description": "Hydraulic Pressure Sensor Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0934",
+    "name": "Hydraulic Pressure Sensor Circuit Low",
+    "description": "Hydraulic Pressure Sensor Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0935",
+    "name": "Hydraulic Pressure Sensor Circuit High",
+    "description": "Hydraulic Pressure Sensor Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0936",
+    "name": "Hydraulic Pressure Sensor Circuit Intermittent",
+    "description": "Hydraulic Pressure Sensor Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0937",
+    "name": "Hydraulic Oil Temperature Sensor Circuit",
+    "description": "Hydraulic Oil Temperature Sensor Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0938",
+    "name": "Hydraulic Oil Temperature Sensor Circuit Range/Performance",
+    "description": "Hydraulic Oil Temperature Sensor Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0939",
+    "name": "Hydraulic Oil Temperature Sensor Circuit Low",
+    "description": "Hydraulic Oil Temperature Sensor Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0940",
+    "name": "Hydraulic Oil Temperature Sensor Circuit High",
+    "description": "Hydraulic Oil Temperature Sensor Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0941",
+    "name": "Hydraulic Oil Temperature Sensor Circuit Intermittent",
+    "description": "Hydraulic Oil Temperature Sensor Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0942",
+    "name": "Hydraulic Pressure Unit",
+    "description": "Hydraulic Pressure Unit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0943",
+    "name": "Hydraulic Pressure Unit Cycling Period Too Short",
+    "description": "Hydraulic Pressure Unit Cycling Period Too Short",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0944",
+    "name": "Hydraulic Pressure Unit Loss of Pressure",
+    "description": "Hydraulic Pressure Unit Loss of Pressure",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0945",
+    "name": "Hydraulic Pump Relay Circuit/Open",
+    "description": "Hydraulic Pump Relay Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0946",
+    "name": "Hydraulic Pump Relay Circuit Range/Performance",
+    "description": "Hydraulic Pump Relay Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0947",
+    "name": "Hydraulic Pump Relay Circuit Low",
+    "description": "Hydraulic Pump Relay Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0948",
+    "name": "Hydraulic Pump Relay Circuit High",
+    "description": "Hydraulic Pump Relay Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0949",
+    "name": "Auto Shift Manual Adaptive Learning Not Complete",
+    "description": "Auto Shift Manual Adaptive Learning Not Complete",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0950",
+    "name": "Auto Shift Manual Control Circuit",
+    "description": "Auto Shift Manual Control Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0951",
+    "name": "Auto Shift Manual Control Circuit Range/Performance",
+    "description": "Auto Shift Manual Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0952",
+    "name": "Auto Shift Manual Control Circuit Low",
+    "description": "Auto Shift Manual Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0953",
+    "name": "Auto Shift Manual Control Circuit High",
+    "description": "Auto Shift Manual Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0954",
+    "name": "Auto Shift Manual Control Circuit Intermittent",
+    "description": "Auto Shift Manual Control Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0955",
+    "name": "Auto Shift Manual Mode Circuit",
+    "description": "Auto Shift Manual Mode Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0956",
+    "name": "Auto Shift Manual Mode Circuit Range/Performance",
+    "description": "Auto Shift Manual Mode Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0957",
+    "name": "Auto Shift Manual Mode Circuit Low",
+    "description": "Auto Shift Manual Mode Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0958",
+    "name": "Auto Shift Manual Mode Circuit High",
+    "description": "Auto Shift Manual Mode Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0959",
+    "name": "Auto Shift Manual Mode Circuit Intermittent",
+    "description": "Auto Shift Manual Mode Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0960",
+    "name": "Pressure Control Solenoid \"A\" Control Circuit/Open",
+    "description": "Pressure Control Solenoid \"A\" Control Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0961",
+    "name": "Pressure Control Solenoid \"A\" Control Circuit Range/Performance",
+    "description": "Pressure Control Solenoid \"A\" Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0962",
+    "name": "Pressure Control Solenoid \"A\" Control Circuit Low",
+    "description": "Pressure Control Solenoid \"A\" Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0963",
+    "name": "Pressure Control Solenoid \"A\" Control Circuit High",
+    "description": "Pressure Control Solenoid \"A\" Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0964",
+    "name": "Pressure Control Solenoid \"B\" Control Circuit/Open",
+    "description": "Pressure Control Solenoid \"B\" Control Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0965",
+    "name": "Pressure Control Solenoid \"B\" Control Circuit Range/Performance",
+    "description": "Pressure Control Solenoid \"B\" Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0966",
+    "name": "Pressure Control Solenoid \"B\" Control Circuit Low",
+    "description": "Pressure Control Solenoid \"B\" Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0967",
+    "name": "Pressure Control Solenoid \"B\" Control Circuit High",
+    "description": "Pressure Control Solenoid \"B\" Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0968",
+    "name": "Pressure Control Solenoid \"C\" Control Circuit/Open",
+    "description": "Pressure Control Solenoid \"C\" Control Circuit/Open",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0969",
+    "name": "Pressure Control Solenoid \"C\" Control Circuit Range/Performance",
+    "description": "Pressure Control Solenoid \"C\" Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0970",
+    "name": "Pressure Control Solenoid \"C\" Control Circuit Low",
+    "description": "Pressure Control Solenoid \"C\" Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0971",
+    "name": "Pressure Control Solenoid \"C\" Control Circuit High",
+    "description": "Pressure Control Solenoid \"C\" Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0972",
+    "name": "Shift Solenoid \"A\" Control Circuit Range/Performance",
+    "description": "Shift Solenoid \"A\" Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0973",
+    "name": "Shift Solenoid \"A\" Control Circuit Low",
+    "description": "Shift Solenoid \"A\" Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0974",
+    "name": "Shift Solenoid \"A\" Control Circuit High",
+    "description": "Shift Solenoid \"A\" Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0975",
+    "name": "Shift Solenoid \"B\" Control Circuit Range/Performance",
+    "description": "Shift Solenoid \"B\" Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0976",
+    "name": "Shift Solenoid \"B\" Control Circuit Low",
+    "description": "Shift Solenoid \"B\" Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0977",
+    "name": "Shift Solenoid \"B\" Control Circuit High",
+    "description": "Shift Solenoid \"B\" Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0978",
+    "name": "Shift Solenoid \"C\" Control Circuit Range/Performance",
+    "description": "Shift Solenoid \"C\" Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0979",
+    "name": "Shift Solenoid \"C\" Control Circuit Low",
+    "description": "Shift Solenoid \"C\" Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0980",
+    "name": "Shift Solenoid \"C\" Control Circuit High",
+    "description": "Shift Solenoid \"C\" Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0981",
+    "name": "Shift Solenoid \"D\" Control Circuit Range/Performance",
+    "description": "Shift Solenoid \"D\" Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0982",
+    "name": "Shift Solenoid \"D\" Control Circuit Low",
+    "description": "Shift Solenoid \"D\" Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0983",
+    "name": "Shift Solenoid \"D\" Control Circuit High",
+    "description": "Shift Solenoid \"D\" Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0984",
+    "name": "Shift Solenoid \"E\" Control Circuit Range/Performance",
+    "description": "Shift Solenoid \"E\" Control Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0985",
+    "name": "Shift Solenoid \"E\" Control Circuit Low",
+    "description": "Shift Solenoid \"E\" Control Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0986",
+    "name": "Shift Solenoid \"E\" Control Circuit High",
+    "description": "Shift Solenoid \"E\" Control Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0987",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0988",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit Range/Performance",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0989",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit Low",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0990",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit High",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0991",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit Intermittent",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"E\" Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0992",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0993",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit Range/Performance",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0994",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit Low",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0995",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit High",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit High",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0996",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit Intermittent",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"F\" Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0997",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"G\" Circuit",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"G\" Circuit",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0998",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"G\" Circuit Range/Performance",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"G\" Circuit Range/Performance",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P0999",
+    "name": "Transmission Fluid Pressure Sensor/Switch \"G\" Circuit Low",
+    "description": "Transmission Fluid Pressure Sensor/Switch \"G\" Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": true,
+    "category": "Transmission"
+  },
+  {
+    "code": "P1000",
+    "name": "OBD System Readiness Test Not Complete",
+    "description": "OBD System Readiness Test Not Complete",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1001",
+    "name": "Key On Engine Running (KOER) Self-Test Not Able to Complete",
+    "description": "Key On Engine Running (KOER) Self-Test Not Able to Complete",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1100",
+    "name": "Mass Air Flow Sensor Intermittent",
+    "description": "Mass Air Flow Sensor Intermittent",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1101",
+    "name": "Mass Air Flow Sensor Out of Self-Test Range",
+    "description": "Mass Air Flow Sensor Out of Self-Test Range",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1110",
+    "name": "Intake Air Temperature Sensor Intermittent",
+    "description": "Intake Air Temperature Sensor Intermittent",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1111",
+    "name": "System Pass",
+    "description": "System Pass",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1112",
+    "name": "Intake Air Temperature Sensor Intermittent",
+    "description": "Intake Air Temperature Sensor Intermittent",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1116",
+    "name": "Engine Coolant Temperature Sensor Out of Self-Test Range",
+    "description": "Engine Coolant Temperature Sensor Out of Self-Test Range",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1117",
+    "name": "Engine Coolant Temperature Sensor Intermittent",
+    "description": "Engine Coolant Temperature Sensor Intermittent",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1120",
+    "name": "Throttle Position Sensor Out of Range (Low)",
+    "description": "Throttle Position Sensor Out of Range (Low)",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1121",
+    "name": "Throttle Position Sensor Inconsistent with MAF",
+    "description": "Throttle Position Sensor Inconsistent with MAF",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1124",
+    "name": "Throttle Position Sensor Out of Self-Test Range",
+    "description": "Throttle Position Sensor Out of Self-Test Range",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1125",
+    "name": "Throttle Position Sensor Circuit Intermittent",
+    "description": "Throttle Position Sensor Circuit Intermittent",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1130",
+    "name": "Lack of HO2S-11 Switch - Adaptive Fuel at Limit",
+    "description": "Lack of HO2S-11 Switch - Adaptive Fuel at Limit",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1131",
+    "name": "Lack of HO2S-11 Switch - Sensor Indicates Lean",
+    "description": "Lack of HO2S-11 Switch - Sensor Indicates Lean",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1132",
+    "name": "Lack of HO2S-11 Switch - Sensor Indicates Rich",
+    "description": "Lack of HO2S-11 Switch - Sensor Indicates Rich",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1137",
+    "name": "Lack of HO2S-12 Switch - Sensor Indicates Lean",
+    "description": "Lack of HO2S-12 Switch - Sensor Indicates Lean",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1138",
+    "name": "Lack of HO2S-12 Switch - Sensor Indicates Rich",
+    "description": "Lack of HO2S-12 Switch - Sensor Indicates Rich",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1150",
+    "name": "Lack of HO2S-21 Switch - Adaptive Fuel at Limit",
+    "description": "Lack of HO2S-21 Switch - Adaptive Fuel at Limit",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1151",
+    "name": "Lack of HO2S-21 Switch - Sensor Indicates Lean",
+    "description": "Lack of HO2S-21 Switch - Sensor Indicates Lean",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1152",
+    "name": "Lack of HO2S-21 Switch - Sensor Indicates Rich",
+    "description": "Lack of HO2S-21 Switch - Sensor Indicates Rich",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1157",
+    "name": "Lack of HO2S-22 Switch - Sensor Indicates Lean",
+    "description": "Lack of HO2S-22 Switch - Sensor Indicates Lean",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1158",
+    "name": "Lack of HO2S-22 Switch - Sensor Indicates Rich",
+    "description": "Lack of HO2S-22 Switch - Sensor Indicates Rich",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1400",
+    "name": "EGR Solenoid Circuit Malfunction",
+    "description": "EGR Solenoid Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1401",
+    "name": "EGR Temperature Sensor Circuit High",
+    "description": "EGR Temperature Sensor Circuit High",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1402",
+    "name": "EGR Temperature Sensor Circuit Low",
+    "description": "EGR Temperature Sensor Circuit Low",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1403",
+    "name": "Differential Pressure Feedback EGR Sensor Circuit Low Input",
+    "description": "Differential Pressure Feedback EGR Sensor Circuit Low Input",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1404",
+    "name": "Differential Pressure Feedback EGR Sensor Circuit High Input",
+    "description": "Differential Pressure Feedback EGR Sensor Circuit High Input",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1405",
+    "name": "Differential Pressure Feedback EGR Sensor Upstream Hose Off or Plugged",
+    "description": "Differential Pressure Feedback EGR Sensor Upstream Hose Off or Plugged",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1406",
+    "name": "Differential Pressure Feedback EGR Sensor Downstream Hose Off or Plugged",
+    "description": "Differential Pressure Feedback EGR Sensor Downstream Hose Off or Plugged",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1407",
+    "name": "Exhaust Gas Recirculation No Flow Detected",
+    "description": "Exhaust Gas Recirculation No Flow Detected",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1408",
+    "name": "Exhaust Gas Recirculation Flow Out of Self-Test Range",
+    "description": "Exhaust Gas Recirculation Flow Out of Self-Test Range",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1409",
+    "name": "Electronic Vacuum Regulator Control Circuit",
+    "description": "Electronic Vacuum Regulator Control Circuit",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1410",
+    "name": "Secondary Air Injection System Circuit Malfunction",
+    "description": "Secondary Air Injection System Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1411",
+    "name": "Secondary Air Injection System Incorrect Flow Detected",
+    "description": "Secondary Air Injection System Incorrect Flow Detected",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1412",
+    "name": "Secondary Air Injection System Switching Valve \"A\" Circuit Malfunction",
+    "description": "Secondary Air Injection System Switching Valve \"A\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1413",
+    "name": "Secondary Air Injection System Switching Valve \"B\" Circuit Malfunction",
+    "description": "Secondary Air Injection System Switching Valve \"B\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1414",
+    "name": "Secondary Air Injection System Switching Valve \"B\" Circuit Malfunction",
+    "description": "Secondary Air Injection System Switching Valve \"B\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1415",
+    "name": "Air Injection Pump Control Circuit",
+    "description": "Air Injection Pump Control Circuit",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1416",
+    "name": "Air Injection Pump Control Circuit Malfunction",
+    "description": "Air Injection Pump Control Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1417",
+    "name": "Secondary Air Injection System Switching Valve \"A\" Circuit Malfunction",
+    "description": "Secondary Air Injection System Switching Valve \"A\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1418",
+    "name": "Secondary Air Injection System Switching Valve \"B\" Circuit Malfunction",
+    "description": "Secondary Air Injection System Switching Valve \"B\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1419",
+    "name": "Secondary Air Injection System",
+    "description": "Secondary Air Injection System",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1420",
+    "name": "Secondary Air Injection System Circuit Malfunction",
+    "description": "Secondary Air Injection System Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1421",
+    "name": "Secondary Air Injection System Circuit Malfunction",
+    "description": "Secondary Air Injection System Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1422",
+    "name": "Secondary Air Injection System Control \"A\" Circuit Malfunction",
+    "description": "Secondary Air Injection System Control \"A\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1423",
+    "name": "Secondary Air Injection System Control \"B\" Circuit Malfunction",
+    "description": "Secondary Air Injection System Control \"B\" Circuit Malfunction",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1424",
+    "name": "Secondary Air Injection System",
+    "description": "Secondary Air Injection System",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1425",
+    "name": "Secondary Air Injection System",
+    "description": "Secondary Air Injection System",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1426",
+    "name": "Secondary Air Injection System",
+    "description": "Secondary Air Injection System",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1427",
+    "name": "Secondary Air Injection System",
+    "description": "Secondary Air Injection System",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1428",
+    "name": "Secondary Air Injection System",
+    "description": "Secondary Air Injection System",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P1429",
+    "name": "Secondary Air Injection System",
+    "description": "Secondary Air Injection System",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "P142B",
+    "name": "Turbocharger/Supercharger Boost Control \"A\" Range/Performance Problem",
+    "description": "Turbocharger/Supercharger Boost Control \"A\" Range/Performance Problem",
+    "system": "Powertrain",
+    "isGeneric": false,
+    "category": "Manufacturer Specific"
+  },
+  {
+    "code": "U0001",
+    "name": "High Speed CAN Communication Bus",
+    "description": "High Speed CAN Communication Bus",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0002",
+    "name": "High Speed CAN Communication Bus Performance",
+    "description": "High Speed CAN Communication Bus Performance",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0003",
+    "name": "High Speed CAN Communication Bus (+) Open",
+    "description": "High Speed CAN Communication Bus (+) Open",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0004",
+    "name": "High Speed CAN Communication Bus (+) Low",
+    "description": "High Speed CAN Communication Bus (+) Low",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0005",
+    "name": "High Speed CAN Communication Bus (+) High",
+    "description": "High Speed CAN Communication Bus (+) High",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0006",
+    "name": "High Speed CAN Communication Bus (-) Open",
+    "description": "High Speed CAN Communication Bus (-) Open",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0007",
+    "name": "High Speed CAN Communication Bus (-) Low",
+    "description": "High Speed CAN Communication Bus (-) Low",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0008",
+    "name": "High Speed CAN Communication Bus (-) High",
+    "description": "High Speed CAN Communication Bus (-) High",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0009",
+    "name": "High Speed CAN Communication Bus (+) Shorted to (-)",
+    "description": "High Speed CAN Communication Bus (+) Shorted to (-)",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0010",
+    "name": "Medium Speed CAN Communication Bus",
+    "description": "Medium Speed CAN Communication Bus",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0011",
+    "name": "Medium Speed CAN Communication Bus Performance",
+    "description": "Medium Speed CAN Communication Bus Performance",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0012",
+    "name": "Medium Speed CAN Communication Bus (+) Open",
+    "description": "Medium Speed CAN Communication Bus (+) Open",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0013",
+    "name": "Medium Speed CAN Communication Bus (+) Low",
+    "description": "Medium Speed CAN Communication Bus (+) Low",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0014",
+    "name": "Medium Speed CAN Communication Bus (+) High",
+    "description": "Medium Speed CAN Communication Bus (+) High",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0015",
+    "name": "Medium Speed CAN Communication Bus (-) Open",
+    "description": "Medium Speed CAN Communication Bus (-) Open",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0016",
+    "name": "Medium Speed CAN Communication Bus (-) Low",
+    "description": "Medium Speed CAN Communication Bus (-) Low",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0017",
+    "name": "Medium Speed CAN Communication Bus (-) High",
+    "description": "Medium Speed CAN Communication Bus (-) High",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0018",
+    "name": "Medium Speed CAN Communication Bus (+) Shorted to (-)",
+    "description": "Medium Speed CAN Communication Bus (+) Shorted to (-)",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "CAN Communication"
+  },
+  {
+    "code": "U0100",
+    "name": "Lost Communication with ECM/PCM \"A\"",
+    "description": "Lost Communication with ECM/PCM \"A\"",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0101",
+    "name": "Lost Communication with TCM",
+    "description": "Lost Communication with TCM",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0102",
+    "name": "Lost Communication with Transfer Case Control Module",
+    "description": "Lost Communication with Transfer Case Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0103",
+    "name": "Lost Communication with Gear Shift Module",
+    "description": "Lost Communication with Gear Shift Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0104",
+    "name": "Lost Communication with Cruise Control Module",
+    "description": "Lost Communication with Cruise Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0105",
+    "name": "Lost Communication with Fuel Injector Control Module",
+    "description": "Lost Communication with Fuel Injector Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0106",
+    "name": "Lost Communication with Glow Plug Control Module",
+    "description": "Lost Communication with Glow Plug Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0107",
+    "name": "Lost Communication with Throttle Actuator Control Module",
+    "description": "Lost Communication with Throttle Actuator Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0108",
+    "name": "Lost Communication with Alternative Fuel Control Module",
+    "description": "Lost Communication with Alternative Fuel Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0109",
+    "name": "Lost Communication with Fuel Pump Control Module",
+    "description": "Lost Communication with Fuel Pump Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0110",
+    "name": "Lost Communication with Drive Motor Control Module",
+    "description": "Lost Communication with Drive Motor Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0111",
+    "name": "Lost Communication with Battery Energy Control Module \"A\"",
+    "description": "Lost Communication with Battery Energy Control Module \"A\"",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0112",
+    "name": "Lost Communication with Battery Energy Control Module \"B\"",
+    "description": "Lost Communication with Battery Energy Control Module \"B\"",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0113",
+    "name": "Lost Communication with Emissions Critical Control Info",
+    "description": "Lost Communication with Emissions Critical Control Info",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0114",
+    "name": "Lost Communication with Four-Wheel Drive Clutch Control Module",
+    "description": "Lost Communication with Four-Wheel Drive Clutch Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0115",
+    "name": "Lost Communication with Generator Control Module \"A\"",
+    "description": "Lost Communication with Generator Control Module \"A\"",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0120",
+    "name": "Lost Communication with Starter Control Module",
+    "description": "Lost Communication with Starter Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0121",
+    "name": "Lost Communication with ABS Control Module",
+    "description": "Lost Communication with ABS Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0122",
+    "name": "Lost Communication with Vehicle Dynamic Control Module",
+    "description": "Lost Communication with Vehicle Dynamic Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0123",
+    "name": "Lost Communication with Yaw Rate Sensor Module",
+    "description": "Lost Communication with Yaw Rate Sensor Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0124",
+    "name": "Lost Communication with Lateral Acceleration Sensor Module",
+    "description": "Lost Communication with Lateral Acceleration Sensor Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0125",
+    "name": "Lost Communication with Multi-Axis Acceleration Sensor Module",
+    "description": "Lost Communication with Multi-Axis Acceleration Sensor Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0126",
+    "name": "Lost Communication with Steering Angle Sensor Module",
+    "description": "Lost Communication with Steering Angle Sensor Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0127",
+    "name": "Lost Communication with Tire Pressure Monitor Module",
+    "description": "Lost Communication with Tire Pressure Monitor Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0128",
+    "name": "Lost Communication with Park Brake Control Module",
+    "description": "Lost Communication with Park Brake Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0129",
+    "name": "Lost Communication with Brake System Control Module",
+    "description": "Lost Communication with Brake System Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  },
+  {
+    "code": "U0130",
+    "name": "Lost Communication with Steering Effort Control Module",
+    "description": "Lost Communication with Steering Effort Control Module",
+    "system": "Network",
+    "isGeneric": true,
+    "category": "Lost Communication with Module"
+  }
+]
+
+  let created = 0
+  let skipped = 0
+
+  for (const dtc of dtcs) {
+    try {
+      const existing = await prisma.oBDIIDTCDefinition.findUnique({
+        where: { code: dtc.code }
+      })
+
+      if (existing) {
+        console.log(`Skipping existing DTC: ${dtc.code}`)
+        skipped++
+      } else {
+        await prisma.oBDIIDTCDefinition.create({
+          data: {
+            code: dtc.code,
+            name: dtc.name,
+            description: dtc.description,
+            system: dtc.system,
+            isGeneric: dtc.isGeneric,
+            category: dtc.category
+          }
+        })
+        created++
+      }
+    } catch (error) {
+      console.error(`Error creating DTC ${dtc.code}:`, error.message)
+    }
+  }
+
+  console.log(`OBD-II DTCs seeded: ${created} created, ${skipped} skipped`)
+}
+
+module.exports = { seedOBDIIDTCs }
+
+// Allow running directly
+if (require.main === module) {
+  seedOBDIIDTCs()
+    .then(async () => {
+      await prisma.$disconnect()
+      console.log('Seed completed')
+    })
+    .catch(async (e) => {
+      console.error(e)
+      await prisma.$disconnect()
+      process.exit(1)
+    })
+}

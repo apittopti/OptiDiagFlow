@@ -136,11 +136,60 @@ PostgreSQL database connection:
 
 **IMPORTANT**: Always use these real trace logs for testing. Never create synthetic test logs.
 
-Location: `C:\Optimotive-dev\OptiDiagFlow\ExamplesForClaude\TraceLogs\`
+Complete trace logs collection: `C:\Optimotive-dev\OptiDiagFlow\ExamplesForClaude\TraceLogsComplete\`
+- Contains 35 trace files from various OEMs (Fiat, Ford, Honda, Hyundai, Kia, Land Rover, Mercedes-Benz, MG, Mitsubishi, Nissan, Polestar, Toyota, Vauxhall, Volkswagen, Volvo)
 
-Available trace logs:
+Example trace logs for quick testing:
 - **Land Rover Defender 2020**: `Landrover/Defender/2020/Camera Calibration/8873778.txt`
 - **Polestar 2 2022**: `Polestar/Polestar 2/2022/Camera calibration/8875011.txt`
+
+### Script Organization Rules
+
+**IMPORTANT**: Never create duplicate or temporary scripts. Follow this organization:
+
+```
+opti-diag-flow/
+├── scripts/
+│   ├── dtc/           # DTC-related utilities
+│   ├── import/        # Data import scripts
+│   └── seed/          # Database seeding scripts
+```
+
+**Rules for Creating Scripts**:
+1. Never create test/temporary scripts in the root directory
+2. Always place scripts in the appropriate subdirectory
+3. Never create multiple versions of the same script (no "properly-", "test-", "verify-" prefixes)
+4. One script per purpose - consolidate functionality
+5. Delete test scripts immediately after use
+
+### Importing Trace Files for Testing
+
+**IMPORTANT**: The application ONLY references files in `uploads/traces` directory. The TraceLogsComplete directory is for Claude's reference only.
+
+To properly set up test data, always upload trace files to the application's uploads directory:
+
+```bash
+cd opti-diag-flow
+node scripts/import/upload-trace-files.js
+```
+This script:
+- Reads trace files from TraceLogsComplete (Claude's reference location)
+- Uploads them through the `/api/upload` endpoint
+- Files are saved to `uploads/traces` with timestamped filenames (e.g., `1758886171435-65okmi-YW23BTX_XC90_CAMERA_ALLSCREENS_LOG.txt`)
+- This is where the application expects to find trace files
+
+After uploading, create jobs that reference these uploaded files:
+```bash
+cd opti-diag-flow
+# Create jobs using the uploaded files
+```
+
+#### Important Notes:
+- **Application references**: `uploads/traces` directory ONLY
+- **Claude references**: `TraceLogsComplete` directory for understanding trace content
+- After database reset, always run `properly-upload-traces.js` to populate uploads directory
+- The reparse functionality looks for files in `uploads/traces` by matching filename patterns
+- Currently 35 trace files available for testing after proper upload
 
 ### ODX Reference Files
 

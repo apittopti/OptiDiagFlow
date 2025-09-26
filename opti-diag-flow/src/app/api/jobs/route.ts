@@ -7,7 +7,6 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const vehicleId = searchParams.get('vehicleId')
-    const status = searchParams.get('status')
     const procedureType = searchParams.get('procedureType')
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
@@ -15,7 +14,6 @@ export async function GET(request: NextRequest) {
     const where: any = {}
 
     if (vehicleId) where.vehicleId = vehicleId
-    if (status) where.status = status
     if (procedureType) where.procedureType = { contains: procedureType, mode: 'insensitive' }
 
     const [jobs, total] = await Promise.all([
@@ -102,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     body = await request.json()
-    const { name, jobType, vehicleModelYearId, vin, traceFiles } = body
+    const { name, jobType, description, vehicleModelYearId, vin, traceFiles } = body
 
     if (!name || !jobType || !vehicleModelYearId) {
       return NextResponse.json(
@@ -149,8 +147,8 @@ export async function POST(request: NextRequest) {
     const job = await prisma.diagnosticJob.create({
       data: {
         name,
+        description: description || null,
         procedureType: jobType,
-        status: 'DRAFT',
         vehicleId: vehicle.id,
         uploadedBy: session.user.id,
         messageCount: 0,
@@ -191,10 +189,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      await prisma.diagnosticJob.update({
-        where: { id: job.id },
-        data: { status: 'ACTIVE' }
-      })
+      // Job processing completed - trace files processed
     }
 
     return NextResponse.json(job, { status: 201 })
@@ -317,6 +312,7 @@ async function processTraceFile(jobId: string, traceFile: { name: string, conten
     where: { id: jobId },
     data: {
       messageCount: parsedData.messages.length,
+      duration: parsedData.metadata?.duration || 0,
       metadata: metadataToStore
     }
   })

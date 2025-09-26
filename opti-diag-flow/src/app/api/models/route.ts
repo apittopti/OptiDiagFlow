@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, oemId, platform } = body
+    const { name, oemId, platform, code } = body
 
     if (!name || !oemId) {
       return NextResponse.json(
@@ -80,11 +80,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Generate a code if not provided
+    const modelCode = code || `${oem.shortName || oem.name.toUpperCase()}_${name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`
+
     const model = await prisma.model.create({
       data: {
         name,
         oemId,
-        platform
+        platform,
+        code: modelCode
       },
       include: {
         OEM: {

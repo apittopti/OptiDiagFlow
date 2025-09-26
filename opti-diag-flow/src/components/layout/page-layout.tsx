@@ -11,7 +11,8 @@ import {
   Bell,
   User,
   Settings,
-  Database
+  Database,
+  AlertCircle
 } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 
@@ -31,6 +32,7 @@ export function PageLayout({ children, title, description }: PageLayoutProps) {
     { icon: FileText, label: 'Jobs', path: '/jobs' },
     { icon: Car, label: 'Vehicle Management', path: '/vehicle-management' },
     { icon: Database, label: 'Knowledge Base', path: '/knowledge' },
+    { icon: AlertCircle, label: 'DTC Management', path: '/dtc-management' },
     { icon: Settings, label: 'Settings', path: '/settings' }
   ]
 

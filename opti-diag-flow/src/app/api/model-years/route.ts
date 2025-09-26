@@ -24,6 +24,16 @@ export async function GET(request: NextRequest) {
               }
             }
           }
+        },
+        Vehicle: {
+          include: {
+            _count: {
+              select: { DiagnosticJob: true }
+            }
+          }
+        },
+        _count: {
+          select: { Vehicle: true }
         }
       },
       orderBy: [
@@ -46,7 +56,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { year, modelId } = body
+    const { year, modelId, code, description } = body
 
     if (!year || !modelId) {
       return NextResponse.json(
@@ -55,10 +65,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get the model to generate a proper code
+    const model = await prisma.model.findUnique({
+      where: { id: modelId },
+      include: { OEM: true }
+    })
+
+    if (!model) {
+      return NextResponse.json(
+        { error: 'Model not found' },
+        { status: 404 }
+      )
+    }
+
+    // Generate a code if not provided
+    const modelYearCode = code || `${model.code}_${year}`
+
     const modelYear = await prisma.modelYear.create({
       data: {
         year,
-        modelId
+        modelId,
+        code: modelYearCode,
+        description: description || `${model.OEM.name} ${model.name} ${year}`
       },
       include: {
         Model: {

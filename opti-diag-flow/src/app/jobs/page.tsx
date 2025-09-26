@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { PageLayout } from '@/components/layout/page-layout'
 import { Card, Button, Badge, StatCard } from '@/components/design-system'
 import { colors, spacing } from '@/lib/design-system/tokens'
+import { inputStyles, combineStyles } from '@/lib/design-system/styles'
 import {
   FileText,
   Eye,
@@ -39,7 +40,6 @@ import Link from 'next/link'
 interface Job {
   id: string
   name: string
-  status: 'DRAFT' | 'ACTIVE' | 'ARCHIVED'
   procedureType: string
   vehicleId: string
   uploadedBy: string
@@ -118,6 +118,13 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
 
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false)
+  const [filterOEM, setFilterOEM] = useState('')
+  const [filterModel, setFilterModel] = useState('')
+  const [filterYear, setFilterYear] = useState('')
+  const [filterProcedureType, setFilterProcedureType] = useState('')
+
   // Upload state
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [isDragging, setIsDragging] = useState(false)
@@ -133,6 +140,7 @@ export default function JobsPage() {
   const [jobType, setJobType] = useState('')
   const [customJobType, setCustomJobType] = useState('')
   const [showCustomJobType, setShowCustomJobType] = useState(false)
+  const [jobNotes, setJobNotes] = useState('')
 
   useEffect(() => {
     fetchJobs()
@@ -400,6 +408,7 @@ export default function JobsPage() {
     setJobName('')
     setJobType('')
     setCustomJobType('')
+    setJobNotes('')
     setShowCustomJobType(false)
     setShowCreateForm(false)
   }
@@ -416,6 +425,7 @@ export default function JobsPage() {
         body: JSON.stringify({
           name: jobName,
           jobType: finalJobType,
+          description: jobNotes || null,
           vehicleModelYearId: selectedModelYear,
           vin: selectedVin || null,
           traceFiles: files.filter(f => f.status === 'success').map(f => ({
@@ -444,11 +454,29 @@ export default function JobsPage() {
 
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = searchTerm === '' ||
+                          job.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           job.Vehicle?.ModelYear?.Model?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          job.Vehicle?.vin?.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSearch
+                          job.Vehicle?.vin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          job.procedureType?.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesOEM = filterOEM === '' || job.Vehicle?.ModelYear?.Model?.OEM?.name === filterOEM
+    const matchesModel = filterModel === '' || job.Vehicle?.ModelYear?.Model?.name === filterModel
+    const matchesYear = filterYear === '' || job.Vehicle?.ModelYear?.year?.toString() === filterYear
+    const matchesProcedureType = filterProcedureType === '' || job.procedureType === filterProcedureType
+
+    return matchesSearch && matchesOEM && matchesModel && matchesYear && matchesProcedureType
   })
+
+  // Get unique values for filters
+  const uniqueOEMs = Array.from(new Set(jobs.map(job => job.Vehicle?.ModelYear?.Model?.OEM?.name).filter(Boolean)))
+  const uniqueModels = filterOEM
+    ? Array.from(new Set(jobs
+        .filter(job => job.Vehicle?.ModelYear?.Model?.OEM?.name === filterOEM)
+        .map(job => job.Vehicle?.ModelYear?.Model?.name).filter(Boolean)))
+    : Array.from(new Set(jobs.map(job => job.Vehicle?.ModelYear?.Model?.name).filter(Boolean)))
+  const uniqueYears = Array.from(new Set(jobs.map(job => job.Vehicle?.ModelYear?.year).filter(Boolean))).sort((a, b) => b - a)
+  const uniqueProcedureTypes = Array.from(new Set(jobs.map(job => job.procedureType).filter(Boolean)))
 
   return (
     <PageLayout
@@ -457,13 +485,7 @@ export default function JobsPage() {
     >
       <div className="ds-container">
         {/* Create Job Toggle */}
-        <div className="ds-flex-between" style={{ marginBottom: spacing[6] }}>
-          <div>
-            <h2 className="ds-heading-2">Diagnostic Jobs</h2>
-            <p className="ds-text-secondary">
-              {showCreateForm ? 'Create a new diagnostic job' : 'Manage your uploaded trace logs and diagnostic jobs'}
-            </p>
-          </div>
+        <div className="ds-flex-end" style={{ marginBottom: spacing[6] }}>
           <Button
             variant={showCreateForm ? 'error' : 'primary'}
             icon={showCreateForm ? <X size={16} /> : <Plus size={16} />}
@@ -473,132 +495,474 @@ export default function JobsPage() {
           </Button>
         </div>
 
+
         {/* Create Job Form */}
         {showCreateForm && (
           <Card style={{ marginBottom: spacing[8] }}>
-            <div className="ds-grid-2" style={{ gap: spacing[8] }}>
-              {/* Left Column - Job Details */}
-              <div>
-                <h3 className="ds-heading-3" style={{ marginBottom: spacing[5] }}>
-                  <FileText size={20} style={{ display: 'inline', marginRight: spacing[2], color: colors.primary[600] }} />
-                  Job Details
-                </h3>
+            <div style={{ padding: spacing[6] }}>
+              <h2 className="ds-heading-2" style={{
+                marginBottom: spacing[8],
+                fontSize: '28px',
+                fontWeight: 700,
+                color: colors.text.primary,
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing[3]
+              }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${colors.primary[500]}, ${colors.primary[600]})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)'
+                }}>
+                  <FileText size={24} color="white" />
+                </div>
+                Create New Diagnostic Job
+              </h2>
 
-                <div className="ds-form-group">
-                  <label className="ds-label">Job Name</label>
-                  <input
-                    type="text"
-                    value={jobName}
-                    onChange={(e) => setJobName(e.target.value)}
-                    placeholder="Enter a descriptive name for this job"
-                    className="ds-input"
-                  />
+              {/* Full Width Form Layout */}
+              <div style={{ width: '100%' }}>
+
+                {/* Two Column Grid for Job Name and Type */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: spacing[4] }}>
+                  {/* Job Name - Required */}
+                  <div className="ds-form-group">
+                    <label className="ds-label" style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: colors.text.primary,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      marginBottom: spacing[2],
+                      display: 'block'
+                    }}>
+                      Job Name <span style={{ color: colors.error[500] }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={jobName}
+                      onChange={(e) => setJobName(e.target.value)}
+                      placeholder="Enter a descriptive name for this diagnostic job"
+                      className="ds-input"
+                      style={inputStyles.base}
+                    />
+                  </div>
+
+                  {/* Job Type - Required */}
+                  <div className="ds-form-group">
+                    <label className="ds-label" style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: colors.text.primary,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      marginBottom: spacing[2],
+                      display: 'block'
+                    }}>
+                      Job Type <span style={{ color: colors.error[500] }}>*</span>
+                    </label>
+                    <select
+                      value={jobType}
+                      onChange={(e) => {
+                        setJobType(e.target.value)
+                        setShowCustomJobType(e.target.value === 'custom')
+                        if (e.target.value !== 'custom') {
+                          setCustomJobType('')
+                        }
+                      }}
+                      className="ds-select"
+                      style={combineStyles(inputStyles.base, { cursor: 'pointer' })}
+                    >
+                      <option value="">Select diagnostic procedure type</option>
+                      <option value="Dynamic ADAS calibration">Dynamic ADAS calibration</option>
+                      <option value="Static ADAS calibration">Static ADAS calibration</option>
+                      <option value="Programming & Coding">Programming & Coding</option>
+                      <option value="Key programming">Key programming</option>
+                      <option value="New parts adaption">New parts adaption</option>
+                      <option value="custom">+ Add Custom Job Type</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="ds-form-group">
-                  <label className="ds-label">Job Type</label>
-                  <select
-                    value={jobType}
-                    onChange={(e) => {
-                      setJobType(e.target.value)
-                      setShowCustomJobType(e.target.value === 'custom')
-                      if (e.target.value !== 'custom') {
-                        setCustomJobType('')
-                      }
-                    }}
-                    className="ds-select"
-                  >
-                    <option value="">Select Job Type</option>
-                    <option value="Dynamic ADAS calibration">Dynamic ADAS calibration</option>
-                    <option value="Static ADAS calibration">Static ADAS calibration</option>
-                    <option value="Programming & Coding">Programming & Coding</option>
-                    <option value="Key programming">Key programming</option>
-                    <option value="New parts adaption">New parts adaption</option>
-                    <option value="custom">+ Add Custom Job Type</option>
-                  </select>
-
-                  {showCustomJobType && (
+                {showCustomJobType && (
+                  <div style={{ marginBottom: spacing[4] }}>
                     <input
                       type="text"
                       value={customJobType}
                       onChange={(e) => setCustomJobType(e.target.value)}
                       placeholder="Enter custom job type"
                       className="ds-input"
-                      style={{ marginTop: spacing[2] }}
+                      style={inputStyles.base}
                     />
-                  )}
+                  </div>
+                )}
+
+                {/* Notes - Full Width */}
+                <div className="ds-form-group" style={{ marginBottom: spacing[4] }}>
+                  <label className="ds-label" style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: colors.text.primary,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: spacing[2],
+                    display: 'block'
+                  }}>
+                    Notes
+                  </label>
+                  <textarea
+                    value={jobNotes}
+                    onChange={(e) => setJobNotes(e.target.value)}
+                    placeholder="Additional notes or comments (optional)"
+                    className="ds-input"
+                    rows={3}
+                    style={inputStyles.textarea}
+                  />
                 </div>
 
-                <div className="ds-form-group">
-                  <label className="ds-label">
-                    <Car size={16} style={{ display: 'inline', marginRight: spacing[1] }} />
+                {/* Vehicle Information Section */}
+                <div style={{
+                  marginTop: spacing[5],
+                  marginBottom: spacing[5],
+                  padding: spacing[4],
+                  backgroundColor: colors.background.secondary,
+                  borderRadius: '8px',
+                  border: `1px solid ${colors.border.light}`
+                }}>
+                  <h3 className="ds-heading-3" style={{
+                    marginBottom: spacing[4],
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: colors.text.primary,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing[2]
+                  }}>
+                    <Car size={16} color={colors.primary[600]} />
                     Vehicle Information
-                  </label>
+                  </h3>
 
-                  <div className="ds-grid-2" style={{ gap: spacing[3], marginBottom: spacing[3] }}>
-                    <select
-                      value={selectedOEM}
-                      onChange={(e) => {
-                        setSelectedOEM(e.target.value)
-                        setSelectedModel('')
-                        setSelectedModelYear('')
-                      }}
-                      className="ds-select"
-                    >
-                      <option value="">Select OEM</option>
-                      {vehicleHierarchy.map(oem => (
-                        <option key={oem.id} value={oem.id}>{oem.name}</option>
-                      ))}
-                    </select>
-
-                    <select
-                      value={selectedModel}
-                      onChange={(e) => {
-                        setSelectedModel(e.target.value)
-                        setSelectedModelYear('')
-                      }}
-                      disabled={!selectedOEM}
-                      className="ds-select"
-                    >
-                      <option value="">Select Model</option>
-                      {selectedOEM && vehicleHierarchy
-                        .find(oem => oem.id === selectedOEM)?.models
-                        .map(model => (
-                          <option key={model.id} value={model.id}>{model.name}</option>
+                  {/* OEM, Model, Year - 3 column grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 1fr',
+                    gap: '16px',
+                    marginBottom: spacing[4]
+                  }}>
+                    <div>
+                      <label className="ds-label" style={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: colors.text.primary,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        marginBottom: spacing[2],
+                        display: 'block'
+                      }}>
+                        OEM <span style={{ color: colors.error[500] }}>*</span>
+                      </label>
+                      <select
+                        value={selectedOEM}
+                        onChange={(e) => {
+                          setSelectedOEM(e.target.value)
+                          setSelectedModel('')
+                          setSelectedModelYear('')
+                        }}
+                        className="ds-select"
+                        style={combineStyles(inputStyles.base, { cursor: 'pointer' })}
+                      >
+                        <option value="">Select OEM</option>
+                        {vehicleHierarchy.map(oem => (
+                          <option key={oem.id} value={oem.id}>{oem.name}</option>
                         ))}
-                    </select>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="ds-label" style={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: colors.text.primary,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        marginBottom: spacing[2],
+                        display: 'block'
+                      }}>
+                        Model <span style={{ color: colors.error[500] }}>*</span>
+                      </label>
+                      <select
+                        value={selectedModel}
+                        onChange={(e) => {
+                          setSelectedModel(e.target.value)
+                          setSelectedModelYear('')
+                        }}
+                        disabled={!selectedOEM}
+                        className="ds-select"
+                        style={combineStyles(inputStyles.base, { cursor: 'pointer', opacity: !selectedOEM ? 0.6 : 1 })}
+                      >
+                        <option value="">Select Model</option>
+                        {selectedOEM && vehicleHierarchy
+                          .find(oem => oem.id === selectedOEM)?.models
+                          .map(model => (
+                            <option key={model.id} value={model.id}>{model.name}</option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="ds-label" style={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: colors.text.primary,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        marginBottom: spacing[2],
+                        display: 'block'
+                      }}>
+                        Year <span style={{ color: colors.error[500] }}>*</span>
+                      </label>
+                      <select
+                        value={selectedModelYear}
+                        onChange={(e) => setSelectedModelYear(e.target.value)}
+                        disabled={!selectedModel}
+                        className="ds-select"
+                        style={combineStyles(inputStyles.base, { cursor: 'pointer', opacity: !selectedModel ? 0.6 : 1 })}
+                      >
+                        <option value="">Select Year</option>
+                        {selectedModel && vehicleHierarchy
+                          .find(oem => oem.id === selectedOEM)?.models
+                          .find(model => model.id === selectedModel)?.modelYears
+                          .map(year => (
+                            <option key={year.id} value={year.id}>{year.year}</option>
+                          ))}
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="ds-grid-2" style={{ gap: spacing[3] }}>
-                    <select
-                      value={selectedModelYear}
-                      onChange={(e) => setSelectedModelYear(e.target.value)}
-                      disabled={!selectedModel}
-                      className="ds-select"
-                    >
-                      <option value="">Select Year</option>
-                      {selectedModel && vehicleHierarchy
-                        .find(oem => oem.id === selectedOEM)?.models
-                        .find(model => model.id === selectedModel)?.modelYears
-                        .map(year => (
-                          <option key={year.id} value={year.id}>{year.year}</option>
-                        ))}
-                    </select>
-
+                  {/* VIN - Constrained width */}
+                  <div style={{ maxWidth: '400px' }}>
+                    <label className="ds-label" style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: colors.text.primary,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      marginBottom: spacing[2],
+                      display: 'block'
+                    }}>
+                      VIN (Vehicle Identification Number)
+                    </label>
                     <input
                       type="text"
                       value={selectedVin}
                       onChange={(e) => setSelectedVin(e.target.value)}
-                      placeholder="VIN (optional)"
+                      placeholder="Enter VIN (optional)"
                       className="ds-input"
+                      maxLength={17}
+                      style={combineStyles(inputStyles.base, { fontFamily: 'monospace', letterSpacing: '1px', maxWidth: '400px' })}
                     />
                   </div>
                 </div>
 
-                <div className="ds-flex-row" style={{ gap: spacing[3], marginTop: spacing[6] }}>
+                {/* File Upload Section */}
+                <div style={{
+                  marginTop: spacing[5],
+                  marginBottom: spacing[5],
+                  padding: spacing[4],
+                  backgroundColor: colors.background.secondary,
+                  borderRadius: '8px',
+                  border: `1px solid ${colors.border.light}`
+                }}>
+                  <h3 className="ds-heading-3" style={{
+                    marginBottom: spacing[4],
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: colors.text.primary,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing[2]
+                  }}>
+                    <Upload size={16} color={colors.primary[600]} />
+                    Upload Trace File
+                  </h3>
+
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => document.getElementById('main-file-input')?.click()}
+                    style={{
+                      border: `2px dashed ${isDragging ? colors.primary[400] : colors.border.default}`,
+                      borderRadius: '8px',
+                      padding: `${spacing[5]} ${spacing[6]}`,
+                      textAlign: 'center',
+                      backgroundColor: isDragging ? colors.primary[50] : colors.background.primary,
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer',
+                      marginBottom: spacing[4]
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: spacing[3]
+                    }}>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        backgroundColor: isDragging ? colors.primary[100] : colors.gray[100],
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.3s ease'
+                      }}>
+                        <Upload size={24} color={isDragging ? colors.primary[600] : colors.gray[500]} />
+                      </div>
+
+                      <div style={{ textAlign: 'left' }}>
+                        <h4 style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          margin: 0,
+                          marginBottom: spacing[1],
+                          color: colors.text.primary
+                        }}>
+                          {isDragging ? 'Drop your trace file here' : 'Drag & drop your trace file'}
+                        </h4>
+                        <p style={{
+                          fontSize: '13px',
+                          color: colors.text.secondary,
+                          margin: 0
+                        }}>
+                          or click to browse and select file
+                        </p>
+                      </div>
+
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        icon={<Upload size={16} />}
+                        style={{ pointerEvents: 'none', marginLeft: 'auto' }}
+                      >
+                        Select Trace File
+                      </Button>
+                    </div>
+
+                    <input
+                      id="main-file-input"
+                      type="file"
+                      accept=".pcap,.pcapng,.log,.txt,.asc"
+                      onChange={handleFileInput}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+
+                  {/* Uploaded Files List */}
+                  {files.length > 0 && (
+                    <div>
+                      <h4 className="ds-heading-4" style={{
+                        marginBottom: spacing[3],
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: colors.text.primary
+                      }}>
+                        Uploaded Files
+                      </h4>
+                      <div className="ds-stack" style={{ maxHeight: '300px', overflow: 'auto' }}>
+                        {files.map(file => (
+                          <Card key={file.id} variant="nested" style={{
+                            padding: spacing[4],
+                            backgroundColor: colors.background.primary,
+                            border: `1px solid ${colors.border.light}`,
+                            borderRadius: '8px'
+                          }}>
+                            <div className="ds-flex-row" style={{ gap: spacing[3], alignItems: 'center' }}>
+                              <FileText size={18} color={colors.gray[600]} />
+
+                              <div style={{ flex: 1 }}>
+                                <div className="ds-flex-between" style={{ marginBottom: spacing[1] }}>
+                                  <span style={{
+                                    fontSize: '15px',
+                                    fontWeight: 500,
+                                    color: colors.text.primary
+                                  }}>
+                                    {file.name}
+                                  </span>
+                                  <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                                    {file.status === 'pending' && (
+                                      <span style={{ fontSize: '13px', color: colors.text.muted }}>Waiting...</span>
+                                    )}
+                                    {file.status === 'uploading' && (
+                                      <Loader size={16} className="ds-spinner" />
+                                    )}
+                                    {file.status === 'success' && (
+                                      <CheckCircle size={16} color={colors.success[500]} />
+                                    )}
+                                    {file.status === 'error' && (
+                                      <AlertCircle size={16} color={colors.error[500]} />
+                                    )}
+                                    <button
+                                      onClick={() => removeFile(file.id)}
+                                      className="ds-button ds-button-ghost ds-button-sm ds-button-icon"
+                                      style={{
+                                        width: '28px',
+                                        height: '28px',
+                                        padding: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                      }}
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div style={{
+                                  fontSize: '13px',
+                                  color: colors.text.muted
+                                }}>
+                                  {formatFileSize(file.size)}
+                                </div>
+                                {file.status === 'uploading' && (
+                                  <div className="ds-progress" style={{ marginTop: spacing[2] }}>
+                                    <div className="ds-progress-bar" style={{ width: `${file.progress}%` }} />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: spacing[3],
+                  paddingTop: spacing[6],
+                  borderTop: `1px solid ${colors.border.light}`
+                }}>
                   <Button
                     variant="secondary"
                     onClick={resetUploadForm}
+                    style={{
+                      minWidth: '120px',
+                      padding: `${spacing[3]} ${spacing[5]}`,
+                      fontSize: '16px'
+                    }}
                   >
                     Cancel
                   </Button>
@@ -606,121 +970,22 @@ export default function JobsPage() {
                     variant="primary"
                     onClick={createJob}
                     disabled={!jobName || !selectedModelYear || (!jobType || (jobType === 'custom' && !customJobType)) || files.filter(f => f.status === 'success').length === 0}
+                    style={{
+                      minWidth: '140px',
+                      padding: `${spacing[3]} ${spacing[5]}`,
+                      fontSize: '16px',
+                      fontWeight: 600
+                    }}
                   >
                     Create Job
                   </Button>
                 </div>
-              </div>
 
-              {/* Right Column - File Upload */}
-              <div>
-                <h3 className="ds-heading-3" style={{ marginBottom: spacing[5] }}>
-                  <Upload size={20} style={{ display: 'inline', marginRight: spacing[2], color: colors.primary[600] }} />
-                  Upload Trace Files
-                </h3>
-
-                <div
-                  className="ds-upload-zone"
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => document.getElementById('main-file-input')?.click()}
-                  style={{
-                    borderColor: isDragging ? colors.primary[600] : colors.border.light,
-                    backgroundColor: isDragging ? colors.primary[50] : colors.gray[50],
-                    marginBottom: spacing[5]
-                  }}
-                >
-                  <div className="ds-upload-icon">
-                    <Upload size={24} />
-                  </div>
-
-                  <h4 className="ds-heading-4">
-                    {isDragging ? 'Drop files here' : 'Drag & drop trace files'}
-                  </h4>
-                  <p className="ds-text-secondary">
-                    or click to browse files
-                  </p>
-                  <p className="ds-text-muted">
-                    Supports: .pcap, .pcapng, .log, .txt, .asc files up to 100MB
-                  </p>
-
-                  <input
-                    id="main-file-input"
-                    type="file"
-                    multiple
-                    accept=".pcap,.pcapng,.log,.txt,.asc"
-                    onChange={handleFileInput}
-                    style={{ display: 'none' }}
-                  />
-                </div>
-
-                {/* Uploaded Files List */}
-                {files.length > 0 && (
-                  <div>
-                    <h4 className="ds-heading-4" style={{ marginBottom: spacing[3] }}>
-                      Uploaded Files ({files.length})
-                    </h4>
-                    <div className="ds-stack" style={{ maxHeight: '200px', overflow: 'auto' }}>
-                      {files.map(file => (
-                        <Card key={file.id} variant="nested">
-                          <div className="ds-flex-row" style={{ gap: spacing[3] }}>
-                            <FileText size={16} color={colors.gray[600]} />
-
-                            <div style={{ flex: 1 }}>
-                              <div className="ds-flex-between" style={{ marginBottom: spacing[1] }}>
-                                <span className="ds-text-primary">{file.name}</span>
-                                <div className="ds-flex-row" style={{ gap: spacing[2] }}>
-                                  {file.status === 'pending' && (
-                                    <span className="ds-text-muted">Waiting...</span>
-                                  )}
-                                  {file.status === 'uploading' && (
-                                    <Loader size={14} className="ds-spinner" />
-                                  )}
-                                  {file.status === 'success' && (
-                                    <CheckCircle size={14} color={colors.success[500]} />
-                                  )}
-                                  {file.status === 'error' && (
-                                    <AlertCircle size={14} color={colors.error[500]} />
-                                  )}
-                                  <button
-                                    onClick={() => removeFile(file.id)}
-                                    className="ds-button ds-button-ghost ds-button-sm ds-button-icon"
-                                  >
-                                    <X size={14} />
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="ds-text-muted">
-                                {formatFileSize(file.size)}
-                              </div>
-                              {file.status === 'uploading' && (
-                                <div className="ds-progress" style={{ marginTop: spacing[2] }}>
-                                  <div className="ds-progress-bar" style={{ width: `${file.progress}%` }} />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </Card>
         )}
 
-        {/* Stats */}
-        <div className="ds-grid-4" style={{ marginBottom: spacing[6] }}>
-          <StatCard
-            label="Total Jobs"
-            value={jobs.length}
-            icon={<FileText size={24} />}
-            color="primary"
-            loading={loading}
-          />
-        </div>
 
         {/* Search and Filters */}
         <Card style={{ marginBottom: spacing[6] }}>
@@ -747,15 +1012,141 @@ export default function JobsPage() {
             <Button
               variant="secondary"
               icon={<Filter size={16} />}
+              onClick={() => setShowFilters(!showFilters)}
               style={{ flexShrink: 0 }}
             >
-              Filters
+              Filters {(filterOEM || filterModel || filterYear || filterProcedureType) && (
+                <Badge variant="primary" size="small" style={{ marginLeft: spacing[2] }}>
+                  Active
+                </Badge>
+              )}
             </Button>
           </div>
+
+          {/* Filter Controls */}
+          {showFilters && (
+            <div style={{
+              marginTop: spacing[4],
+              paddingTop: spacing[4],
+              borderTop: `1px solid ${colors.border.light}`,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: spacing[3]
+            }}>
+              <div>
+                <label className="ds-label" style={{ fontSize: '12px', marginBottom: spacing[1] }}>
+                  OEM
+                </label>
+                <select
+                  className="ds-select"
+                  value={filterOEM}
+                  onChange={(e) => {
+                    setFilterOEM(e.target.value)
+                    setFilterModel('') // Reset model when OEM changes
+                  }}
+                  style={combineStyles(inputStyles.base, { cursor: 'pointer' })}
+                >
+                  <option value="">All OEMs</option>
+                  {uniqueOEMs.sort().map(oem => (
+                    <option key={oem} value={oem}>{oem}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="ds-label" style={{ fontSize: '12px', marginBottom: spacing[1] }}>
+                  Model
+                </label>
+                <select
+                  className="ds-select"
+                  value={filterModel}
+                  onChange={(e) => setFilterModel(e.target.value)}
+                  style={combineStyles(inputStyles.base, { cursor: 'pointer' })}
+                  disabled={!filterOEM && uniqueModels.length === 0}
+                >
+                  <option value="">All Models</option>
+                  {uniqueModels.sort().map(model => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="ds-label" style={{ fontSize: '12px', marginBottom: spacing[1] }}>
+                  Year
+                </label>
+                <select
+                  className="ds-select"
+                  value={filterYear}
+                  onChange={(e) => setFilterYear(e.target.value)}
+                  style={combineStyles(inputStyles.base, { cursor: 'pointer' })}
+                >
+                  <option value="">All Years</option>
+                  {uniqueYears.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="ds-label" style={{ fontSize: '12px', marginBottom: spacing[1] }}>
+                  Procedure Type
+                </label>
+                <select
+                  className="ds-select"
+                  value={filterProcedureType}
+                  onChange={(e) => setFilterProcedureType(e.target.value)}
+                  style={combineStyles(inputStyles.base, { cursor: 'pointer' })}
+                >
+                  <option value="">All Types</option>
+                  {uniqueProcedureTypes.sort().map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setFilterOEM('')
+                    setFilterModel('')
+                    setFilterYear('')
+                    setFilterProcedureType('')
+                  }}
+                  style={{ width: '100%' }}
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* Jobs List */}
         <Card>
+          {/* Results Count */}
+          {!loading && (
+            <div style={{
+              marginBottom: spacing[4],
+              paddingBottom: spacing[4],
+              borderBottom: `1px solid ${colors.border.light}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 className="ds-heading-3" style={{ margin: 0 }}>
+                {filteredJobs.length} {filteredJobs.length === 1 ? 'Job' : 'Jobs'} Found
+                {(searchTerm || filterOEM || filterModel || filterYear || filterProcedureType) && (
+                  <span style={{ fontSize: '14px', fontWeight: 400, color: colors.text.muted, marginLeft: spacing[2] }}>
+                    (filtered from {jobs.length} total)
+                  </span>
+                )}
+              </h3>
+            </div>
+          )}
+
           {loading ? (
             <div className="ds-loading-container">
               <div className="ds-spinner-large" />
@@ -815,10 +1206,15 @@ export default function JobsPage() {
                         }}>
                           <FileText size={24} color="white" />
                         </div>
-                        <div>
-                          <h3 className="ds-heading-3" style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
-                            {job.name}
-                          </h3>
+                        <div style={{ flex: 1 }}>
+                          <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center', marginBottom: spacing[1] }}>
+                            <h3 className="ds-heading-3" style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
+                              {job.name}
+                            </h3>
+                            <Badge variant="primary" size="small" style={{ fontWeight: 500 }}>
+                              {job.procedureType}
+                            </Badge>
+                          </div>
                           <p style={{ margin: 0, color: colors.text.secondary, fontSize: '14px' }}>
                             Job #{job.id.slice(0, 8).toUpperCase()}
                           </p>
@@ -827,7 +1223,7 @@ export default function JobsPage() {
 
                       <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                         gap: spacing[3],
                         marginBottom: spacing[4],
                         padding: spacing[4],
@@ -879,6 +1275,47 @@ export default function JobsPage() {
                             width: '32px',
                             height: '32px',
                             borderRadius: '6px',
+                            backgroundColor: colors.info[100],
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <Network size={16} color={colors.info[600]} />
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>Protocol</span>
+                            <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
+                              {(() => {
+                                // Check both ecuSummary and ecus fields
+                                const ecus = (job as any).metadata?.ecuSummary || (job as any).metadata?.ecus || [];
+
+                                // Count protocols by frequency
+                                const protocolCount = {};
+                                ecus.forEach(ecu => {
+                                  if (ecu.protocol) {
+                                    protocolCount[ecu.protocol] = (protocolCount[ecu.protocol] || 0) + 1;
+                                  }
+                                });
+
+                                // Get all unique protocols
+                                const protocols = Object.keys(protocolCount);
+                                if (protocols.length === 0) return 'N/A';
+
+                                // Sort by count (most common first)
+                                const sortedProtocols = protocols.sort((a, b) => protocolCount[b] - protocolCount[a]);
+
+                                // Always show all protocols
+                                return sortedProtocols.join(', ');
+                              })()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '6px',
                             backgroundColor: colors.warning[100],
                             display: 'flex',
                             alignItems: 'center',
@@ -889,7 +1326,27 @@ export default function JobsPage() {
                           <div>
                             <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>Messages</span>
                             <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
-                              {job.messageCount || 0}
+                              {job.messageCount ? job.messageCount.toLocaleString() : '0'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '6px',
+                            backgroundColor: colors.purple[100],
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <Cpu size={16} color={colors.purple[600]} />
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>ECUs</span>
+                            <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
+                              {job._count?.ECUConfiguration || 0}
                             </span>
                           </div>
                         </div>
@@ -904,12 +1361,55 @@ export default function JobsPage() {
                             alignItems: 'center',
                             justifyContent: 'center'
                           }}>
-                            <FileText size={16} color={colors.error[600]} />
+                            <AlertCircle size={16} color={colors.error[600]} />
                           </div>
                           <div>
-                            <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>ECUs</span>
+                            <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>DTCs</span>
                             <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
-                              {job._count?.ECUConfiguration || 0}
+                              {job._count?.DTC || 0}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '6px',
+                            backgroundColor: colors.success[100],
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <Database size={16} color={colors.success[600]} />
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>DIDs</span>
+                            <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
+                              {job._count?.DataIdentifier || 0}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="ds-flex-row" style={{ gap: spacing[2], alignItems: 'center' }}>
+                          <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '6px',
+                            backgroundColor: colors.orange?.[100] || colors.warning[100],
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <Clock size={16} color={colors.orange?.[600] || colors.warning[600]} />
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '12px', color: colors.text.muted, display: 'block' }}>Duration</span>
+                            <span style={{ fontSize: '14px', fontWeight: 500, color: colors.text.primary }}>
+                              {(() => {
+                                const duration = job.duration || (job as any).metadata?.duration;
+                                return duration ? formatDuration(duration) : 'N/A';
+                              })()}
                             </span>
                           </div>
                         </div>
@@ -932,18 +1432,32 @@ export default function JobsPage() {
                       <div className="ds-flex-row" style={{ gap: spacing[3], marginBottom: spacing[3], flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '13px', color: colors.text.muted }}>
                           <Clock size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                          Created: {new Date(job.createdAt).toLocaleDateString()}
+                          Created: {new Date(job.createdAt).toLocaleDateString()} at {new Date(job.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </span>
-                        {job.duration && (
-                          <span style={{ fontSize: '13px', color: colors.text.muted }}>
-                            <Activity size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                            Duration: {formatDuration(job.duration)}
-                          </span>
-                        )}
-                        <span style={{ fontSize: '13px', color: colors.text.muted }}>
-                          <Settings size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                          Type: {job.procedureType}
-                        </span>
+                        {(() => {
+                          const traceFileName = (job as any).metadata?.traceFileName;
+                          return traceFileName ? (
+                            <span style={{ fontSize: '13px', color: colors.text.muted }}>
+                              <File size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                              File: {traceFileName}
+                            </span>
+                          ) : null;
+                        })()}
+                        {(() => {
+                          const startTime = (job as any).metadata?.startTime;
+                          const endTime = (job as any).metadata?.endTime;
+                          if (startTime && endTime) {
+                            const sessionStart = new Date(startTime);
+                            const sessionEnd = new Date(endTime);
+                            return (
+                              <span style={{ fontSize: '13px', color: colors.text.muted }}>
+                                <Activity size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                                Session: {sessionStart.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})} - {sessionEnd.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
 
                       {job.TraceSession && job.TraceSession.length > 0 && (
@@ -981,6 +1495,24 @@ export default function JobsPage() {
                                 {job.ODXDiscoveryResult[0].didCount} DIDs
                               </Badge>
                             </>
+                          )}
+                          {/* Show protocol badges */}
+                          {(() => {
+                            const protocols = (job as any).metadata?.ecuSummary?.map(ecu => ecu.protocol).filter(Boolean) || [];
+                            const uniqueProtocols = [...new Set(protocols)];
+                            return uniqueProtocols.map(protocol => (
+                              <Badge key={protocol} variant="info" size="small">
+                                <Network size={14} style={{ marginRight: spacing[1] }} />
+                                {protocol}
+                              </Badge>
+                            ));
+                          })()}
+                          {/* Show routines if any */}
+                          {job._count?.Routine > 0 && (
+                            <Badge variant="purple" size="small">
+                              <Settings size={14} style={{ marginRight: spacing[1] }} />
+                              {job._count.Routine} Routines
+                            </Badge>
                           )}
                         </div>
                       )}
@@ -1033,7 +1565,11 @@ export default function JobsPage() {
                         Reparse
                       </Button>
                       <Link href={`/jobs/${job.id}/edit`}>
-                        <Button variant="secondary" size="small" icon={<Edit size={16} />}>
+                        <Button
+                          variant="secondary"
+                          size="small"
+                          icon={<Edit size={16} />}
+                        >
                           Edit
                         </Button>
                       </Link>

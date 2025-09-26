@@ -87,3 +87,6 @@ next-env.d.ts
 public/workbox-*.js
 public/sw.js
 public/worker-*.js
+
+# Reference data for Claude - Not for application use
+ExamplesForClaude/

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft, Download, RefreshCw, AlertCircle, Activity, Database, Cpu, CheckCircle, XCircle, ArrowRight, ChevronDown, Filter, FileDigit, Zap, Car, Calendar, Info, Shield, GitBranch, AlertTriangle, Hash, Wrench, Settings, Gauge, Lock, Key, FileText, Play, Square, RotateCw, HardDrive, Network, Power, Terminal, Binary, Upload, Trash2, Clock } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea, Dot } from 'recharts'
@@ -48,6 +48,7 @@ export default function JobDetailsPage() {
   const router = useRouter()
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [obdiiDTCsCache, setObdiiDTCsCache] = useState<Record<string, any>>({})
   const [activeTab, setActiveTab] = useState('jifeline')
   const [selectedEcu, setSelectedEcu] = useState<string | null>(null)
   const [messages, setMessages] = useState<any[]>([])
@@ -180,6 +181,73 @@ export default function JobDetailsPage() {
 
     fetchKnowledgeBase()
   }, [])
+
+  // Fetch OBD-II DTCs from database
+  const fetchOBDIIDTCs = useCallback(async (codes: string[]) => {
+    try {
+      // Check cache first
+      const uncachedCodes = codes.filter(code => !obdiiDTCsCache[code])
+      if (uncachedCodes.length === 0) return // All codes are cached
+
+      const response = await fetch('/api/obdii-dtcs/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codes: uncachedCodes })
+      })
+
+      if (response.ok) {
+        const results = await response.json()
+        setObdiiDTCsCache(prev => ({ ...prev, ...results }))
+      }
+    } catch (error) {
+      console.error('Error fetching OBD-II DTCs:', error)
+    }
+  }, [obdiiDTCsCache])
+
+  // Pre-fetch OBD-II DTCs when EOBD tab is shown
+  useEffect(() => {
+    if (activeTab === 'eobd' && messages.length > 0) {
+      const obdCodes = new Set<string>()
+
+      // Extract all OBD-II codes from messages
+      messages.forEach((msg: any) => {
+        if (msg.diagnosticProtocol === 'OBD-II' && msg.data) {
+          const service = parseInt(msg.data.substring(0, 2), 16)
+          if ((service === 0x03 || service === 0x07 || service === 0x43 || service === 0x47) && msg.data.length > 4) {
+            const dataPortionOnly = msg.data.substring(4)
+            if (dataPortionOnly.length > 2) {
+              const dtcData = dataPortionOnly.substring(2)
+              for (let i = 0; i < dtcData.length; i += 4) {
+                if (i + 4 <= dtcData.length) {
+                  const dtcHex = dtcData.substring(i, i + 4)
+                  // Decode to get the code
+                  const firstDigit = parseInt(dtcHex[0], 16)
+                  const secondDigit = dtcHex[1]
+                  const thirdFourthDigits = dtcHex.substring(2)
+                  let prefix = ''
+                  switch (firstDigit >> 2) {
+                    case 0: prefix = 'P'; break
+                    case 1: prefix = 'C'; break
+                    case 2: prefix = 'B'; break
+                    case 3: prefix = 'U'; break
+                    default: prefix = 'P'; break
+                  }
+                  const isGeneric = (firstDigit & 0x02) === 0
+                  const genericFlag = isGeneric ? '0' : '1'
+                  const fullCode = `${prefix}${genericFlag}${secondDigit}${thirdFourthDigits}`
+                  obdCodes.add(fullCode)
+                }
+              }
+            }
+          }
+        }
+      })
+
+      if (obdCodes.size > 0) {
+        fetchOBDIIDTCs(Array.from(obdCodes))
+      }
+    }
+  }, [activeTab, messages, fetchOBDIIDTCs])
 
   // Analyze security access in the trace
   const analyzeSecurityAccess = () => {
@@ -377,6 +445,7 @@ export default function JobDetailsPage() {
     '60': 'PIDs supported [61-80]'
   }
 
+
   // OBD-II DTC decoder function
   function decodeOBDIIDTC(dtcHex: string): { code: string, description: string } {
     if (dtcHex.length !== 4) {
@@ -403,571 +472,20 @@ export default function JobDetailsPage() {
 
     const fullCode = `${prefix}${genericFlag}${secondDigit}${thirdFourthDigits}`
 
-    // Common OBD-II DTC descriptions for generic codes
-    const obdiiDTCs: Record<string, string> = {
-      // P0xxx - Powertrain Generic
-      'P0100': 'Mass or Volume Air Flow Circuit Malfunction',
-      'P0101': 'Mass or Volume Air Flow Circuit Range/Performance Problem',
-      'P0102': 'Mass or Volume Air Flow Circuit Low Input',
-      'P0103': 'Mass or Volume Air Flow Circuit High Input',
-      'P0104': 'Mass or Volume Air Flow Circuit Intermittent',
-      'P0105': 'Manifold Absolute Pressure/Barometric Pressure Circuit Malfunction',
-      'P0106': 'Manifold Absolute Pressure/Barometric Pressure Circuit Range/Performance Problem',
-      'P0107': 'Manifold Absolute Pressure/Barometric Pressure Circuit Low Input',
-      'P0108': 'Manifold Absolute Pressure/Barometric Pressure Circuit High Input',
-      'P0109': 'Manifold Absolute Pressure/Barometric Pressure Circuit Intermittent',
-      'P0110': 'Intake Air Temperature Circuit Malfunction',
-      'P0111': 'Intake Air Temperature Circuit Range/Performance Problem',
-      'P0112': 'Intake Air Temperature Circuit Low Input',
-      'P0113': 'Intake Air Temperature Circuit High Input',
-      'P0114': 'Intake Air Temperature Circuit Intermittent',
-      'P0115': 'Engine Coolant Temperature Circuit Malfunction',
-      'P0116': 'Engine Coolant Temperature Circuit Range/Performance Problem',
-      'P0117': 'Engine Coolant Temperature Circuit Low Input',
-      'P0118': 'Engine Coolant Temperature Circuit High Input',
-      'P0119': 'Engine Coolant Temperature Circuit Intermittent',
-      'P0120': 'Throttle/Pedal Position Sensor/Switch "A" Circuit Malfunction',
-      'P0121': 'Throttle/Pedal Position Sensor/Switch "A" Circuit Range/Performance Problem',
-      'P0122': 'Throttle/Pedal Position Sensor/Switch "A" Circuit Low Input',
-      'P0123': 'Throttle/Pedal Position Sensor/Switch "A" Circuit High Input',
-      'P0124': 'Throttle/Pedal Position Sensor/Switch "A" Circuit Intermittent',
-      'P0020': 'Intake Camshaft Position Actuator Circuit/Open (Bank 2)',
-      'P0021': 'Intake Camshaft Position Timing - Over-Advanced (Bank 2)',
-      'P0022': 'Intake Camshaft Position Timing - Over-Retarded (Bank 2)',
-      'P0023': 'Exhaust Camshaft Position Actuator Circuit/Open (Bank 2)',
-      'P0024': 'Exhaust Camshaft Position Timing - Over-Advanced (Bank 2)',
-      'P0025': 'Exhaust Camshaft Position Timing - Over-Retarded (Bank 2)',
-      'P0026': 'Intake Valve Control Solenoid Circuit Range/Performance (Bank 1)',
-      'P0027': 'Exhaust Valve Control Solenoid Circuit Range/Performance (Bank 1)',
-      'P0028': 'Intake Valve Control Solenoid Circuit Range/Performance (Bank 2)',
-      'P0029': 'Exhaust Valve Control Solenoid Circuit Range/Performance (Bank 2)',
-      'P0030': 'O2 Sensor Heater Control Circuit (Bank 1, Sensor 1)',
-      'P0031': 'O2 Sensor Heater Control Circuit Low (Bank 1, Sensor 1)',
-      'P0032': 'O2 Sensor Heater Control Circuit High (Bank 1, Sensor 1)',
-      'P0033': 'Turbo/Super Charger Bypass Valve Control Circuit',
-      'P0034': 'Turbo/Super Charger Bypass Valve Control Circuit Low',
-      'P0035': 'Turbo/Super Charger Bypass Valve Control Circuit High',
-      'P0036': 'O2 Sensor Heater Control Circuit (Bank 1, Sensor 2)',
-      'P0037': 'O2 Sensor Heater Control Circuit Low (Bank 1, Sensor 2)',
-      'P0038': 'O2 Sensor Heater Control Circuit High (Bank 1, Sensor 2)',
-      'P0039': 'Turbo/Super Charger Bypass Valve Control Circuit Range/Performance',
-      'P0040': 'O2 Sensor Signals Swapped (Bank 1, Sensor 1 / Bank 2, Sensor 1)',
-      'P0041': 'O2 Sensor Signals Swapped (Bank 1, Sensor 2 / Bank 2, Sensor 2)',
-      'P0042': 'O2 Sensor Heater Control Circuit (Bank 1, Sensor 3)',
-      'P0043': 'O2 Sensor Heater Control Circuit Low (Bank 1, Sensor 3)',
-      'P0044': 'O2 Sensor Heater Control Circuit High (Bank 1, Sensor 3)',
-      'P0045': 'Turbo/Super Charger Boost Control Solenoid Circuit/Open',
-      'P0046': 'Turbo/Super Charger Boost Control Solenoid Circuit Range/Performance',
-      'P0047': 'Turbo/Super Charger Boost Control Solenoid Circuit Low',
-      'P0048': 'Turbo/Super Charger Boost Control Solenoid Circuit High',
-      'P0049': 'Turbo/Super Charger Turbine Overspeed',
-      'P0050': 'O2 Sensor Heater Control Circuit (Bank 2, Sensor 1)',
-      'P0051': 'O2 Sensor Heater Control Circuit Low (Bank 2, Sensor 1)',
-      'P0052': 'O2 Sensor Heater Control Circuit High (Bank 2, Sensor 1)',
-      'P0053': 'O2 Sensor Heater Resistance (Bank 1, Sensor 1)',
-      'P0054': 'O2 Sensor Heater Resistance (Bank 1, Sensor 2)',
-      'P0055': 'O2 Sensor Heater Resistance (Bank 1, Sensor 3)',
-      'P0056': 'O2 Sensor Heater Control Circuit (Bank 2, Sensor 2)',
-      'P0057': 'O2 Sensor Heater Control Circuit Low (Bank 2, Sensor 2)',
-      'P0058': 'O2 Sensor Heater Control Circuit High (Bank 2, Sensor 2)',
-      'P0059': 'O2 Sensor Heater Resistance (Bank 2, Sensor 1)',
-      'P0060': 'O2 Sensor Heater Resistance (Bank 2, Sensor 2)',
-      'P0061': 'O2 Sensor Heater Resistance (Bank 2, Sensor 3)',
-      'P0062': 'O2 Sensor Heater Control Circuit (Bank 2, Sensor 3)',
-      'P0063': 'O2 Sensor Heater Control Circuit Low (Bank 2, Sensor 3)',
-      'P0064': 'O2 Sensor Heater Control Circuit High (Bank 2, Sensor 3)',
-      'P0065': 'Air Assisted Injector Control Range/Performance',
-      'P0066': 'Air Assisted Injector Control Circuit/Open',
-      'P0067': 'Air Assisted Injector Control Circuit Low',
-      'P0068': 'Manifold Absolute Pressure/Mass Air Flow Throttle Position Correlation',
-      'P0069': 'Manifold Absolute Pressure/Barometric Pressure Correlation',
-      'P0070': 'Ambient Air Temperature Sensor Circuit',
-      'P0071': 'Ambient Air Temperature Sensor Range/Performance',
-      'P0072': 'Ambient Air Temperature Sensor Circuit Low',
-      'P0073': 'Ambient Air Temperature Sensor Circuit High',
-      'P0074': 'Ambient Air Temperature Sensor Circuit Intermittent',
-      'P0075': 'Intake Valve Control Solenoid Circuit (Bank 1)',
-      'P0076': 'Intake Valve Control Solenoid Circuit Low (Bank 1)',
-      'P0077': 'Intake Valve Control Solenoid Circuit High (Bank 1)',
-      'P0078': 'Exhaust Valve Control Solenoid Circuit (Bank 1)',
-      'P0079': 'Exhaust Valve Control Solenoid Circuit Low (Bank 1)',
-      'P0080': 'Exhaust Valve Control Solenoid Circuit High (Bank 1)',
-      'P0081': 'Intake Valve Control Solenoid Circuit (Bank 2)',
-      'P0082': 'Intake Valve Control Solenoid Circuit Low (Bank 2)',
-      'P0083': 'Intake Valve Control Solenoid Circuit High (Bank 2)',
-      'P0084': 'Exhaust Valve Control Solenoid Circuit (Bank 2)',
-      'P0085': 'Exhaust Valve Control Solenoid Circuit Low (Bank 2)',
-      'P0086': 'Exhaust Valve Control Solenoid Circuit High (Bank 2)',
-      'P0087': 'Fuel Rail/System Pressure Too Low',
-      'P0088': 'Fuel Rail/System Pressure Too High',
-      'P0089': 'Fuel Pressure Regulator Performance',
-      'P0090': 'Fuel Pressure Regulator Control Circuit',
-      'P0091': 'Fuel Pressure Regulator Control Circuit Low',
-      'P0092': 'Fuel Pressure Regulator Control Circuit High',
-      'P0093': 'Fuel System Leak Detected - Large Leak',
-      'P0094': 'Fuel System Leak Detected - Small Leak',
-      'P0095': 'Intake Air Temperature Sensor 2 Circuit',
-      'P0096': 'Intake Air Temperature Sensor 2 Circuit Range/Performance',
-      'P0097': 'Intake Air Temperature Sensor 2 Circuit Low',
-      'P0098': 'Intake Air Temperature Sensor 2 Circuit High',
-      'P0099': 'Intake Air Temperature Sensor 2 Circuit Intermittent/Erratic',
-      'P0125': 'Insufficient Coolant Temperature for Closed Loop Fuel Control',
-      'P0126': 'Insufficient Coolant Temperature for Stable Operation',
-      'P0127': 'Intake Air Temperature Too High',
-      'P0128': 'Coolant Thermostat (Coolant Temperature Below Thermostat Regulating Temperature)',
-      'P0129': 'Barometric Pressure Too Low',
-      'P0130': 'O2 Sensor Circuit Malfunction (Bank 1, Sensor 1)',
-      'P0131': 'O2 Sensor Circuit Low Voltage (Bank 1, Sensor 1)',
-      'P0132': 'O2 Sensor Circuit High Voltage (Bank 1, Sensor 1)',
-      'P0133': 'O2 Sensor Circuit Slow Response (Bank 1, Sensor 1)',
-      'P0134': 'O2 Sensor Circuit No Activity Detected (Bank 1, Sensor 1)',
-      'P0135': 'O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 1)',
-      'P0136': 'O2 Sensor Circuit Malfunction (Bank 1, Sensor 2)',
-      'P0137': 'O2 Sensor Circuit Low Voltage (Bank 1, Sensor 2)',
-      'P0138': 'O2 Sensor Circuit High Voltage (Bank 1, Sensor 2)',
-      'P0139': 'O2 Sensor Circuit Slow Response (Bank 1, Sensor 2)',
-      'P0140': 'O2 Sensor Circuit No Activity Detected (Bank 1, Sensor 2)',
-      'P0141': 'O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 2)',
-      'P0150': 'O2 Sensor Circuit Malfunction (Bank 2, Sensor 1)',
-      'P0151': 'O2 Sensor Circuit Low Voltage (Bank 2, Sensor 1)',
-      'P0152': 'O2 Sensor Circuit High Voltage (Bank 2, Sensor 1)',
-      'P0153': 'O2 Sensor Circuit Slow Response (Bank 2, Sensor 1)',
-      'P0154': 'O2 Sensor Circuit No Activity Detected (Bank 2, Sensor 1)',
-      'P0155': 'O2 Sensor Heater Circuit Malfunction (Bank 2, Sensor 1)',
-      'P0156': 'O2 Sensor Circuit Malfunction (Bank 2, Sensor 2)',
-      'P0157': 'O2 Sensor Circuit Low Voltage (Bank 2, Sensor 2)',
-      'P0158': 'O2 Sensor Circuit High Voltage (Bank 2, Sensor 2)',
-      'P0159': 'O2 Sensor Circuit Slow Response (Bank 2, Sensor 2)',
-      'P0160': 'O2 Sensor Circuit No Activity Detected (Bank 2, Sensor 2)',
-      'P0161': 'O2 Sensor Heater Circuit Malfunction (Bank 2, Sensor 2)',
-      'P0170': 'Fuel Trim Malfunction (Bank 1)',
-      'P0171': 'System Too Lean (Bank 1)',
-      'P0172': 'System Too Rich (Bank 1)',
-      'P0173': 'Fuel Trim Malfunction (Bank 2)',
-      'P0174': 'System Too Lean (Bank 2)',
-      'P0175': 'System Too Rich (Bank 2)',
-      'P0300': 'Random/Multiple Cylinder Misfire Detected',
-      'P0301': 'Cylinder 1 Misfire Detected',
-      'P0302': 'Cylinder 2 Misfire Detected',
-      'P0303': 'Cylinder 3 Misfire Detected',
-      'P0304': 'Cylinder 4 Misfire Detected',
-      'P0305': 'Cylinder 5 Misfire Detected',
-      'P0306': 'Cylinder 6 Misfire Detected',
-      'P0307': 'Cylinder 7 Misfire Detected',
-      'P0308': 'Cylinder 8 Misfire Detected',
-      'P0320': 'Ignition/Distributor Engine Speed Input Circuit Malfunction',
-      'P0325': 'Knock Sensor 1 Circuit Malfunction (Bank 1 or Single Sensor)',
-      'P0330': 'Knock Sensor 2 Circuit Malfunction (Bank 2)',
-      'P0335': 'Crankshaft Position Sensor "A" Circuit Malfunction',
-      'P0340': 'Camshaft Position Sensor Circuit Malfunction',
-      'P0401': 'Exhaust Gas Recirculation Flow Insufficient Detected',
-      'P0402': 'Exhaust Gas Recirculation Flow Excessive Detected',
-      'P0403': 'Exhaust Gas Recirculation Circuit Malfunction',
-      'P0404': 'Exhaust Gas Recirculation Circuit Range/Performance',
-      'P0405': 'Exhaust Gas Recirculation Sensor "A" Circuit Low',
-      'P0406': 'Exhaust Gas Recirculation Sensor "A" Circuit High',
-      'P0420': 'Catalyst System Efficiency Below Threshold (Bank 1)',
-      'P0430': 'Catalyst System Efficiency Below Threshold (Bank 2)',
-      'P0440': 'Evaporative Emission Control System Malfunction',
-      'P0441': 'Evaporative Emission Control System Incorrect Purge Flow',
-      'P0442': 'Evaporative Emission Control System Leak Detected (Small Leak)',
-      'P0443': 'Evaporative Emission Control System Purge Control Valve Circuit Malfunction',
-      'P0446': 'Evaporative Emission Control System Vent Control Circuit Malfunction',
-      'P0449': 'Evaporative Emission Control System Vent Valve/Solenoid Circuit Malfunction',
-      'P0450': 'Evaporative Emission Control System Pressure Sensor Malfunction',
-      'P0451': 'Evaporative Emission Control System Pressure Sensor Range/Performance',
-      'P0452': 'Evaporative Emission Control System Pressure Sensor Low Input',
-      'P0453': 'Evaporative Emission Control System Pressure Sensor High Input',
-      'P0455': 'Evaporative Emission Control System Leak Detected (Gross Leak)',
-      'P0500': 'Vehicle Speed Sensor Malfunction',
-      'P0501': 'Vehicle Speed Sensor Range/Performance',
-      'P0502': 'Vehicle Speed Sensor Circuit Low Input',
-      'P0503': 'Vehicle Speed Sensor Intermittent/Erratic/High',
-      'P0505': 'Idle Control System Malfunction',
-      'P0506': 'Idle Control System RPM Lower Than Expected',
-      'P0507': 'Idle Control System RPM Higher Than Expected',
-      'P0510': 'Closed Throttle Position Switch Malfunction',
-      'P0600': 'Serial Communication Link Malfunction',
-      'P0601': 'Internal Control Module Memory Check Sum Error',
-      'P0602': 'Control Module Programming Error',
-      'P0603': 'Internal Control Module Keep Alive Memory (KAM) Error',
-      'P0604': 'Internal Control Module Random Access Memory (RAM) Error',
-      'P0605': 'Internal Control Module Read Only Memory (ROM) Error',
-      'P0700': 'Transmission Control System Malfunction',
-      'P0701': 'Transmission Control System Range/Performance',
-      'P0702': 'Transmission Control System Electrical',
-      'P0703': 'Torque Converter/Brake Switch "B" Circuit Malfunction',
-      'P0704': 'Clutch Switch Input Circuit Malfunction',
-      'P0705': 'Transmission Range Sensor Circuit Malfunction (PRNDL Input)',
-      'P0720': 'Output Speed Sensor Circuit Malfunction',
-      'P0725': 'Engine Speed Input Circuit Malfunction',
-      'P0730': 'Incorrect Gear Ratio',
-      'P0740': 'Torque Converter Clutch Circuit Malfunction',
-      'P0741': 'Torque Converter Clutch Circuit Performance or Stuck Off',
-      'P0742': 'Torque Converter Clutch Circuit Stuck On',
-      'P0743': 'Torque Converter Clutch Circuit Electrical',
-      'P0744': 'Torque Converter Clutch Circuit Intermittent',
-      'P0745': 'Pressure Control Solenoid Malfunction',
-      'P0746': 'Pressure Control Solenoid Performance or Stuck Off',
-      'P0747': 'Pressure Control Solenoid Stuck On',
-      'P0748': 'Pressure Control Solenoid Electrical',
-      'P0749': 'Pressure Control Solenoid Intermittent',
-      'P0750': 'Shift Solenoid "A" Malfunction',
-      'P0751': 'Shift Solenoid "A" Performance or Stuck Off',
-      'P0752': 'Shift Solenoid "A" Stuck On',
-      'P0753': 'Shift Solenoid "A" Electrical',
-      'P0754': 'Shift Solenoid "A" Intermittent',
-      'P0755': 'Shift Solenoid "B" Malfunction',
-      'P0756': 'Shift Solenoid "B" Performance or Stuck Off',
-      'P0757': 'Shift Solenoid "B" Stuck On',
-      'P0758': 'Shift Solenoid "B" Electrical',
-      'P0759': 'Shift Solenoid "B" Intermittent',
-      'P0760': 'Shift Solenoid "C" Malfunction',
-      'P0761': 'Shift Solenoid "C" Performance or Stuck Off',
-      'P0762': 'Shift Solenoid "C" Stuck On',
-      'P0763': 'Shift Solenoid "C" Electrical',
-      'P0764': 'Shift Solenoid "C" Intermittent',
-      'P0765': 'Shift Solenoid "D" Malfunction',
-      'P0766': 'Shift Solenoid "D" Performance or Stuck Off',
-      'P0767': 'Shift Solenoid "D" Stuck On',
-      'P0768': 'Shift Solenoid "D" Electrical',
-      'P0769': 'Shift Solenoid "D" Intermittent',
-      'P0770': 'Shift Solenoid "E" Malfunction',
-      'P0771': 'Shift Solenoid "E" Performance or Stuck Off',
-      'P0772': 'Shift Solenoid "E" Stuck On',
-      'P0773': 'Shift Solenoid "E" Electrical',
-      'P0774': 'Shift Solenoid "E" Intermittent',
-      'P0780': 'Shift Malfunction',
-      'P0781': '1-2 Shift Malfunction',
-      'P0782': '2-3 Shift Malfunction',
-      'P0783': '3-4 Shift Malfunction',
-      'P0784': '4-5 Shift Malfunction',
-      'P0785': 'Shift/Timing Solenoid Malfunction',
-      'P0786': 'Shift/Timing Solenoid Range/Performance',
-      'P0787': 'Shift/Timing Solenoid Low',
-      'P0788': 'Shift/Timing Solenoid High',
-      'P0789': 'Shift/Timing Solenoid Intermittent',
-      'P0790': 'Normal/Performance Switch Circuit Malfunction',
-      'P0791': 'Intermediate Shaft Speed Sensor Circuit',
-      'P0792': 'Intermediate Shaft Speed Sensor Circuit Range/Performance',
-      'P0793': 'Intermediate Shaft Speed Sensor Circuit No Signal',
-      'P0794': 'Intermediate Shaft Speed Sensor Circuit Intermittent',
-      'P0795': 'Pressure Control Solenoid "C"',
-      'P0796': 'Pressure Control Solenoid "C" Performance or Stuck Off',
-      'P0797': 'Pressure Control Solenoid "C" Stuck On',
-      'P0798': 'Pressure Control Solenoid "C" Electrical',
-      'P0799': 'Pressure Control Solenoid "C" Intermittent',
-
-      // P1xxx - Manufacturer Specific Powertrain
-      'P1000': 'OBD System Readiness Test Not Complete',
-      'P1001': 'Key On Engine Running (KOER) Self-Test Not Able to Complete',
-      'P1100': 'Mass Air Flow Sensor Intermittent',
-      'P1101': 'Mass Air Flow Sensor Out of Self-Test Range',
-      'P1110': 'Intake Air Temperature Sensor Intermittent',
-      'P1111': 'System Pass',
-      'P1112': 'Intake Air Temperature Sensor Intermittent',
-      'P1116': 'Engine Coolant Temperature Sensor Out of Self-Test Range',
-      'P1117': 'Engine Coolant Temperature Sensor Intermittent',
-      'P1120': 'Throttle Position Sensor Out of Range (Low)',
-      'P1121': 'Throttle Position Sensor Inconsistent with MAF',
-      'P1124': 'Throttle Position Sensor Out of Self-Test Range',
-      'P1125': 'Throttle Position Sensor Circuit Intermittent',
-      'P1130': 'Lack of HO2S-11 Switch - Adaptive Fuel at Limit',
-      'P1131': 'Lack of HO2S-11 Switch - Sensor Indicates Lean',
-      'P1132': 'Lack of HO2S-11 Switch - Sensor Indicates Rich',
-      'P1137': 'Lack of HO2S-12 Switch - Sensor Indicates Lean',
-      'P1138': 'Lack of HO2S-12 Switch - Sensor Indicates Rich',
-      'P1150': 'Lack of HO2S-21 Switch - Adaptive Fuel at Limit',
-      'P1151': 'Lack of HO2S-21 Switch - Sensor Indicates Lean',
-      'P1152': 'Lack of HO2S-21 Switch - Sensor Indicates Rich',
-      'P1157': 'Lack of HO2S-22 Switch - Sensor Indicates Lean',
-      'P1158': 'Lack of HO2S-22 Switch - Sensor Indicates Rich',
-
-      // More standard P0xxx codes
-      'P0800': 'Transfer Case Control System Request MIL',
-      'P0801': 'Reverse Inhibit Control Circuit Malfunction',
-      'P0803': '1-4 Upshift (Skip Shift) Solenoid Control Circuit Malfunction',
-      'P0804': '1-4 Upshift (Skip Shift) Lamp Control Circuit Malfunction',
-      'P0805': 'Clutch Position Sensor Circuit Malfunction',
-      'P0820': 'Gear Lever X-Y Position Sensor Circuit',
-      'P0830': 'Clutch Pedal Switch "A" Circuit',
-      'P0831': 'Clutch Pedal Switch "A" Circuit Low',
-      'P0832': 'Clutch Pedal Switch "A" Circuit High',
-      'P0833': 'Clutch Pedal Switch "B" Circuit',
-      'P0834': 'Clutch Pedal Switch "B" Circuit Low',
-      'P0835': 'Clutch Pedal Switch "B" Circuit High',
-      'P0840': 'Transmission Fluid Pressure Sensor/Switch "A" Circuit',
-      'P0841': 'Transmission Fluid Pressure Sensor/Switch "A" Circuit Range/Performance',
-      'P0842': 'Transmission Fluid Pressure Sensor/Switch "A" Circuit Low',
-      'P0843': 'Transmission Fluid Pressure Sensor/Switch "A" Circuit High',
-      'P0844': 'Transmission Fluid Pressure Sensor/Switch "A" Circuit Intermittent',
-      'P0845': 'Transmission Fluid Pressure Sensor/Switch "B" Circuit',
-      'P0846': 'Transmission Fluid Pressure Sensor/Switch "B" Circuit Range/Performance',
-      'P0847': 'Transmission Fluid Pressure Sensor/Switch "B" Circuit Low',
-      'P0848': 'Transmission Fluid Pressure Sensor/Switch "B" Circuit High',
-      'P0849': 'Transmission Fluid Pressure Sensor/Switch "B" Circuit Intermittent',
-      'P0850': 'Park/Neutral Position (PNP) Switch Input Circuit',
-      'P0851': 'Park/Neutral Position (PNP) Switch Input Circuit Low',
-      'P0852': 'Park/Neutral Position (PNP) Switch Input Circuit High',
-      'P0853': 'Drive Switch Input Circuit',
-      'P0854': 'Drive Switch Input Circuit Low',
-      'P0855': 'Drive Switch Input Circuit High',
-      'P0856': 'Traction Control Input Signal',
-      'P0857': 'Traction Control Input Signal Range/Performance',
-      'P0858': 'Traction Control Input Signal Low',
-      'P0859': 'Traction Control Input Signal High',
-      'P0860': 'Gear Shift Module Communication Circuit',
-      'P0861': 'Gear Shift Module Communication Circuit Low',
-      'P0862': 'Gear Shift Module Communication Circuit High',
-      'P0863': 'TCM Communication Circuit',
-      'P0864': 'TCM Communication Circuit Range/Performance',
-      'P0865': 'TCM Communication Circuit Low',
-      'P0866': 'TCM Communication Circuit High',
-      'P0867': 'Transmission Fluid Pressure',
-      'P0868': 'Transmission Fluid Pressure Low',
-      'P0869': 'Transmission Fluid Pressure High',
-      'P0870': 'Transmission Fluid Pressure Sensor/Switch "C" Circuit',
-      'P0871': 'Transmission Fluid Pressure Sensor/Switch "C" Circuit Range/Performance',
-      'P0872': 'Transmission Fluid Pressure Sensor/Switch "C" Circuit Low',
-      'P0873': 'Transmission Fluid Pressure Sensor/Switch "C" Circuit High',
-      'P0874': 'Transmission Fluid Pressure Sensor/Switch "C" Circuit Intermittent',
-      'P0875': 'Transmission Fluid Pressure Sensor/Switch "D" Circuit',
-      'P0876': 'Transmission Fluid Pressure Sensor/Switch "D" Circuit Range/Performance',
-      'P0877': 'Transmission Fluid Pressure Sensor/Switch "D" Circuit Low',
-      'P0878': 'Transmission Fluid Pressure Sensor/Switch "D" Circuit High',
-      'P0879': 'Transmission Fluid Pressure Sensor/Switch "D" Circuit Intermittent',
-      'P0880': 'TCM Power Input Signal',
-      'P0881': 'TCM Power Input Signal Range/Performance',
-      'P0882': 'TCM Power Input Signal Low',
-      'P0883': 'TCM Power Input Signal High',
-      'P0884': 'TCM Power Input Signal Intermittent',
-      'P0885': 'TCM Power Relay Control Circuit/Open',
-      'P0886': 'TCM Power Relay Control Circuit Low',
-      'P0887': 'TCM Power Relay Control Circuit High',
-      'P0888': 'TCM Power Relay Sense Circuit',
-      'P0889': 'TCM Power Relay Sense Circuit Range/Performance',
-      'P0890': 'TCM Power Relay Sense Circuit Low',
-      'P0891': 'TCM Power Relay Sense Circuit High',
-      'P0892': 'TCM Power Relay Sense Circuit Intermittent',
-      'P0893': 'Multiple Gears Engaged',
-      'P0894': 'Transmission Component Slipping',
-      'P0895': 'Shift Time Too Short',
-      'P0896': 'Shift Time Too Long',
-      'P0897': 'Transmission Fluid Deteriorated',
-      'P0898': 'Transmission Control System MIL Request Circuit Low',
-      'P0899': 'Transmission Control System MIL Request Circuit High',
-
-      // Additional critical P codes for comprehensive coverage
-      'P0900': 'Clutch Actuator Circuit/Open',
-      'P0901': 'Clutch Actuator Circuit Range/Performance',
-      'P0902': 'Clutch Actuator Circuit Low',
-      'P0903': 'Clutch Actuator Circuit High',
-      'P0904': 'Gate Select Position Circuit',
-      'P0905': 'Gate Select Position Circuit Range/Performance',
-      'P0906': 'Gate Select Position Circuit Low',
-      'P0907': 'Gate Select Position Circuit High',
-      'P0908': 'Gate Select Position Circuit Intermittent',
-      'P0909': 'Gate Select Control Error',
-      'P0910': 'Gate Select Actuator Circuit/Open',
-      'P0911': 'Gate Select Actuator Circuit Range/Performance',
-      'P0912': 'Gate Select Actuator Circuit Low',
-      'P0913': 'Gate Select Actuator Circuit High',
-      'P0914': 'Gear Shift Position Circuit',
-      'P0915': 'Gear Shift Position Circuit Range/Performance',
-      'P0916': 'Gear Shift Position Circuit Low',
-      'P0917': 'Gear Shift Position Circuit High',
-      'P0918': 'Gear Shift Position Circuit Intermittent',
-      'P0919': 'Gear Shift Position Control Error',
-      'P0920': 'Gear Shift Forward Actuator Circuit/Open',
-      'P0921': 'Gear Shift Forward Actuator Circuit Range/Performance',
-      'P0922': 'Gear Shift Forward Actuator Circuit Low',
-      'P0923': 'Gear Shift Forward Actuator Circuit High',
-      'P0924': 'Gear Shift Reverse Actuator Circuit/Open',
-      'P0925': 'Gear Shift Reverse Actuator Circuit Range/Performance',
-      'P0926': 'Gear Shift Reverse Actuator Circuit Low',
-      'P0927': 'Gear Shift Reverse Actuator Circuit High',
-      'P0928': 'Gear Shift Lock Solenoid Control Circuit/Open',
-      'P0929': 'Gear Shift Lock Solenoid Control Circuit Range/Performance',
-      'P0930': 'Gear Shift Lock Solenoid Control Circuit Low',
-      'P0931': 'Gear Shift Lock Solenoid Control Circuit High',
-      'P0932': 'Hydraulic Pressure Sensor Circuit',
-      'P0933': 'Hydraulic Pressure Sensor Circuit Range/Performance',
-      'P0934': 'Hydraulic Pressure Sensor Circuit Low',
-      'P0935': 'Hydraulic Pressure Sensor Circuit High',
-      'P0936': 'Hydraulic Pressure Sensor Circuit Intermittent',
-      'P0937': 'Hydraulic Oil Temperature Sensor Circuit',
-      'P0938': 'Hydraulic Oil Temperature Sensor Circuit Range/Performance',
-      'P0939': 'Hydraulic Oil Temperature Sensor Circuit Low',
-      'P0940': 'Hydraulic Oil Temperature Sensor Circuit High',
-      'P0941': 'Hydraulic Oil Temperature Sensor Circuit Intermittent',
-      'P0942': 'Hydraulic Pressure Unit',
-      'P0943': 'Hydraulic Pressure Unit Cycling Period Too Short',
-      'P0944': 'Hydraulic Pressure Unit Loss of Pressure',
-      'P0945': 'Hydraulic Pump Relay Circuit/Open',
-      'P0946': 'Hydraulic Pump Relay Circuit Range/Performance',
-      'P0947': 'Hydraulic Pump Relay Circuit Low',
-      'P0948': 'Hydraulic Pump Relay Circuit High',
-      'P0949': 'Auto Shift Manual Adaptive Learning Not Complete',
-      'P0950': 'Auto Shift Manual Control Circuit',
-      'P0951': 'Auto Shift Manual Control Circuit Range/Performance',
-      'P0952': 'Auto Shift Manual Control Circuit Low',
-      'P0953': 'Auto Shift Manual Control Circuit High',
-      'P0954': 'Auto Shift Manual Control Circuit Intermittent',
-      'P0955': 'Auto Shift Manual Mode Circuit',
-      'P0956': 'Auto Shift Manual Mode Circuit Range/Performance',
-      'P0957': 'Auto Shift Manual Mode Circuit Low',
-      'P0958': 'Auto Shift Manual Mode Circuit High',
-      'P0959': 'Auto Shift Manual Mode Circuit Intermittent',
-      'P0960': 'Pressure Control Solenoid "A" Control Circuit/Open',
-      'P0961': 'Pressure Control Solenoid "A" Control Circuit Range/Performance',
-      'P0962': 'Pressure Control Solenoid "A" Control Circuit Low',
-      'P0963': 'Pressure Control Solenoid "A" Control Circuit High',
-      'P0964': 'Pressure Control Solenoid "B" Control Circuit/Open',
-      'P0965': 'Pressure Control Solenoid "B" Control Circuit Range/Performance',
-      'P0966': 'Pressure Control Solenoid "B" Control Circuit Low',
-      'P0967': 'Pressure Control Solenoid "B" Control Circuit High',
-      'P0968': 'Pressure Control Solenoid "C" Control Circuit/Open',
-      'P0969': 'Pressure Control Solenoid "C" Control Circuit Range/Performance',
-      'P0970': 'Pressure Control Solenoid "C" Control Circuit Low',
-      'P0971': 'Pressure Control Solenoid "C" Control Circuit High',
-      'P0972': 'Shift Solenoid "A" Control Circuit Range/Performance',
-      'P0973': 'Shift Solenoid "A" Control Circuit Low',
-      'P0974': 'Shift Solenoid "A" Control Circuit High',
-      'P0975': 'Shift Solenoid "B" Control Circuit Range/Performance',
-      'P0976': 'Shift Solenoid "B" Control Circuit Low',
-      'P0977': 'Shift Solenoid "B" Control Circuit High',
-      'P0978': 'Shift Solenoid "C" Control Circuit Range/Performance',
-      'P0979': 'Shift Solenoid "C" Control Circuit Low',
-      'P0980': 'Shift Solenoid "C" Control Circuit High',
-      'P0981': 'Shift Solenoid "D" Control Circuit Range/Performance',
-      'P0982': 'Shift Solenoid "D" Control Circuit Low',
-      'P0983': 'Shift Solenoid "D" Control Circuit High',
-      'P0984': 'Shift Solenoid "E" Control Circuit Range/Performance',
-      'P0985': 'Shift Solenoid "E" Control Circuit Low',
-      'P0986': 'Shift Solenoid "E" Control Circuit High',
-      'P0987': 'Transmission Fluid Pressure Sensor/Switch "E" Circuit',
-      'P0988': 'Transmission Fluid Pressure Sensor/Switch "E" Circuit Range/Performance',
-      'P0989': 'Transmission Fluid Pressure Sensor/Switch "E" Circuit Low',
-      'P0990': 'Transmission Fluid Pressure Sensor/Switch "E" Circuit High',
-      'P0991': 'Transmission Fluid Pressure Sensor/Switch "E" Circuit Intermittent',
-      'P0992': 'Transmission Fluid Pressure Sensor/Switch "F" Circuit',
-      'P0993': 'Transmission Fluid Pressure Sensor/Switch "F" Circuit Range/Performance',
-      'P0994': 'Transmission Fluid Pressure Sensor/Switch "F" Circuit Low',
-      'P0995': 'Transmission Fluid Pressure Sensor/Switch "F" Circuit High',
-      'P0996': 'Transmission Fluid Pressure Sensor/Switch "F" Circuit Intermittent',
-      'P0997': 'Transmission Fluid Pressure Sensor/Switch "G" Circuit',
-      'P0998': 'Transmission Fluid Pressure Sensor/Switch "G" Circuit Range/Performance',
-      'P0999': 'Transmission Fluid Pressure Sensor/Switch "G" Circuit Low',
-
-      // Additional common manufacturer P codes (like P142B that user mentioned)
-      'P1400': 'EGR Solenoid Circuit Malfunction',
-      'P1401': 'EGR Temperature Sensor Circuit High',
-      'P1402': 'EGR Temperature Sensor Circuit Low',
-      'P1403': 'Differential Pressure Feedback EGR Sensor Circuit Low Input',
-      'P1404': 'Differential Pressure Feedback EGR Sensor Circuit High Input',
-      'P1405': 'Differential Pressure Feedback EGR Sensor Upstream Hose Off or Plugged',
-      'P1406': 'Differential Pressure Feedback EGR Sensor Downstream Hose Off or Plugged',
-      'P1407': 'Exhaust Gas Recirculation No Flow Detected',
-      'P1408': 'Exhaust Gas Recirculation Flow Out of Self-Test Range',
-      'P1409': 'Electronic Vacuum Regulator Control Circuit',
-      'P1410': 'Secondary Air Injection System Circuit Malfunction',
-      'P1411': 'Secondary Air Injection System Incorrect Flow Detected',
-      'P1412': 'Secondary Air Injection System Switching Valve "A" Circuit Malfunction',
-      'P1413': 'Secondary Air Injection System Switching Valve "B" Circuit Malfunction',
-      'P1414': 'Secondary Air Injection System Switching Valve "B" Circuit Malfunction',
-      'P1415': 'Air Injection Pump Control Circuit',
-      'P1416': 'Air Injection Pump Control Circuit Malfunction',
-      'P1417': 'Secondary Air Injection System Switching Valve "A" Circuit Malfunction',
-      'P1418': 'Secondary Air Injection System Switching Valve "B" Circuit Malfunction',
-      'P1419': 'Secondary Air Injection System',
-      'P1420': 'Secondary Air Injection System Circuit Malfunction',
-      'P1421': 'Secondary Air Injection System Circuit Malfunction',
-      'P1422': 'Secondary Air Injection System Control "A" Circuit Malfunction',
-      'P1423': 'Secondary Air Injection System Control "B" Circuit Malfunction',
-      'P1424': 'Secondary Air Injection System',
-      'P1425': 'Secondary Air Injection System',
-      'P1426': 'Secondary Air Injection System',
-      'P1427': 'Secondary Air Injection System',
-      'P1428': 'Secondary Air Injection System',
-      'P1429': 'Secondary Air Injection System',
-      'P142B': 'Turbocharger/Supercharger Boost Control "A" Range/Performance Problem',
-
-      // B0xxx - Body DTCs
-      'B0001': 'Driver Air Bag Circuit Open',
-      'B0002': 'Driver Air Bag Circuit Shorted',
-      'B0003': 'Driver Air Bag Circuit Resistance Out of Range',
-      'B0004': 'Passenger Air Bag Circuit Open',
-      'B0005': 'Passenger Air Bag Circuit Shorted',
-      'B0010': 'Driver Side Impact Sensor Circuit Open',
-      'B0020': 'Passenger Side Impact Sensor Circuit Open',
-      'B0050': 'Left Front Crash Sensor Circuit Open',
-      'B0060': 'Right Front Crash Sensor Circuit Open',
-
-      // C0xxx - Chassis DTCs
-      'C0001': 'ABS System Voltage Low',
-      'C0002': 'ABS System Voltage High',
-      'C0005': 'Left Front Wheel Speed Sensor Circuit',
-      'C0010': 'Right Front Wheel Speed Sensor Circuit',
-      'C0015': 'Left Rear Wheel Speed Sensor Circuit',
-      'C0020': 'Right Rear Wheel Speed Sensor Circuit',
-      'C0035': 'Left Front Wheel Speed Circuit Malfunction',
-      'C0040': 'Right Front Wheel Speed Circuit Malfunction',
-      'C0045': 'Left Rear Wheel Speed Circuit Malfunction',
-      'C0050': 'Right Rear Wheel Speed Circuit Malfunction',
-      'C0060': 'ABS Solenoid "A" Malfunction',
-      'C0065': 'ABS Solenoid "B" Malfunction',
-      'C0070': 'ABS Solenoid "C" Malfunction',
-      'C0075': 'ABS Solenoid "D" Malfunction',
-
-      // U0xxx - Network Communication DTCs
-      'U0001': 'High Speed CAN Communication Bus',
-      'U0002': 'High Speed CAN Communication Bus Performance',
-      'U0003': 'High Speed CAN Communication Bus (+) Open',
-      'U0004': 'High Speed CAN Communication Bus (+) Low',
-      'U0005': 'High Speed CAN Communication Bus (+) High',
-      'U0006': 'High Speed CAN Communication Bus (-) Open',
-      'U0007': 'High Speed CAN Communication Bus (-) Low',
-      'U0008': 'High Speed CAN Communication Bus (-) High',
-      'U0009': 'High Speed CAN Communication Bus (+) Shorted to (-)',
-      'U0010': 'Medium Speed CAN Communication Bus',
-      'U0011': 'Medium Speed CAN Communication Bus Performance',
-      'U0012': 'Medium Speed CAN Communication Bus (+) Open',
-      'U0013': 'Medium Speed CAN Communication Bus (+) Low',
-      'U0014': 'Medium Speed CAN Communication Bus (+) High',
-      'U0015': 'Medium Speed CAN Communication Bus (-) Open',
-      'U0016': 'Medium Speed CAN Communication Bus (-) Low',
-      'U0017': 'Medium Speed CAN Communication Bus (-) High',
-      'U0018': 'Medium Speed CAN Communication Bus (+) Shorted to (-)',
-      'U0100': 'Lost Communication with ECM/PCM "A"',
-      'U0101': 'Lost Communication with TCM',
-      'U0102': 'Lost Communication with Transfer Case Control Module',
-      'U0103': 'Lost Communication with Gear Shift Module',
-      'U0104': 'Lost Communication with Cruise Control Module',
-      'U0105': 'Lost Communication with Fuel Injector Control Module',
-      'U0106': 'Lost Communication with Glow Plug Control Module',
-      'U0107': 'Lost Communication with Throttle Actuator Control Module',
-      'U0108': 'Lost Communication with Alternative Fuel Control Module',
-      'U0109': 'Lost Communication with Fuel Pump Control Module',
-      'U0110': 'Lost Communication with Drive Motor Control Module',
-      'U0111': 'Lost Communication with Battery Energy Control Module "A"',
-      'U0112': 'Lost Communication with Battery Energy Control Module "B"',
-      'U0113': 'Lost Communication with Emissions Critical Control Info',
-      'U0114': 'Lost Communication with Four-Wheel Drive Clutch Control Module',
-      'U0115': 'Lost Communication with Generator Control Module "A"',
-      'U0120': 'Lost Communication with Starter Control Module',
-      'U0121': 'Lost Communication with ABS Control Module',
-      'U0122': 'Lost Communication with Vehicle Dynamic Control Module',
-      'U0123': 'Lost Communication with Yaw Rate Sensor Module',
-      'U0124': 'Lost Communication with Lateral Acceleration Sensor Module',
-      'U0125': 'Lost Communication with Multi-Axis Acceleration Sensor Module',
-      'U0126': 'Lost Communication with Steering Angle Sensor Module',
-      'U0127': 'Lost Communication with Tire Pressure Monitor Module',
-      'U0128': 'Lost Communication with Park Brake Control Module',
-      'U0129': 'Lost Communication with Brake System Control Module',
-      'U0130': 'Lost Communication with Steering Effort Control Module'
+    // Look up from cached database results first
+    if (obdiiDTCsCache[fullCode]) {
+      return {
+        code: fullCode,
+        description: obdiiDTCsCache[fullCode].description || obdiiDTCsCache[fullCode].name
+      }
     }
 
-    const description = obdiiDTCs[fullCode] || (isGeneric ? 'Generic OBD-II code' : 'Manufacturer specific code')
+    // If not found in cache, trigger database lookup and return fallback for now
+    if (!obdiiDTCsCache[fullCode]) {
+      fetchOBDIIDTCs([fullCode]).catch(console.error)
+    }
+
+    const description = isGeneric ? 'Generic OBD-II code' : 'Manufacturer specific code'
 
     return { code: fullCode, description }
   }
@@ -4520,332 +4038,428 @@ export default function JobDetailsPage() {
           {activeTab === 'dtcs' && (
             <div className="ds-section">
               <h3 className="ds-heading-3">Diagnostic Trouble Codes</h3>
-              {job.DTC && job.DTC.length > 0 ? (
-                <div className="ds-stack" style={{ gap: spacing[5] }}>
-                  {Object.entries(
-                    job.DTC.reduce((acc: any, dtc: any) => {
-                      if (!acc[dtc.ecuName]) acc[dtc.ecuName] = []
-                      acc[dtc.ecuName].push(dtc)
-                      return acc
-                    }, {})
-                  ).map(([ecuName, dtcs]: any) => (
-                    <div key={ecuName}>
-                      <h4 className="ds-heading-4" style={{
-                        marginBottom: spacing[3],
-                        padding: spacing[2] + ' ' + spacing[3],
-                        backgroundColor: colors.background.secondary,
-                        borderRadius: '6px'
-                      }}>
-                        {ecuName}
-                      </h4>
-                      <Card variant="nested">
-                        <div style={{ overflowX: 'auto' }}>
-                          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
-                            <thead>
-                              <tr style={{ backgroundColor: colors.background.secondary }}>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'left',
-                                  fontSize: '13px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  minWidth: '120px'
-                                }}>
-                                  DTC Code
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'left',
-                                  fontSize: '13px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  minWidth: '250px'
-                                }}>
-                                  Description
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'left',
-                                  fontSize: '13px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  minWidth: '120px'
-                                }}>
-                                  HEX Data
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'center',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  whiteSpace: 'nowrap',
-                                  title: 'Bit 0: Test Failed'
-                                }}>
-                                  Test Failed
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'center',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  whiteSpace: 'nowrap',
-                                  title: 'Bit 1: Test Failed This Operation Cycle'
-                                }}>
-                                  Failed This Cycle
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'center',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  whiteSpace: 'nowrap',
-                                  title: 'Bit 2: Pending DTC'
-                                }}>
-                                  Pending
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'center',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  whiteSpace: 'nowrap',
-                                  title: 'Bit 3: Confirmed DTC'
-                                }}>
-                                  Confirmed
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'center',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  whiteSpace: 'nowrap',
-                                  title: 'Bit 4: Test Not Completed Since Last Clear'
-                                }}>
-                                  Not Complete Clear
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'center',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  whiteSpace: 'nowrap',
-                                  title: 'Bit 5: Test Failed Since Last Clear'
-                                }}>
-                                  Failed Since Clear
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'center',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  whiteSpace: 'nowrap',
-                                  title: 'Bit 6: Test Not Completed This Operation Cycle'
-                                }}>
-                                  Not Complete Cycle
-                                </th>
-                                <th style={{
-                                  padding: spacing[3],
-                                  textAlign: 'center',
-                                  fontSize: '11px',
-                                  fontWeight: 600,
-                                  borderBottom: `2px solid ${colors.border.light}`,
-                                  whiteSpace: 'nowrap',
-                                  title: 'Bit 7: Warning Indicator Requested'
-                                }}>
-                                  Warning Light
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {dtcs.map((dtc: any, idx: number) => {
-                                // Parse status byte if available, otherwise use defaults
-                                const statusBits = dtc.statusByte ? parseInt(dtc.statusByte, 16) : 0
-                                // UDS DTC Status Bits according to ISO 14229-1
-                                const testFailed = (statusBits & 0x01) !== 0  // Bit 0
-                                const testFailedThisCycle = (statusBits & 0x02) !== 0  // Bit 1
-                                const pending = (statusBits & 0x04) !== 0  // Bit 2
-                                const confirmed = (statusBits & 0x08) !== 0  // Bit 3
-                                const testNotCompletedSinceLastClear = (statusBits & 0x10) !== 0  // Bit 4
-                                const testFailedSinceLastClear = (statusBits & 0x20) !== 0  // Bit 5
-                                const testNotCompletedThisCycle = (statusBits & 0x40) !== 0  // Bit 6
-                                const warningLight = (statusBits & 0x80) !== 0  // Bit 7
+              {(() => {
+                // Extract OBD-II DTCs from messages (similar to EOBD tab logic)
+                const obdMessages = messages.filter((msg: any) => {
+                  return msg.diagnosticProtocol === 'OBD-II' && !msg.isRequest && msg.data
+                })
 
-                                return (
-                                  <tr key={idx} style={{
-                                    borderBottom: `1px solid ${colors.border.light}`,
-                                    '&:hover': { backgroundColor: colors.background.secondary }
-                                  }}>
-                                    <td style={{ padding: spacing[3] }}>
-                                      <Badge variant="secondary" size="large">
-                                        {dtc.code}
-                                      </Badge>
-                                    </td>
-                                    <td style={{ padding: spacing[3], fontSize: '14px' }}>
-                                      {dtc.description || 'No description'}
-                                    </td>
-                                    <td style={{ padding: spacing[3], fontFamily: 'monospace', fontSize: '13px' }}>
-                                      <Badge variant="outline" size="small">
-                                        {dtc.rawHex || 'N/A'}
-                                      </Badge>
-                                    </td>
-                                    {/* Bit 0: Test Failed */}
-                                    <td style={{ padding: spacing[3], textAlign: 'center' }}>
-                                      <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '4px',
-                                        backgroundColor: testFailed ? colors.error[500] : colors.gray[200],
-                                        margin: '0 auto',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
-                                        {testFailed && (
-                                          <CheckCircle size={14} color="white" />
-                                        )}
-                                      </div>
-                                    </td>
-                                    {/* Bit 1: Test Failed This Operation Cycle */}
-                                    <td style={{ padding: spacing[3], textAlign: 'center' }}>
-                                      <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '4px',
-                                        backgroundColor: testFailedThisCycle ? colors.warning[500] : colors.gray[200],
-                                        margin: '0 auto',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
-                                        {testFailedThisCycle && (
-                                          <CheckCircle size={14} color="white" />
-                                        )}
-                                      </div>
-                                    </td>
-                                    {/* Bit 2: Pending DTC */}
-                                    <td style={{ padding: spacing[3], textAlign: 'center' }}>
-                                      <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '4px',
-                                        backgroundColor: pending ? colors.info[500] : colors.gray[200],
-                                        margin: '0 auto',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
-                                        {pending && (
-                                          <CheckCircle size={14} color="white" />
-                                        )}
-                                      </div>
-                                    </td>
-                                    {/* Bit 3: Confirmed DTC */}
-                                    <td style={{ padding: spacing[3], textAlign: 'center' }}>
-                                      <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '4px',
-                                        backgroundColor: confirmed ? colors.purple[500] : colors.gray[200],
-                                        margin: '0 auto',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
-                                        {confirmed && (
-                                          <CheckCircle size={14} color="white" />
-                                        )}
-                                      </div>
-                                    </td>
-                                    {/* Bit 4: Test Not Completed Since Last Clear */}
-                                    <td style={{ padding: spacing[3], textAlign: 'center' }}>
-                                      <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '4px',
-                                        backgroundColor: testNotCompletedSinceLastClear ? colors.warning[400] : colors.gray[200],
-                                        margin: '0 auto',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
-                                        {testNotCompletedSinceLastClear && (
-                                          <CheckCircle size={14} color="white" />
-                                        )}
-                                      </div>
-                                    </td>
-                                    {/* Bit 5: Test Failed Since Last Clear */}
-                                    <td style={{ padding: spacing[3], textAlign: 'center' }}>
-                                      <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '4px',
-                                        backgroundColor: testFailedSinceLastClear ? colors.error[400] : colors.gray[200],
-                                        margin: '0 auto',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
-                                        {testFailedSinceLastClear && (
-                                          <CheckCircle size={14} color="white" />
-                                        )}
-                                      </div>
-                                    </td>
-                                    {/* Bit 6: Test Not Completed This Operation Cycle */}
-                                    <td style={{ padding: spacing[3], textAlign: 'center' }}>
-                                      <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '4px',
-                                        backgroundColor: testNotCompletedThisCycle ? colors.warning[300] : colors.gray[200],
-                                        margin: '0 auto',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
-                                        {testNotCompletedThisCycle && (
-                                          <CheckCircle size={14} color="white" />
-                                        )}
-                                      </div>
-                                    </td>
-                                    {/* Bit 7: Warning Indicator Requested */}
-                                    <td style={{ padding: spacing[3], textAlign: 'center' }}>
-                                      <div style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        borderRadius: '4px',
-                                        backgroundColor: warningLight ? colors.error[600] : colors.gray[200],
-                                        margin: '0 auto',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
-                                        {warningLight && (
-                                          <AlertCircle size={14} color="white" />
-                                        )}
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )
-                              })}
-                            </tbody>
-                          </table>
+                const obdiiDTCs: any[] = []
+
+                obdMessages.forEach((msg: any) => {
+                  const decoded = decodeUDSMessage(msg.data, msg.isRequest, msg.diagnosticProtocol, msg.protocol)
+                  const service = parseInt(decoded.service, 16)
+                  const baseService = service >= 0x40 ? service - 0x40 : service
+                  const ecuAddr = msg.sourceAddr
+
+                  if ((baseService === 0x03 || baseService === 0x07) && msg.data && msg.data.length > 4) {
+                    const cleanData = msg.data.startsWith('0x') ? msg.data.substring(2) : msg.data
+                    const dataPortionOnly = cleanData.startsWith(decoded.service) ? cleanData.substring(2) : cleanData
+
+                    if (dataPortionOnly.length > 2) {
+                      const dtcCount = parseInt(dataPortionOnly.substring(0, 2), 16)
+                      const dtcData = dataPortionOnly.substring(2)
+
+                      for (let i = 0; i < dtcData.length; i += 4) {
+                        if (i + 4 <= dtcData.length) {
+                          const dtcHex = dtcData.substring(i, i + 4)
+                          const decodedDTC = decodeOBDIIDTC(dtcHex)
+
+                          const ecuConfig = job.ECUConfiguration?.find((e: any) => e.targetAddress === ecuAddr)
+                          const ecuName = ecuNames[ecuAddr]?.name || ecuConfig?.ecuName || `ECU_${ecuAddr}`
+
+                          obdiiDTCs.push({
+                            ...decodedDTC,
+                            ecuName,
+                            ecuAddr,
+                            timestamp: msg.timestamp,
+                            isPending: baseService === 0x07,
+                            rawHex: dtcHex
+                          })
+                        }
+                      }
+                    }
+                  }
+                })
+
+                const hasUDSDTCs = job.DTC && job.DTC.length > 0
+                const hasOBDIIDTCs = obdiiDTCs.length > 0
+
+                if (!hasUDSDTCs && !hasOBDIIDTCs) {
+                  return (
+                    <Card variant="nested">
+                      <div className="ds-empty-state">No DTCs found in this diagnostic session</div>
+                    </Card>
+                  )
+                }
+
+                return (
+                  <div className="ds-stack" style={{ gap: spacing[6] }}>
+                    {/* UDS DTCs Section */}
+                    {hasUDSDTCs && (
+                      <div>
+                        <div className="ds-flex-row" style={{ alignItems: 'center', gap: spacing[3], marginBottom: spacing[4] }}>
+                          <h4 className="ds-heading-4">UDS Protocol DTCs</h4>
+                          <Badge variant="info" size="small">
+                            {job.DTC.length} codes
+                          </Badge>
+                          <div style={{
+                            fontSize: '14px',
+                            color: colors.gray[600],
+                            fontStyle: 'italic'
+                          }}>
+                            Found via UDS Service 0x19 (manufacturer-specific ECU codes)
+                          </div>
                         </div>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <Card variant="nested">
-                  <div className="ds-empty-state">No DTCs found</div>
-                </Card>
-              )}
+                        <div className="ds-stack" style={{ gap: spacing[5] }}>
+                          {Object.entries(
+                            job.DTC.reduce((acc: any, dtc: any) => {
+                              if (!acc[dtc.ecuName]) acc[dtc.ecuName] = []
+                              acc[dtc.ecuName].push(dtc)
+                              return acc
+                            }, {})
+                          ).map(([ecuName, dtcs]: any) => (
+                            <div key={ecuName}>
+                              <h5 className="ds-heading-5" style={{
+                                marginBottom: spacing[3],
+                                padding: spacing[2] + ' ' + spacing[3],
+                                backgroundColor: colors.background.secondary,
+                                borderRadius: '6px'
+                              }}>
+                                {ecuName}
+                              </h5>
+                              <Card variant="nested">
+                                <div style={{ overflowX: 'auto' }}>
+                                  <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+                                    <thead>
+                                      <tr style={{ backgroundColor: colors.background.secondary }}>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'left',
+                                          fontSize: '13px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          minWidth: '120px'
+                                        }}>
+                                          DTC Code
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'left',
+                                          fontSize: '13px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          minWidth: '250px'
+                                        }}>
+                                          Description
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'left',
+                                          fontSize: '13px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          minWidth: '120px'
+                                        }}>
+                                          HEX Data
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'center',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          whiteSpace: 'nowrap',
+                                          title: 'Bit 0: Test Failed'
+                                        }}>
+                                          Test Failed
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'center',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          whiteSpace: 'nowrap',
+                                          title: 'Bit 1: Test Failed This Operation Cycle'
+                                        }}>
+                                          Failed This Cycle
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'center',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          whiteSpace: 'nowrap',
+                                          title: 'Bit 2: Pending DTC'
+                                        }}>
+                                          Pending
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'center',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          whiteSpace: 'nowrap',
+                                          title: 'Bit 3: Confirmed DTC'
+                                        }}>
+                                          Confirmed
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'center',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          whiteSpace: 'nowrap',
+                                          title: 'Bit 4: Test Not Completed Since Last Clear'
+                                        }}>
+                                          Not Complete Clear
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'center',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          whiteSpace: 'nowrap',
+                                          title: 'Bit 5: Test Failed Since Last Clear'
+                                        }}>
+                                          Failed Since Clear
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'center',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          whiteSpace: 'nowrap',
+                                          title: 'Bit 6: Test Not Completed This Operation Cycle'
+                                        }}>
+                                          Not Complete Cycle
+                                        </th>
+                                        <th style={{
+                                          padding: spacing[3],
+                                          textAlign: 'center',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          borderBottom: `2px solid ${colors.border.light}`,
+                                          whiteSpace: 'nowrap',
+                                          title: 'Bit 7: Warning Indicator Requested'
+                                        }}>
+                                          Warning Light
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {dtcs.map((dtc: any, idx: number) => {
+                                        // Parse status byte if available, otherwise use defaults
+                                        const statusBits = dtc.statusByte ? parseInt(dtc.statusByte, 16) : 0
+                                        // UDS DTC Status Bits according to ISO 14229-1
+                                        const testFailed = (statusBits & 0x01) !== 0  // Bit 0
+                                        const testFailedThisCycle = (statusBits & 0x02) !== 0  // Bit 1
+                                        const pending = (statusBits & 0x04) !== 0  // Bit 2
+                                        const confirmed = (statusBits & 0x08) !== 0  // Bit 3
+                                        const testNotCompletedSinceLastClear = (statusBits & 0x10) !== 0  // Bit 4
+                                        const testFailedSinceLastClear = (statusBits & 0x20) !== 0  // Bit 5
+                                        const testNotCompletedThisCycle = (statusBits & 0x40) !== 0  // Bit 6
+                                        const warningLight = (statusBits & 0x80) !== 0  // Bit 7
+
+                                        return (
+                                          <tr key={idx} style={{
+                                            borderBottom: `1px solid ${colors.border.light}`,
+                                            '&:hover': { backgroundColor: colors.background.secondary }
+                                          }}>
+                                            <td style={{ padding: spacing[3] }}>
+                                              <Badge variant="secondary" size="large">
+                                                {dtc.code}
+                                              </Badge>
+                                            </td>
+                                            <td style={{ padding: spacing[3], fontSize: '14px' }}>
+                                              {dtc.description || 'No description'}
+                                            </td>
+                                            <td style={{ padding: spacing[3], fontFamily: 'monospace', fontSize: '13px' }}>
+                                              <Badge variant="outline" size="small">
+                                                {dtc.rawHex || 'N/A'}
+                                              </Badge>
+                                            </td>
+                                            {/* UDS Status Bits (8 columns) */}
+                                            <td style={{ padding: spacing[3], textAlign: 'center' }}>
+                                              <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '4px',
+                                                backgroundColor: testFailed ? colors.error[500] : colors.gray[200],
+                                                margin: '0 auto'
+                                              }}></div>
+                                            </td>
+                                            <td style={{ padding: spacing[3], textAlign: 'center' }}>
+                                              <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '4px',
+                                                backgroundColor: testFailedThisCycle ? colors.error[500] : colors.gray[200],
+                                                margin: '0 auto'
+                                              }}></div>
+                                            </td>
+                                            <td style={{ padding: spacing[3], textAlign: 'center' }}>
+                                              <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '4px',
+                                                backgroundColor: pending ? colors.warning[500] : colors.gray[200],
+                                                margin: '0 auto'
+                                              }}></div>
+                                            </td>
+                                            <td style={{ padding: spacing[3], textAlign: 'center' }}>
+                                              <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '4px',
+                                                backgroundColor: confirmed ? colors.error[600] : colors.gray[200],
+                                                margin: '0 auto'
+                                              }}></div>
+                                            </td>
+                                            <td style={{ padding: spacing[3], textAlign: 'center' }}>
+                                              <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '4px',
+                                                backgroundColor: testNotCompletedSinceLastClear ? colors.gray[400] : colors.gray[200],
+                                                margin: '0 auto'
+                                              }}></div>
+                                            </td>
+                                            <td style={{ padding: spacing[3], textAlign: 'center' }}>
+                                              <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '4px',
+                                                backgroundColor: testFailedSinceLastClear ? colors.error[500] : colors.gray[200],
+                                                margin: '0 auto'
+                                              }}></div>
+                                            </td>
+                                            <td style={{ padding: spacing[3], textAlign: 'center' }}>
+                                              <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '4px',
+                                                backgroundColor: testNotCompletedThisCycle ? colors.gray[400] : colors.gray[200],
+                                                margin: '0 auto'
+                                              }}></div>
+                                            </td>
+                                            <td style={{ padding: spacing[3], textAlign: 'center' }}>
+                                              <div style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                borderRadius: '4px',
+                                                backgroundColor: warningLight ? colors.warning[600] : colors.gray[200],
+                                                margin: '0 auto'
+                                              }}></div>
+                                            </td>
+                                          </tr>
+                                        )
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </Card>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* OBD-II DTCs Section */}
+                    {hasOBDIIDTCs && (
+                      <div>
+                        <div className="ds-flex-row" style={{ alignItems: 'center', gap: spacing[3], marginBottom: spacing[4] }}>
+                          <h4 className="ds-heading-4">OBD-II Protocol DTCs</h4>
+                          <Badge variant="warning" size="small">
+                            {obdiiDTCs.length} codes
+                          </Badge>
+                          <div style={{
+                            fontSize: '14px',
+                            color: colors.gray[600],
+                            fontStyle: 'italic'
+                          }}>
+                            Found via OBD-II Services 0x03/0x07 (generic standardized codes)
+                          </div>
+                        </div>
+                        <div className="ds-stack" style={{ gap: spacing[5] }}>
+                          {Object.entries(
+                            obdiiDTCs.reduce((acc: any, dtc: any) => {
+                              if (!acc[dtc.ecuName]) acc[dtc.ecuName] = []
+                              acc[dtc.ecuName].push(dtc)
+                              return acc
+                            }, {})
+                          ).map(([ecuName, dtcs]: any) => (
+                            <div key={ecuName}>
+                              <h5 className="ds-heading-5" style={{
+                                marginBottom: spacing[3],
+                                padding: spacing[2] + ' ' + spacing[3],
+                                backgroundColor: colors.warning[50],
+                                border: `1px solid ${colors.warning[200]}`,
+                                borderRadius: '6px'
+                              }}>
+                                {ecuName}
+                              </h5>
+                              <Card variant="nested">
+                                <div className="ds-table-container">
+                                  <table className="ds-table">
+                                    <thead>
+                                      <tr>
+                                        <th className="ds-table-header-cell">DTC Code</th>
+                                        <th className="ds-table-header-cell">System</th>
+                                        <th className="ds-table-header-cell">Description</th>
+                                        <th className="ds-table-header-cell">Type</th>
+                                        <th className="ds-table-header-cell">Status</th>
+                                        <th className="ds-table-header-cell">Timestamp</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {dtcs.map((dtc: any, dtcIdx: number) => (
+                                        <tr key={`obdii-${ecuName}-${dtcIdx}`}>
+                                          <td className="ds-table-cell">
+                                            <Badge variant={dtc.isPending ? "warning" : "error"} size="small">
+                                              {dtc.code}
+                                            </Badge>
+                                          </td>
+                                          <td className="ds-table-cell">
+                                            <Badge variant="secondary" size="small">
+                                              {dtc.code[0] === 'P' ? 'Powertrain' :
+                                               dtc.code[0] === 'C' ? 'Chassis' :
+                                               dtc.code[0] === 'B' ? 'Body' :
+                                               dtc.code[0] === 'U' ? 'Network' : 'Unknown'}
+                                            </Badge>
+                                          </td>
+                                          <td className="ds-table-cell">{dtc.description}</td>
+                                          <td className="ds-table-cell">
+                                            <Badge variant={dtc.code[1] === '0' || dtc.code[1] === '2' ? "success" : "info"} size="small">
+                                              {dtc.code[1] === '0' || dtc.code[1] === '2' ? 'Generic' : 'Manufacturer'}
+                                            </Badge>
+                                          </td>
+                                          <td className="ds-table-cell">
+                                            <Badge variant={dtc.isPending ? "warning" : "error"} size="small">
+                                              {dtc.isPending ? 'Pending' : 'Stored'}
+                                            </Badge>
+                                          </td>
+                                          <td className="ds-table-cell">{dtc.timestamp}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </Card>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           )}
 
